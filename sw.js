@@ -1,10 +1,10 @@
 /* Miiuz Beyond Borders — offline support. Bump VERSION whenever app files change. */
-const VERSION = "mbb-v3";
+const VERSION = "mbb-v4";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "js/data/malaysia.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
   "js/i18n.js", "js/locales.js", "js/core.js", "js/i18n-entries.js", "js/ai.js", "js/prompt.js", "js/translate.js",
-  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/app.js",
+  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/member.js", "js/app.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
 ];
 
@@ -25,8 +25,8 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // Never cache the assistant or live exchange rates.
-  if (url.pathname.startsWith("/api/") || url.hostname === "open.er-api.com") return;
+  // Never cache the assistant, member data or live exchange rates.
+  if (url.pathname.startsWith("/api/") || url.hostname === "open.er-api.com" || url.hostname.endsWith(".supabase.co")) return;
 
   // Google Fonts: cache after first use so text looks right offline.
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {

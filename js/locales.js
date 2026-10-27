@@ -6,12 +6,12 @@
  * Shared with api/translate.mjs, which only accepts languages listed here. */
 (function (root) {
   const LANGS = {
-    en: { tag: "en", native: "English", name: "English", locale: "en-GB", currency: "USD", full: true },
-    zh: { tag: "zh-Hans", native: "简体中文", name: "Simplified Chinese", locale: "zh-CN", currency: "CNY", full: true },
-    ko: { tag: "ko", native: "한국어", name: "Korean", locale: "ko-KR", currency: "KRW", full: true },
-    ja: { tag: "ja", native: "日本語", name: "Japanese", locale: "ja-JP", currency: "JPY", full: true },
-    "zh-Hant": { tag: "zh-Hant", native: "繁體中文", name: "Traditional Chinese (Taiwan)", locale: "zh-TW", currency: "TWD" },
-    yue: { tag: "yue-Hant", native: "粵語（香港）", name: "Cantonese, written in Traditional Chinese as used in Hong Kong", locale: "zh-HK", currency: "HKD" },
+    en: { tag: "en", short: "EN", native: "English", name: "English", locale: "en-GB", currency: "USD", full: true },
+    zh: { tag: "zh-Hans", short: "简", native: "简体中文", name: "Simplified Chinese", locale: "zh-CN", currency: "CNY", full: true },
+    ko: { tag: "ko", short: "한", native: "한국어", name: "Korean", locale: "ko-KR", currency: "KRW", full: true },
+    ja: { tag: "ja", short: "日", native: "日本語", name: "Japanese", locale: "ja-JP", currency: "JPY", full: true },
+    "zh-Hant": { tag: "zh-Hant", short: "繁", native: "繁體中文", name: "Traditional Chinese (Taiwan)", locale: "zh-TW", currency: "TWD" },
+    yue: { tag: "yue-Hant", short: "粵", native: "粵語（香港）", name: "Cantonese, written in Traditional Chinese as used in Hong Kong", locale: "zh-HK", currency: "HKD" },
     ms: { tag: "ms", native: "Bahasa Melayu", name: "Malay", locale: "ms-MY", currency: "SGD" },
     id: { tag: "id", native: "Bahasa Indonesia", name: "Indonesian", locale: "id-ID", currency: "IDR" },
     th: { tag: "th", native: "ไทย", name: "Thai", locale: "th-TH", currency: "THB" },

@@ -1,0 +1,223 @@
+-- Miiuz Beyond Borders — membership, points and member offers.
+-- Run once in Supabase → SQL Editor → New query → paste all → Run. Safe to run again.
+--
+-- Points rules (change the numbers in award_join_points if needed):
+--   +10 for the new member, once their email is verified
+--   +10 for the member whose invite link they used
+-- Points are written only by the database itself; the app can read a member's own
+-- points but can never add or change them. To award points by hand (a promotion, a
+-- purchase), add a row to points_ledger with reason 'adjustment'.
+--
+-- Tiers (table member_tiers; edit min_points there): Basic 0, Silver 1,000,
+-- Gold 5,000, Platinum 10,000 — based on points ever earned, so a tier never drops.
+-- Points and tiers don't expire.
+
+-- ---------- tables ----------
+create table if not exists public.profiles (
+  id uuid primary key references auth.users (id) on delete cascade,
+  referral_code text unique not null,
+  referred_by uuid references public.profiles (id) on delete set null,
+  display_name text check (char_length(display_name) <= 60),
+  language text,
+  marketing_opt_in boolean not null default false,
+  marketing_opt_in_at timestamptz,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.points_ledger (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references public.profiles (id) on delete cascade,
+  points integer not null,
+  reason text not null check (reason in ('signup', 'referral', 'adjustment', 'redeem')),
+  related_user uuid references public.profiles (id) on delete set null,
+  note text,
+  created_at timestamptz not null default now()
+);
+create unique index if not exists points_one_signup on public.points_ledger (user_id) where reason = 'signup';
+create unique index if not exists points_one_referral_per_friend on public.points_ledger (related_user) where reason = 'referral';
+create index if not exists points_by_user on public.points_ledger (user_id, created_at desc);
+
+create table if not exists public.member_tiers (
+  tier text primary key check (tier in ('basic', 'silver', 'gold', 'platinum')),
+  rank smallint not null unique,
+  min_points integer not null check (min_points >= 0)
+);
+insert into public.member_tiers (tier, rank, min_points) values
+  ('basic', 0, 0), ('silver', 1, 1000), ('gold', 2, 5000), ('platinum', 3, 10000)
+on conflict (tier) do nothing;
+
+-- Member-only offers, goodies and news. Add rows in Table Editor → member_offers.
+-- title / body are per language, e.g. {"en": "Free cendol", "zh": "免费煎蕊", "ko": "...", "ja": "..."}
+-- min_tier limits an offer to that tier and above (basic = every member).
+create table if not exists public.member_offers (
+  id bigint generated always as identity primary key,
+  kind text not null default 'offer' check (kind in ('offer', 'goodie', 'news')),
+  min_tier text not null default 'basic' references public.member_tiers (tier),
+  title jsonb not null,
+  body jsonb not null default '{}'::jsonb,
+  code text,
+  link text,
+  starts_at timestamptz not null default now(),
+  ends_at timestamptz,
+  active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
+-- ---------- points ----------
+create or replace function public.new_referral_code() returns text
+language plpgsql set search_path = public as $$
+declare c text;
+begin
+  loop
+    c := upper(substr(md5(random()::text || clock_timestamp()::text), 1, 6));
+    exit when not exists (select 1 from public.profiles where referral_code = c);
+  end loop;
+  return c;
+end $$;
+
+create or replace function public.award_join_points(member uuid) returns void
+language plpgsql security definer set search_path = public as $$
+declare inviter uuid;
+begin
+  insert into public.points_ledger (user_id, points, reason) values (member, 10, 'signup')
+    on conflict do nothing;
+  select referred_by into inviter from public.profiles where id = member;
+  if inviter is not null and inviter <> member then
+    insert into public.points_ledger (user_id, points, reason, related_user) values (inviter, 10, 'referral', member)
+      on conflict do nothing;
+  end if;
+end $$;
+revoke execute on function public.award_join_points(uuid) from public, anon, authenticated;
+
+-- New account: create the profile and remember who invited them (points wait for verification).
+create or replace function public.handle_new_user() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
+  code text := upper(trim(coalesce(meta ->> 'ref', '')));
+  wants_news boolean := coalesce(meta ->> 'marketing', '') = 'true';
+  inviter uuid;
+begin
+  if code <> '' then
+    select id into inviter from public.profiles where referral_code = code;
+  end if;
+  insert into public.profiles (id, referral_code, referred_by, display_name, language, marketing_opt_in, marketing_opt_in_at)
+  values (new.id, public.new_referral_code(), inviter,
+          nullif(left(trim(coalesce(meta ->> 'name', '')), 60), ''),
+          nullif(left(coalesce(meta ->> 'lang', ''), 16), ''),
+          wants_news, case when wants_news then now() end)
+  on conflict (id) do nothing;
+  if new.email_confirmed_at is not null then
+    perform public.award_join_points(new.id);
+  end if;
+  return new;
+end $$;
+
+-- Email verified (the member entered the emailed code or tapped the link): award points.
+create or replace function public.handle_user_confirmed() returns trigger
+language plpgsql security definer set search_path = public as $$
+begin
+  if old.email_confirmed_at is null and new.email_confirmed_at is not null then
+    perform public.award_join_points(new.id);
+  end if;
+  return new;
+end $$;
+
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created after insert on auth.users
+  for each row execute function public.handle_new_user();
+drop trigger if exists on_auth_user_confirmed on auth.users;
+create trigger on_auth_user_confirmed after update of email_confirmed_at on auth.users
+  for each row execute function public.handle_user_confirmed();
+
+-- Keep a record of when someone agreed to (or stopped) receiving offers by email.
+create or replace function public.stamp_opt_in() returns trigger
+language plpgsql set search_path = public as $$
+begin
+  if new.marketing_opt_in is distinct from old.marketing_opt_in then
+    new.marketing_opt_in_at := case when new.marketing_opt_in then now() end;
+  end if;
+  return new;
+end $$;
+drop trigger if exists profiles_stamp_opt_in on public.profiles;
+create trigger profiles_stamp_opt_in before update on public.profiles
+  for each row execute function public.stamp_opt_in();
+
+-- ---------- tiers ----------
+-- Tier for a number of points ever earned.
+create or replace function public.tier_for(points integer) returns text
+language sql stable set search_path = public as $$
+  select tier from public.member_tiers where min_points <= points order by min_points desc limit 1;
+$$;
+
+-- The signed-in member's balance, points ever earned, tier and the next tier.
+create or replace function public.my_status()
+returns table (balance integer, lifetime integer, tier text, next_tier text, next_at integer)
+language sql stable security definer set search_path = public as $$
+  with s as (
+    select coalesce(sum(points), 0)::int as balance,
+           coalesce(sum(points) filter (where points > 0), 0)::int as lifetime
+    from public.points_ledger where user_id = auth.uid()
+  )
+  select s.balance, s.lifetime, public.tier_for(s.lifetime),
+         (select t.tier from public.member_tiers t where t.min_points > s.lifetime order by t.min_points limit 1),
+         (select t.min_points from public.member_tiers t where t.min_points > s.lifetime order by t.min_points limit 1)
+  from s;
+$$;
+revoke execute on function public.my_status() from public, anon;
+grant execute on function public.my_status() to authenticated;
+
+create or replace function public.my_tier_rank() returns smallint
+language sql stable security definer set search_path = public as $$
+  select t.rank from public.member_tiers t
+  where t.tier = public.tier_for((select coalesce(sum(points) filter (where points > 0), 0)::int
+                                  from public.points_ledger where user_id = auth.uid()));
+$$;
+grant execute on function public.my_tier_rank() to authenticated;
+
+-- Guests may see how many member offers are live (not what they are).
+create or replace function public.live_offer_count() returns integer
+language sql stable security definer set search_path = public as $$
+  select count(*)::int from public.member_offers
+  where active and starts_at <= now() and (ends_at is null or ends_at > now());
+$$;
+grant execute on function public.live_offer_count() to anon, authenticated;
+
+-- ---------- access rules ----------
+alter table public.profiles enable row level security;
+alter table public.points_ledger enable row level security;
+alter table public.member_offers enable row level security;
+alter table public.member_tiers enable row level security;
+
+drop policy if exists "anyone reads tiers" on public.member_tiers;
+create policy "anyone reads tiers" on public.member_tiers for select to anon, authenticated using (true);
+revoke insert, update, delete on public.member_tiers from anon, authenticated;
+
+drop policy if exists "members read own profile" on public.profiles;
+create policy "members read own profile" on public.profiles
+  for select to authenticated using ((select auth.uid()) = id);
+drop policy if exists "members update own profile" on public.profiles;
+create policy "members update own profile" on public.profiles
+  for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
+revoke insert, update, delete on public.profiles from anon, authenticated;
+grant update (display_name, language, marketing_opt_in) on public.profiles to authenticated;
+
+drop policy if exists "members read own points" on public.points_ledger;
+create policy "members read own points" on public.points_ledger
+  for select to authenticated using ((select auth.uid()) = user_id);
+revoke insert, update, delete on public.points_ledger from anon, authenticated;
+
+drop policy if exists "members read live offers" on public.member_offers;
+create policy "members read live offers" on public.member_offers
+  for select to authenticated using (
+    active and starts_at <= now() and (ends_at is null or ends_at > now())
+    and (select t.rank from public.member_tiers t where t.tier = min_tier) <= public.my_tier_rank()
+  );
+revoke insert, update, delete on public.member_offers from anon, authenticated;
+
+-- ---------- first news item (edit or delete it in Table Editor) ----------
+insert into public.member_offers (kind, title, body)
+select 'news',
+  '{"en": "Welcome to Miiuz BB members", "zh": "欢迎加入 Miiuz BB 会员", "ko": "Miiuz BB 회원이 되신 걸 환영해요", "ja": "Miiuz BB メンバーへようこそ"}',
+  '{"en": "Member offers, goodies and travel news will appear here.", "zh": "会员优惠、小礼物和旅行资讯都会出现在这里。", "ko": "회원 혜택, 선물, 여행 소식이 여기에 올라와요.", "ja": "メンバー限定の特典・プレゼント・旅のお知らせはここに届きます。"}'
+where not exists (select 1 from public.member_offers);

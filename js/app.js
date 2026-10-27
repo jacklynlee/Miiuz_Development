@@ -2,7 +2,7 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
-  const VIEWS = ["home", "guide", "plan", "tools", "ask"];
+  const VIEWS = ["home", "guide", "plan", "tools", "ask", "member"];
   let route = { view: "home" }, pendingScroll = null;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
@@ -18,6 +18,7 @@
     $$(".tabbar a").forEach(a => (a.dataset.tab === route.view ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
     if (route.view === "home") renderHome();
     if (route.view === "guide") MBB.guide.render(route.sub);
+    if (route.view === "member") { MBB.member.hideNudge(false); MBB.member.render(); }
     if (pendingScroll) {
       const el = document.getElementById(pendingScroll);
       pendingScroll = null;
@@ -56,6 +57,7 @@
       `<div class="chip"><input type="radio" name="hcity" id="h-city-${k}" value="${k}"${k === MBB.state.city ? " checked" : ""}><label for="h-city-${k}">${esc(L(c))}</label></div>`).join("");
 
     $("#view-home").innerHTML = `
+      ${MBB.member.homeCard()}
       <section class="hero">
         <p class="eyebrow">${esc(t("home.eyebrow"))}</p>
         <h1>${esc(t("home.title"))}</h1>
@@ -110,6 +112,8 @@
       </section>`;
 
     $("#h-city").addEventListener("change", e => MBB.setCity(e.target.value));
+    const inst = MBB.install.card();
+    if (inst) { $(".glance").insertAdjacentHTML("afterend", inst); MBB.install.bind(); }
   }
 
   /* ---------- SOS sheet ---------- */
@@ -202,6 +206,9 @@
     $("#lang-select").innerHTML =
       `<optgroup label="${esc(t("lang.full"))}">${all.filter(([, l]) => l.full).map(opt).join("")}</optgroup>` +
       `<optgroup label="${esc(t("lang.ai"))}">${all.filter(([, l]) => !l.full).map(opt).join("")}</optgroup>`;
+    const cur = MBB.LANGS[MBB.state.lang];
+    $("#lang-short").textContent = cur.short || MBB.state.lang.toUpperCase();
+    $("#lang-select").title = cur.native;
   }
 
   function init() {
@@ -213,11 +220,14 @@
     MBB.planner.init();
     MBB.tools.init();
     MBB.chat.init();
+    MBB.member.init();
 
     $("#lang-select").addEventListener("change", e => MBB.setLang(e.target.value));
     $("#sos-open").addEventListener("click", openSOS);
+    $("#member-btn").addEventListener("click", () => MBB.go("member"));
+    $("#nudge").addEventListener("click", e => { if (e.target.id === "nudge") MBB.member.hideNudge(); });
     $("#sos").addEventListener("click", e => { if (e.target.id === "sos") closeSOS(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") { MBB.closePresent(); closeSOS(); } });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { MBB.closePresent(); closeSOS(); MBB.member.hideNudge(); } });
     document.addEventListener("click", e => {
       if (e.target.closest("#present-close")) { MBB.closePresent(); return; }
       if (e.target.closest("[data-sos]")) { openSOS(); return; }
@@ -229,6 +239,8 @@
     MBB.on("city", () => { if (route.view === "home" || route.view === "guide") show(); });
     MBB.on("fx", () => { if (route.view === "home") renderHome(); });
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
+    MBB.on("member", () => { if (route.view === "home") renderHome(); });
+    MBB.on("install", () => { if (route.view === "home") renderHome(); });
 
     window.addEventListener("hashchange", show);
     show();

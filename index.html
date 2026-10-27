@@ -39,8 +39,10 @@
       <label class="lang-pick" for="lang-select">
         <span class="sr-only" data-i18n="lang.label">Language</span>
         <span class="lang-ic" data-icon="globe"></span>
+        <span class="lang-short" id="lang-short" aria-hidden="true">EN</span>
         <select id="lang-select"></select>
       </label>
+      <button type="button" class="member-btn" id="member-btn" data-i18n-aria="member.join"></button>
       <button type="button" class="sos-btn" id="sos-open" aria-haspopup="dialog">SOS</button>
     </div>
   </div>
@@ -126,6 +128,8 @@
 
   <section class="view" id="view-tools" data-view="tools" hidden></section>
 
+  <section class="view" id="view-member" data-view="member" hidden></section>
+
   <section class="view" id="view-ask" data-view="ask" hidden>
     <div class="chat" id="chat">
       <div class="chat-head">
@@ -162,6 +166,7 @@
 <div class="sheet-backdrop" id="sos" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sos-title" id="sos-sheet"></div>
 </div>
+<div class="sheet-backdrop" id="nudge" hidden></div>
 <div class="present" id="present" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
@@ -179,6 +184,8 @@
 <script src="js/planner.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/chat.js"></script>
+<script src="js/install.js"></script>
+<script src="js/member.js"></script>
 <script src="js/app.js"></script>
 <!-- preview:end -->
 </body>

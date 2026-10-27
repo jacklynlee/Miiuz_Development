@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import chat from "./api/chat.mjs";
 import translate from "./api/translate.mjs";
+import config from "./api/config.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -20,6 +21,7 @@ http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://localhost:${PORT}`);
   if (url.pathname === "/api/chat") return chat(req, res);
   if (url.pathname === "/api/translate") return translate(req, res);
+  if (url.pathname === "/api/config") return config(req, res);
 
   const rel = decodeURIComponent(url.pathname).replace(/^\/+/, "") || "index.html";
   const file = path.resolve(ROOT, rel);
