@@ -25,7 +25,7 @@
     [/^leisure:(park|garden|nature_reserve)$|^boundary:(national_park|protected_area)$/, "park"], [/^leisure:/, "leisure"],
     [/^natural:beach$/, "beach"], [/^natural:(peak|volcano|hill|ridge)$/, "mountain"], [/:waterfall$/, "waterfall"], [/^natural:cave_entrance$/, "cave"], [/^natural:/, "nature"],
     [/^place:(island|islet|archipelago)$/, "island"], [/^place:city$/, "city"], [/^place:town$/, "town"], [/^place:/, "area"],
-    [/^historic:/, "historic"], [/^amenity:(school|university|college)$/, "school"], [/^highway:/, "road"], [/^building:/, "building"],
+    [/^historic:/, "historic"], [/^amenity:(school|university|college)$/, "school"], [/^highway:bus_stop$/, "station"], [/^highway:/, "road"], [/^building:/, "building"],
   ];
   const TYPE_ICON = {
     attraction: "star", museum: "landmark", viewpoint: "camera", themepark: "star", zoo: "tree", stay: "bed", food: "bowl", cafe: "bowl", bar: "bowl",

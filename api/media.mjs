@@ -24,7 +24,7 @@ let memo = null; // per warm instance
 export default async function handler(req, res) {
   if (req.method !== "GET") return sendJson(res, 405, { error: "GET only" });
   try {
-    if (!memo || Date.now() - memo.at > 6 * 3600e3) memo = { at: Date.now(), items: await bestPhotos(mediaItems()) };
+    if (!memo || Date.now() - memo.at > 6 * 3600e3) memo = { at: Date.now(), items: await bestPhotos(mediaItems(), { avoid: C.photos.avoid }) };
     sendJson(res, 200, { v: 1, items: memo.items }, "public, max-age=86400, s-maxage=604800, stale-while-revalidate=2592000");
   } catch (e) {
     console.error("media", e?.message);

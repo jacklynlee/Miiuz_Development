@@ -79,9 +79,12 @@ function photo(file, page) {
   };
 }
 
-// The first candidate title whose lead photo is usable, for each item: { key: photo | null }
-export async function bestPhotos(items, wiki = "en") {
+// The first candidate title whose lead photo is usable, for each item: { key: photo | null }.
+// `avoid`: file names already reviewed and rejected.
+export async function bestPhotos(items, { wiki = "en", avoid = [] } = {}) {
+  const skip = new Set(avoid.map(f => f.replace(/ /g, "_")));
   const files = await pageImages(wiki, items.flatMap(x => x.titles));
+  for (const t of Object.keys(files)) if (files[t] && skip.has(files[t].replace(/ /g, "_"))) files[t] = null;
   const photos = await commonsPhotos(Object.values(files));
   const out = {};
   for (const { key, titles } of items) out[key] = titles.map(t => photos[files[t]]).find(Boolean) || null;

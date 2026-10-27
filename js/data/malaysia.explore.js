@@ -119,21 +119,21 @@
       go: { zh: "不通公路：从美里（约 30 分钟）或古晋坐飞机。公园总部离姆禄机场几分钟。", en: "No road access: fly from Miri (about 30 minutes) or Kuching. Park HQ is a few minutes from Mulu airport.", ko: "도로가 없어요. 미리(약 30분)나 쿠칭에서 비행기로 가요. 공원 본부는 물루 공항에서 몇 분 거리.", ja: "道路はなく、ミリ（約30分）かクチンから飛行機で。公園本部はムル空港から数分。" },
       when: { zh: "全年适合；洞穴导览和石林徒步要提前订。蝙蝠出洞看天气。", en: "Good all year; book cave tours and the Pinnacles trek ahead. The bat exodus depends on the weather.", ko: "일 년 내내 좋아요. 동굴 투어와 피너클스 트레킹은 미리 예약하세요. 박쥐 비행은 날씨에 따라 달라요.", ja: "通年OK。洞窟ツアーとピナクルズのトレッキングは事前予約を。コウモリの飛翔は天候次第。" } },
 
-    { id: "johor_bahru", state: "johor", region: "south", kind: "city", lat: 1.4927, lng: 103.7414, wp: ["Johor Bahru", "Legoland Malaysia Resort"],
+    { id: "johor_bahru", state: "johor", region: "south", kind: "city", lat: 1.4927, lng: 103.7414, wp: ["Johor Bahru", "Sultan Abu Bakar State Mosque", "Legoland Malaysia Resort"],
       aka: ["JB", "Legoland", "Iskandar Puteri", "Causeway", "柔佛巴鲁"],
       name: { zh: "新山", en: "Johor Bahru", ko: "조호르바루", ja: "ジョホールバル" },
       sum: { zh: "隔着新柔长堤与新加坡相望的南部门户：依斯干达公主城的乐高乐园等主题乐园、美食街，以及陈旭年街一带的老街。", en: "The southern gateway across the Causeway from Singapore: LEGOLAND Malaysia and other theme parks in Iskandar Puteri, food streets and the old town around Jalan Tan Hiok Nee.", ko: "코즈웨이 건너 싱가포르와 마주한 남쪽 관문. 이스칸다르 푸테리의 레고랜드 말레이시아 등 테마파크, 먹자골목, 탄히옥니 거리 주변 구시가지.", ja: "コーズウェイを挟んでシンガポールと向き合う南の玄関口。イスカンダル・プテリのレゴランド・マレーシアなどのテーマパーク、屋台街、タン・ヒオック・ニー通り周辺の旧市街。" },
       go: { zh: "从吉隆坡坐巴士或开车约 4–5 小时，飞机约 1 小时。从新加坡可坐巴士或 Shuttle Tebrau 火车过长堤。", en: "About 4–5 hours by bus or car from KL, or about 1 hour by plane. From Singapore, cross the Causeway by bus or the Shuttle Tebrau train.", ko: "쿠알라룸푸르에서 버스나 차로 약 4~5시간, 비행기로 약 1시간. 싱가포르에서는 버스나 셔틀 테브라우 열차로 코즈웨이를 건너요.", ja: "クアラルンプールからバスか車で約4〜5時間、飛行機で約1時間。シンガポールからはバスかシャトル・テブラウ列車でコーズウェイを渡ります。" },
       when: { zh: "全年适合；周五傍晚和公共假期从新加坡过关排队很久。", en: "Good all year. Avoid crossing from Singapore on Friday evenings and public holidays, when border queues are long.", ko: "일 년 내내 좋아요. 금요일 저녁과 공휴일엔 싱가포르 국경 줄이 길어요.", ja: "通年OK。金曜の夕方と祝日はシンガポールからの国境が大混雑。" } },
 
-    { id: "perhentian", map: { zh: "停泊岛", en: "Perhentian", ko: "페르헨티안", ja: "プルフンティアン" }, state: "terengganu", region: "east", kind: "island", lat: 5.9100, lng: 102.7400, wp: ["Perhentian Islands"],
+    { id: "perhentian", map: { zh: "停泊岛", en: "Perhentian", ko: "페르헨티안", ja: "プルフンティアン" }, state: "terengganu", region: "east", kind: "island", lat: 5.9100, lng: 102.7400, wp: ["Perhentian Islands", "Perhentian Kecil", "Perhentian Besar"],
       aka: ["Pulau Perhentian", "Perhentian Kecil", "Perhentian Besar", "Kuala Besut", "停泊岛"],
       name: { zh: "停泊岛", en: "Perhentian Islands", ko: "페르헨티안 제도", ja: "プルフンティアン諸島" },
       sum: { zh: "两座小岛，白沙、清澈海水，下水就是珊瑚礁：可以和海龟、礁鲨一起浮潜，然后彻底放空。岛上没有汽车。", en: "Two small islands with white sand, clear water and reefs right off the beach: snorkel with turtles and reef sharks, then slow right down. There are no cars.", ko: "하얀 모래와 맑은 바다, 해변 바로 앞 산호초가 있는 두 개의 작은 섬. 바다거북, 암초상어와 스노클링하고 푹 쉬어요. 자동차가 없어요.", ja: "白砂と透明な海、ビーチのすぐ先にサンゴ礁がある2つの小さな島。ウミガメやリーフシャークとシュノーケリングして、のんびり。車はありません。" },
       go: { zh: "先飞哥打巴鲁（吉隆坡出发约 1 小时），再开车约 1 小时到瓜拉勿述（Kuala Besut）码头，坐快艇 30–45 分钟。", en: "Fly to Kota Bharu (about 1 hour from KL), drive about 1 hour to Kuala Besut jetty, then 30–45 minutes by speedboat.", ko: "코타바루까지 비행기(쿠알라룸푸르에서 약 1시간), 쿠알라 베숫 선착장까지 차로 약 1시간, 스피드보트로 30~45분.", ja: "コタバルまで飛行機（クアラルンプールから約1時間）、クアラ・ブスット桟橋まで車で約1時間、スピードボートで30〜45分。" },
       when: { zh: "大约 3–10 月开放；11–2 月季风期大多数度假村关闭。多带现金，岛上刷卡和提款机有限。", en: "Open roughly March to October; most resorts close in the November–February monsoon. Bring enough cash: cards and ATMs are limited.", ko: "대략 3~10월에 운영해요. 11~2월 몬순 기간엔 리조트 대부분이 문을 닫아요. 카드·ATM이 제한적이니 현금을 넉넉히.", ja: "おおむね3〜10月。11〜2月のモンスーン期はほとんどのリゾートが休業。カードやATMは限られるので現金を多めに。" } },
 
-    { id: "redang", map: { zh: "热浪岛", en: "Redang", ko: "르당", ja: "レダン" }, state: "terengganu", region: "east", kind: "island", lat: 5.7800, lng: 103.0100, wp: ["Redang Island"],
+    { id: "redang", map: { zh: "热浪岛", en: "Redang", ko: "르당", ja: "レダン" }, state: "terengganu", region: "east", kind: "island", lat: 5.7800, lng: 103.0100, wp: ["Redang Island", "Redang Archipelago"],
       aka: ["Pulau Redang", "Merang", "热浪岛"],
       name: { zh: "热浪岛", en: "Redang Island", ko: "르당섬", ja: "レダン島" },
       sum: { zh: "海洋公园岛屿，海水是马来西亚最清澈之一，沙滩细软、珊瑚丰富。大多数人买度假村套餐，含船接送和浮潜行程。", en: "A marine-park island with some of Malaysia's clearest water, powdery beaches and coral gardens. Most visits are resort packages with boat transfers and snorkelling trips.", ko: "말레이시아에서 손꼽히게 맑은 바다, 고운 모래, 산호 정원이 있는 해양공원 섬. 대부분 배편과 스노클링이 포함된 리조트 패키지로 가요.", ja: "マレーシア屈指の透明度を誇る海、さらさらの砂浜、サンゴの庭が広がる海洋公園の島。ほとんどがボート送迎とシュノーケリング付きのリゾートパッケージ。" },
@@ -185,7 +185,7 @@
 
   // Souvenirs worth bringing home (shown in Home and the Shopping guide).
   MY.souvenirs = [
-    { id: "batik", wp: ["Batik"],
+    { id: "batik", wp: ["Malaysian batik", "Batik"],
       name: { zh: "峇迪布（Batik）", en: "Batik", ko: "바틱", ja: "バティック" },
       desc: { zh: "手绘或蜡印的热带图案布料，有丝巾、衬衫和纱笼。吉隆坡中央艺术坊和吉兰丹、登嘉楼的市场选择最多。", en: "Hand-drawn or block-printed fabric in bright tropical patterns: scarves, shirts and sarongs. Central Market in KL and the Kelantan and Terengganu markets have the widest choice.", ko: "손으로 그리거나 찍어낸 화려한 열대 무늬 천. 스카프, 셔츠, 사롱이 있어요. 쿠알라룸푸르 센트럴 마켓과 클란탄·트렝가누 시장에 종류가 가장 많아요.", ja: "手描きや型押しで鮮やかな南国柄を染めた布。スカーフ、シャツ、サロンなど。KLのセントラル・マーケットやクランタン、トレンガヌの市場が品揃え豊富。" } },
     { id: "songket", wp: ["Songket"],
@@ -209,7 +209,7 @@
     { id: "tea", wp: ["Boh Plantations", "Cameron Highlands"],
       name: { zh: "金马伦高原红茶", en: "Cameron Highlands tea", ko: "캐머런 하일랜드 홍차", ja: "キャメロン・ハイランドの紅茶" },
       desc: { zh: "马来西亚高原茶园出产的红茶，例如 BOH。茶园商店或超市都买得到。", en: "Black tea from Malaysia's highland estates, such as BOH. Buy it at the estates' tea shops or any supermarket.", ko: "BOH 등 말레이시아 고원 차밭에서 나는 홍차. 차밭 매장이나 슈퍼마켓에서 살 수 있어요.", ja: "BOHなどマレーシアの高原の茶園で作られる紅茶。茶園のショップやスーパーで買えます。" } },
-    { id: "kaya", wp: ["Kaya (jam)", "Kaya toast"],
+    { id: "kaya", wp: ["Kaya toast", "Kaya (jam)"],
       name: { zh: "咖椰酱（Kaya）", en: "Kaya jam", ko: "카야 잼", ja: "カヤジャム" },
       desc: { zh: "椰浆加鸡蛋和班兰叶熬成的甜酱，咖椰吐司的灵魂。罐装要放托运行李，并留意你国家的食品入境规定。", en: "Sweet coconut-and-egg jam scented with pandan, the spread on kaya toast. Jars go in checked luggage; check your country's food rules.", ko: "판단 향이 나는 코코넛·달걀 잼으로 카야 토스트의 핵심. 병은 위탁 수하물로 부치고, 자국의 식품 반입 규정을 확인하세요.", ja: "パンダンが香るココナッツと卵の甘いジャムで、カヤトーストの主役。瓶は預け荷物に。自国の食品持ち込み規則も確認を。" } },
     { id: "tambun", wp: ["Tambun biscuit"],
@@ -226,25 +226,28 @@
   // Photos for the planner places and dishes (English Wikipedia titles, best first).
   MY.photos = {
     poi: {
-      klcc_park: ["KLCC Park", "Petronas Towers"], skybridge: ["Petronas Towers"], suria: ["Suria KLCC"], aquaria: ["Aquaria KLCC"],
+      klcc_park: ["KLCC Park", "Petronas Towers"], skybridge: ["Petronas Towers", "Kuala Lumpur City Centre"], suria: ["Suria KLCC"], aquaria: ["Aquaria KLCC"],
       batu: ["Batu Caves"], thean_hou: ["Thean Hou Temple"], petaling: ["Petaling Street"], kwai_chai: ["Kwai Chai Hong", "Petaling Street"],
       kopitiam_ct: ["Kopi tiam"], mahamariamman: ["Sri Mahamariamman Temple, Kuala Lumpur"], central_market: ["Central Market, Kuala Lumpur"],
       merdeka: ["Merdeka Square, Kuala Lumpur", "Sultan Abdul Samad Building"], masjid_jamek: ["Masjid Jamek"], river_of_life: ["River of Life (Kuala Lumpur)", "Masjid Jamek"],
-      pavilion: ["Pavilion Kuala Lumpur"], jalan_alor: ["Jalan Alor"], kl_tower: ["Kuala Lumpur Tower"], forest_eco: ["Bukit Nanas", "Kuala Lumpur Tower"],
-      botanical: ["Perdana Botanical Garden"], islamic_arts: ["Islamic Arts Museum Malaysia"], national_mosque: ["National Mosque of Malaysia"],
+      pavilion: ["Pavilion Kuala Lumpur"], jalan_alor: ["Jalan Alor"], kl_tower: ["Kuala Lumpur Tower"], forest_eco: ["KL Forest Eco Park", "Bukit Nanas", "Kuala Lumpur Tower"],
+      botanical: ["Perdana Botanical Garden", "Perdana Botanical Gardens"], islamic_arts: ["Islamic Arts Museum Malaysia"], national_mosque: ["National Mosque of Malaysia"],
       kampung_baru: ["Kampung Baru"], bird_park: ["Kuala Lumpur Bird Park"],
       street_art: ["Street art in George Town", "Armenian Street, George Town"], khoo_kongsi: ["Khoo Kongsi"], clan_jetties: ["Clan Jetties", "Chew Jetty"],
       blue_mansion: ["Cheong Fatt Tze Mansion"], peranakan: ["Pinang Peranakan Mansion"], fort: ["Fort Cornwallis"], little_india_pg: ["Little India, Penang"],
       cendol: ["Cendol"], kopitiam_pg: ["Kopi tiam"], penang_hill: ["Penang Hill"], kek_lok_si: ["Kek Lok Si"], komtar: ["Komtar"],
-      gurney: ["Gurney Drive"], chulia: ["Chulia Street"], ferringhi: ["Batu Ferringhi"],
-      dutch_square: ["Stadthuys", "Dutch Square, Malacca"], st_paul: ["St. Paul's Church, Malacca"], famosa: ["A Famosa"], cheng_hoon: ["Cheng Hoon Teng"],
-      baba_nyonya: ["Baba & Nyonya Heritage Museum"], jonker_day: ["Jonker Street"], jonker_night: ["Jonker Street"], chicken_rice: ["Chicken rice ball", "Hainanese chicken rice"],
+      gurney: ["Gurney Drive"], chulia: ["Chulia Street", "Lebuh Chulia"], ferringhi: ["Batu Ferringhi"],
+      dutch_square: ["Stadthuys", "Dutch Square, Malacca"], st_paul: ["St. Paul's Church, Malacca"], famosa: ["A Famosa"], cheng_hoon: ["Cheng Hoon Teng", "Cheng Hoon Teng Temple"],
+      baba_nyonya: ["Baba & Nyonya Heritage Museum", "Baba Nyonya Heritage Museum"], jonker_day: ["Jonker Street", "Jonker Walk"], jonker_night: ["Jonker Walk", "Jonker Street"], chicken_rice: ["Chicken rice ball", "Hainanese chicken rice"],
       nyonya_food: ["Peranakan cuisine"], river_cruise: ["Malacca River"], taming_sari: ["Taming Sari Tower"], masjid_selat: ["Malacca Straits Mosque"],
       kampung_morten: ["Kampung Morten"], river_walk: ["Malacca River"],
     },
     // Same order as the dishes in the Food guide (as are dishNames below).
-    dishes: [["Nasi lemak"], ["Char kway teow"], ["Roti canai"], ["Satay"], ["Asam laksa", "Laksa"], ["Curry laksa", "Laksa"], ["Bak kut teh"],
+    dishes: [["Nasi lemak"], ["Char kway teow"], ["Roti canai", "Roti prata"], ["Satay"], ["Asam laksa", "Laksa"], ["Curry laksa", "Laksa"], ["Bak kut teh"],
       ["Nasi kandar", "Banana leaf rice"], ["Cendol"], ["Teh tarik", "White coffee"], ["Durian"]],
+    // Lead photos checked and found unsuitable (wrong subject, a map, or not Malaysian).
+    avoid: ["Jalan_Tun_Razak,_Kuala_Lumpur_20230828_151721.jpg", "KLMonoRail-Top.JPG", "Perhentian_islands.png", "Bamboofabric.png",
+      "富力公主湾_R&F_Princess_Cove_(cropped).jpg", "Batik_Trusmi_Cirebon_(23).jpg"],
   };
 
   // What travellers call the dishes in their own language, so search finds them.
