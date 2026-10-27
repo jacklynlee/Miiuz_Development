@@ -100,3 +100,7 @@ Rebuild the single-file claude.ai preview with `npm run build:preview`.
 Facts were checked in October 2026 (visa rules, MDAC, KLIA Ekspres fares, SST, payments,
 emergency numbers). Rules and prices change; the app tells travellers to confirm with
 official sources. Update `checked` in `js/data/malaysia.js` when you re-verify.
+
+---
+
+© 2026 Miiuz Beyond Borders Sdn. Bhd. All rights reserved. See [LICENSE](LICENSE).

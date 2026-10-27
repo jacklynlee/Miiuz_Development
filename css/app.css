@@ -404,6 +404,7 @@ textarea { min-height: 64px; resize: vertical; }
 
 .foot { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; font-size: 12px; color: var(--muted); }
 .foot b { color: var(--fg); letter-spacing: .06em; }
+.foot .copy { flex-basis: 100%; font-size: 11.5px; }
 
 [dir="rtl"] .back .ic, [dir="rtl"] .quick .next, [dir="rtl"] .ic-flip { transform: scaleX(-1); }
 

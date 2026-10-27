@@ -1,5 +1,5 @@
 /* Miiuz Beyond Borders — offline support. Bump VERSION whenever app files change. */
-const VERSION = "mbb-v2";
+const VERSION = "mbb-v3";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "js/data/malaysia.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
