@@ -1,0 +1,19 @@
+{
+  "name": "mybb-app",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Miiuz Beyond Borders (Miiuz BB): travel companion web app for tourists in a new country, starting with Malaysia.",
+  "scripts": {
+    "dev": "node server.mjs",
+    "dev:env": "node --env-file=.env server.mjs",
+    "check": "node scripts/check.mjs",
+    "build:preview": "node scripts/build-preview.mjs",
+    "translate": "node scripts/translate.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0"
+  }
+}

@@ -1,0 +1,276 @@
+/* Miiuz Beyond Borders — shared helpers: state, i18n lookup, storage, icons, overlays. */
+(function () {
+  const MBB = (window.MBB = window.MBB || {});
+
+  /* ---------- storage (per-device conveniences only; every access may throw) ---------- */
+  const store = {
+    get(key, fallback) {
+      try { const v = localStorage.getItem("mbb." + key); return v == null ? fallback : JSON.parse(v); } catch { return fallback; }
+    },
+    set(key, value) {
+      try { localStorage.setItem("mbb." + key, JSON.stringify(value)); } catch { /* private mode etc. */ }
+    },
+  };
+  MBB.store = store;
+
+  /* ---------- languages ---------- */
+  // The language list lives in js/locales.js.
+  let lang = store.get("lang", MBB.negotiateLang(navigator.languages || [navigator.language]));
+  if (!MBB.LANGS[lang]) lang = "en";
+  MBB.locale = () => MBB.LANGS[MBB.state.lang].locale;
+  MBB.isChinese = () => ["zh", "zh-Hant", "yue"].includes(MBB.state.lang);
+  MBB.applyDir = () => {
+    const info = MBB.LANGS[MBB.state.lang];
+    document.documentElement.lang = info.tag;
+    document.documentElement.dir = info.rtl ? "rtl" : "ltr";
+  };
+
+  /* ---------- state ---------- */
+  MBB.state = {
+    lang,
+    country: "my",
+    city: store.get("city", "kl"),
+    home: store.get("home", MBB.LANGS[lang].currency),
+  };
+  MBB.C = MBB.countries[MBB.state.country];
+  if (!MBB.C.cities[MBB.state.city]) MBB.state.city = "kl";
+
+  /* ---------- translation overlays (js/data/<country>.<lang>.js) ---------- */
+  // Each overlay adds a language to the base pack's { zh, en } objects. Lists are matched by position.
+  function applyOverlay(C, l, o) {
+    const set = (obj, val) => { if (obj && typeof obj === "object" && val != null) obj[l] = val; };
+    set(C.name, o.name); set(C.currency.name, o.currencyName);
+    for (const [k, v] of Object.entries(o.cities || {})) {
+      const c = C.cities[k]; if (!c) continue;
+      c[l] = v.name; set(c.airport, v.airport); set(c.transferNote, v.transferNote);
+    }
+    for (const p of C.pois) { const v = o.pois?.[p.id]; if (v) { p[l] = v[0]; set(p.why, v[1]); set(p.tip, v[2]); } }
+    for (const e of C.emergency) { const v = o.emergency?.[e.id]; if (v) { set(e.label, v[0]); set(e.note, v[1]); } }
+    (o.climate || []).forEach((s, i) => set(C.climate[i], s));
+    for (const g of C.guide) {
+      const v = o.guide?.[g.id]; if (!v) continue;
+      set(g.title, v.title); set(g.lead, v.lead);
+      (v.facts || []).forEach(([k, val], i) => { if (g.facts?.[i]) { set(g.facts[i].k, k); set(g.facts[i].v, val); } });
+      (v.sections || []).forEach(([h, items], i) => { const s = g.sections[i]; if (!s) return; set(s.h, h); items.forEach((it, j) => set(s.items[j], it)); });
+      (v.links || []).forEach((label, i) => set(g.links?.[i]?.label, label));
+      (v.dishes || []).forEach((d, i) => { if (g.dishes?.[i]) g.dishes[i][l] = d; });
+    }
+    for (const c of C.phrases) { const v = o.phrases?.[c.id]; if (v) { set(c.title, v.title); v.items.forEach((s, i) => { if (c.items[i]) c.items[i][l] = s; }); } }
+    for (const g of C.checklist) { const v = o.checklist?.[g.id]; if (v) { set(g.title, v.title); for (const it of g.items) if (v.items[it.id]) it[l] = v.items[it.id]; } }
+    if (o.driverCard) C.driverCard[l] = o.driverCard;
+  }
+  for (const [key, overlay] of Object.entries(MBB.overlays || {})) {
+    const [country, l] = key.split(".");
+    if (MBB.countries[country]) applyOverlay(MBB.countries[country], l, overlay);
+  }
+
+  /* ---------- events ---------- */
+  const bus = new EventTarget();
+  MBB.on = (name, fn) => bus.addEventListener(name, e => fn(e.detail));
+  MBB.emit = (name, detail) => bus.dispatchEvent(new CustomEvent(name, { detail }));
+
+  MBB.setLang = l => {
+    if (l === MBB.state.lang) return;
+    if (!MBB.LANGS[l]) return;
+    MBB.state.lang = l; store.set("lang", l);
+    MBB.applyDir();
+    MBB.applyStatic();
+    MBB.emit("lang", l);
+    MBB.translator?.ensure(l); // AI-translated languages fill in as their text arrives
+  };
+  MBB.setCity = c => {
+    if (!MBB.C.cities[c] || c === MBB.state.city) return;
+    MBB.state.city = c; store.set("city", c);
+    MBB.emit("city", c);
+  };
+  MBB.setHome = cur => {
+    MBB.state.home = cur; store.set("home", cur);
+    MBB.emit("fx");
+  };
+
+  /* ---------- text ---------- */
+  MBB.L = v => {
+    if (v == null) return "";
+    if (typeof v !== "object" || Array.isArray(v)) return v;
+    return v[MBB.state.lang] ?? v.en ?? v.zh ?? "";
+  };
+  // A place's display name: localized where an overlay provides one, else its local/English name.
+  MBB.placeName = p => (MBB.state.lang === "en" ? p.en : (p[MBB.state.lang] || p.en));
+  MBB.t = (key, vars) => {
+    const entry = MBB.STR[key];
+    let s = entry ? MBB.L(entry) : key;
+    if (vars && typeof s === "string") s = s.replace(/\{(\w+)\}/g, (m, k) => (vars[k] ?? m));
+    return s;
+  };
+  MBB.esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  MBB.$ = (sel, root = document) => root.querySelector(sel);
+  MBB.$$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+
+  // Fill every [data-i18n] / [data-i18n-ph] / [data-i18n-aria] element.
+  MBB.applyStatic = (root = document) => {
+    MBB.$$("[data-i18n]", root).forEach(el => { el.textContent = MBB.t(el.dataset.i18n); });
+    MBB.$$("[data-i18n-ph]", root).forEach(el => { el.placeholder = MBB.t(el.dataset.i18nPh); });
+    MBB.$$("[data-i18n-aria]", root).forEach(el => { el.setAttribute("aria-label", MBB.t(el.dataset.i18nAria)); });
+  };
+
+  /* ---------- time ---------- */
+  MBB.toMin = s => { const [h, m] = String(s).split(":").map(Number); return h * 60 + m; };
+  MBB.fmt = m => { m = Math.round(m); const h = Math.floor(m / 60) % 24, mm = ((m % 60) + 60) % 60; return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`; };
+  // Clock and weekday in the destination's time zone, whatever the phone is set to.
+  MBB.localNow = () => {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone: MBB.C.timezone, hour: "2-digit", minute: "2-digit", weekday: "short", month: "numeric", day: "numeric", hourCycle: "h23" })
+      .formatToParts(new Date()).reduce((o, p) => ((o[p.type] = p.value), o), {});
+    const day = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(parts.weekday);
+    return { day, minutes: Number(parts.hour) * 60 + Number(parts.minute), month: Number(parts.month) - 1, hhmm: `${parts.hour}:${parts.minute}` };
+  };
+  // Hours between destination and phone (positive = destination ahead).
+  MBB.tzGap = () => {
+    const now = new Date();
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: MBB.C.timezone, hourCycle: "h23", year: "numeric", month: "numeric", day: "numeric", hour: "numeric", minute: "numeric" })
+      .formatToParts(now).reduce((o, x) => ((o[x.type] = Number(x.value)), o), {});
+    const destOffset = (Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute) - Math.floor(now.getTime() / 6e4) * 6e4) / 6e4;
+    const deviceOffset = -now.getTimezoneOffset();
+    return Math.round((destOffset - deviceOffset) / 30) / 2;
+  };
+
+  /* ---------- currency ---------- */
+  const fxSaved = store.get("fx", null);
+  MBB.fx = fxSaved && fxSaved.rates ? fxSaved : { rates: MBB.C.rates, live: false, updated: null };
+  MBB.rate = cur => MBB.fx.rates[cur] ?? MBB.C.rates[cur] ?? null; // 1 MYR = x cur
+  MBB.refreshFx = async (force) => {
+    const fresh = MBB.fx.live && MBB.fx.updated && Date.now() - MBB.fx.updated < 6 * 36e5;
+    if (fresh && !force) return true;
+    try {
+      const res = await fetch("https://open.er-api.com/v6/latest/" + MBB.C.currency.code, { cache: "no-store" });
+      if (!res.ok) throw new Error(res.status);
+      const data = await res.json();
+      if (data.result !== "success" || !data.rates) throw new Error("bad data");
+      MBB.fx = { rates: data.rates, live: true, updated: Date.now() };
+      store.set("fx", MBB.fx);
+      MBB.emit("fx");
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  MBB.money = (n, cur) => {
+    const digits = ["JPY", "KRW", "IDR", "VND"].includes(cur) ? 0 : 2;
+    try { return new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n); }
+    catch { return `${cur} ${n.toFixed(digits)}`; }
+  };
+  MBB.rm = n => `RM ${n.toFixed(2)}`;
+
+  /* ---------- feedback ---------- */
+  MBB.toast = msg => {
+    const t = MBB.$("#toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(MBB.toast.h);
+    MBB.toast.h = setTimeout(() => (t.hidden = true), 2400);
+  };
+  // Call from inside a click handler: writeText must start before any await.
+  MBB.copy = text => {
+    const fallback = () => {
+      const ta = document.createElement("textarea");
+      ta.value = text; ta.setAttribute("readonly", ""); ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.append(ta); ta.select();
+      let ok = false;
+      try { ok = document.execCommand("copy"); } catch { ok = false; }
+      ta.remove();
+      return ok;
+    };
+    try {
+      return navigator.clipboard.writeText(text).then(() => true, fallback);
+    } catch {
+      return Promise.resolve(fallback());
+    }
+  };
+
+  /* ---------- full-screen "show this" card ---------- */
+  let lastFocus = null, wakeLock = null;
+  MBB.present = ({ kicker = "", big, sub = "" }) => {
+    const el = MBB.$("#present");
+    el.innerHTML = `<div class="present-in">
+      ${kicker ? `<p class="present-kicker">${MBB.esc(kicker)}</p>` : ""}
+      <p class="present-big">${MBB.esc(big)}</p>
+      ${sub ? `<p class="present-sub">${MBB.esc(sub)}</p>` : ""}
+      <button type="button" class="btn btn-ghost present-close" id="present-close">${MBB.esc(MBB.t("common.close"))}</button>
+    </div>`;
+    lastFocus = document.activeElement;
+    el.hidden = false;
+    MBB.$("#present-close").focus();
+    try { navigator.wakeLock?.request("screen").then(l => (wakeLock = l), () => {}); } catch { /* optional */ }
+  };
+  MBB.closePresent = () => {
+    const el = MBB.$("#present");
+    if (el.hidden) return;
+    el.hidden = true;
+    try { wakeLock?.release(); } catch { /* ignore */ }
+    wakeLock = null;
+    lastFocus?.focus?.();
+  };
+
+  /* ---------- speech ---------- */
+  let voices = [];
+  const loadVoices = () => { try { voices = window.speechSynthesis?.getVoices() || []; } catch { voices = []; } };
+  loadVoices();
+  try { window.speechSynthesis?.addEventListener?.("voiceschanged", loadVoices); } catch { /* ignore */ }
+  // Returns false when no suitable voice exists, so the caller can offer "Show" instead.
+  MBB.speak = text => {
+    const synth = window.speechSynthesis;
+    if (!synth || typeof SpeechSynthesisUtterance === "undefined") return false;
+    if (!voices.length) loadVoices();
+    let voice = null;
+    for (const l of MBB.C.speechLang) {
+      const base = l.slice(0, 2).toLowerCase();
+      voice = voices.find(v => v.lang && v.lang.replace("_", "-").toLowerCase() === l.toLowerCase())
+        || voices.find(v => v.lang && v.lang.toLowerCase().startsWith(base));
+      if (voice) break;
+    }
+    if (!voice) return false;
+    try {
+      synth.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.voice = voice; u.lang = voice.lang; u.rate = 0.9;
+      synth.speak(u);
+      return true;
+    } catch { return false; }
+  };
+
+  /* ---------- icons (24px line icons, currentColor) ---------- */
+  const P = {
+    home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+    guide: '<path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>',
+    plan: '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>',
+    tools: '<path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M20 18h0"/><circle cx="16" cy="6" r="2.2"/><circle cx="10" cy="12" r="2.2"/><circle cx="18" cy="18" r="2.2"/>',
+    ask: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+    passport: '<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 16.5h6"/>',
+    plane: '<path d="M21 15.5l-8-4.5V5a1.5 1.5 0 0 0-3 0v6l-8 4.5v2l8-2.5v4l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-4l8 2.5z"/>',
+    coins: '<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v4c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M9 14v3c0 1.7 2.7 3 6 3s6-1.3 6-3v-4c0-1.7-2.7-3-6-3"/>',
+    train: '<rect x="5" y="3" width="14" height="14" rx="3"/><path d="M5 10.5h14"/><circle cx="9" cy="13.5" r="1"/><circle cx="15" cy="13.5" r="1"/><path d="M8 21l2-4M16 21l-2-4"/>',
+    signal: '<path d="M4 20v-3M9 20v-7M14 20V9M19 20V4"/>',
+    bowl: '<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M9 3.5c0 2 1.5 2 1.5 4M13.5 3.5c0 2 1.5 2 1.5 4"/>',
+    hands: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11"/><path d="M11 11V4.5a1.5 1.5 0 0 1 3 0V11"/><path d="M14 11V6a1.5 1.5 0 0 1 3 0v8c0 4-2.5 7-6.5 7S5 18 4 15l-1.2-3a1.5 1.5 0 0 1 2.7-1.2L8 14"/>',
+    shield: '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+    cloud: '<path d="M7 17h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 8.5 4.3 4.3 0 0 0 7 17z"/><path d="M9 21l1-2M13 21l1-2"/>',
+    cross: '<rect x="3" y="3" width="18" height="18" rx="4"/><path d="M12 8v8M8 12h8"/>',
+    bag: '<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+    calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+    speaker: '<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/>',
+    expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+    copy: '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',
+    phone: '<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/>',
+    pin: '<path d="M12 21s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+    back: '<path d="M15 5l-7 7 7 7"/>',
+    next: '<path d="M9 5l7 7-7 7"/>',
+    check: '<path d="M5 12l5 5 9-10"/>',
+    refresh: '<path d="M20 11a8 8 0 0 0-14.5-4.5L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.5 4.5L20 16"/><path d="M20 20v-4h-4"/>',
+    send: '<path d="M4 12l16-8-6 16-2.5-6.5z"/>',
+    external: '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    spark: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z"/>',
+    clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+    globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/>',
+    sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  };
+  MBB.icon = (name, cls = "") =>
+    `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${P[name] || ""}</svg>`;
+})();
