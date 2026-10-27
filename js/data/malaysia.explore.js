@@ -226,7 +226,7 @@
   // Photos for the planner places and dishes (English Wikipedia titles, best first).
   MY.photos = {
     poi: {
-      klcc_park: ["KLCC Park", "Petronas Towers"], skybridge: ["Petronas Towers", "Kuala Lumpur City Centre"], suria: ["Suria KLCC"], aquaria: ["Aquaria KLCC"],
+      klcc_park: ["KLCC Park", "Petronas Towers"], skybridge: ["Petronas Towers", "KLCC Park"], suria: ["Suria KLCC"], aquaria: ["Aquaria KLCC"],
       batu: ["Batu Caves"], thean_hou: ["Thean Hou Temple"], petaling: ["Petaling Street"], kwai_chai: ["Kwai Chai Hong", "Petaling Street"],
       kopitiam_ct: ["Kopi tiam"], mahamariamman: ["Sri Mahamariamman Temple, Kuala Lumpur"], central_market: ["Central Market, Kuala Lumpur"],
       merdeka: ["Merdeka Square, Kuala Lumpur", "Sultan Abdul Samad Building"], masjid_jamek: ["Masjid Jamek"], river_of_life: ["River of Life (Kuala Lumpur)", "Masjid Jamek"],
@@ -247,7 +247,8 @@
       ["Nasi kandar", "Banana leaf rice"], ["Cendol"], ["Teh tarik", "White coffee"], ["Durian"]],
     // Lead photos checked and found unsuitable (wrong subject, a map, or not Malaysian).
     avoid: ["Jalan_Tun_Razak,_Kuala_Lumpur_20230828_151721.jpg", "KLMonoRail-Top.JPG", "Perhentian_islands.png", "Bamboofabric.png",
-      "富力公主湾_R&F_Princess_Cove_(cropped).jpg", "Batik_Trusmi_Cirebon_(23).jpg"],
+      "富力公主湾_R&F_Princess_Cove_(cropped).jpg", "Batik_Trusmi_Cirebon_(23).jpg",
+      "Sky_Deck_at_Kuala_Lumpur_Tower_(Menara_KL),_Malaysia_on_28_July_2020_at_172828.jpg"],
   };
 
   // What travellers call the dishes in their own language, so search finds them.
