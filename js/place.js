@@ -41,7 +41,9 @@
   function osmType(p) {
     if (p.cat === "boundary" && p.type === "administrative") return ["state", "city", "town"].includes(p.kind) ? p.kind : "area";
     const k = `${p.cat}:${p.type}`;
-    return TYPES.find(([re]) => re.test(k))?.[1] || "place";
+    const type = TYPES.find(([re]) => re.test(k))?.[1] || "place";
+    // A path or building with its own Wikipedia article (e.g. Langkawi Sky Bridge) is a sight.
+    return ["road", "building", "place"].includes(type) && (p.tags?.wikidata || p.tags?.wikipedia) ? "attraction" : type;
   }
   const typeIcon = p => TYPE_ICON[osmType(p)] || "pin";
   function osmName(p) {
