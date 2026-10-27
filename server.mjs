@@ -8,6 +8,8 @@ import { fileURLToPath } from "node:url";
 import chat from "./api/chat.mjs";
 import translate from "./api/translate.mjs";
 import config from "./api/config.mjs";
+import places from "./api/places.mjs";
+import media from "./api/media.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -22,6 +24,8 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/chat") return chat(req, res);
   if (url.pathname === "/api/translate") return translate(req, res);
   if (url.pathname === "/api/config") return config(req, res);
+  if (url.pathname === "/api/places") return places(req, res);
+  if (url.pathname === "/api/media") return media(req, res);
 
   const rel = decodeURIComponent(url.pathname).replace(/^\/+/, "") || "index.html";
   const file = path.resolve(ROOT, rel);

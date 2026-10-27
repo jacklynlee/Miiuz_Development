@@ -6,7 +6,7 @@
 <!-- preview:start -->
 <title>Miiuz Beyond Borders</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="description" content="Miiuz Beyond Borders (Miiuz BB): everything a traveller needs in Malaysia — entry, transport, money, food, day plans, phrases, emergency help and an AI assistant.">
+<meta name="description" content="Miiuz Beyond Borders (Miiuz BB) · Cuti-cuti Malaysia! Search any place in Malaysia, with maps, photos, entry and transport tips, food, souvenirs, day plans, phrases, emergency help and an AI assistant.">
 <meta name="theme-color" content="#0d6662">
 <meta name="copyright" content="© 2026 Miiuz Beyond Borders Sdn. Bhd. All rights reserved.">
 <!-- pwa:start -->
@@ -130,6 +130,12 @@
 
   <section class="view" id="view-member" data-view="member" hidden></section>
 
+  <section class="view" id="view-search" data-view="search" hidden></section>
+
+  <section class="view" id="view-place" data-view="place" hidden></section>
+
+  <section class="view" id="view-credits" data-view="credits" hidden></section>
+
   <section class="view" id="view-ask" data-view="ask" hidden>
     <div class="chat" id="chat">
       <div class="chat-head">
@@ -157,8 +163,9 @@
   </section>
 
   <footer class="foot">
-    <b>MIIUZ BEYOND BORDERS</b>
+    <b>MIIUZ BEYOND BORDERS · <span lang="ms">Cuti-cuti Malaysia!</span></b>
     <span data-i18n="app.footer"></span>
+    <a href="#credits" data-i18n="app.credits">Photo &amp; map credits</a>
     <small class="copy" lang="en">© 2026 Miiuz Beyond Borders Sdn. Bhd. All rights reserved.</small>
   </footer>
 </main>
@@ -171,6 +178,8 @@
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="js/data/malaysia.js"></script>
+<script src="js/data/malaysia.explore.js"></script>
+<script src="js/data/malaysia.map.js"></script>
 <script src="js/data/malaysia.ko.js"></script>
 <script src="js/data/malaysia.ja.js"></script>
 <script src="js/i18n.js"></script>
@@ -186,6 +195,10 @@
 <script src="js/chat.js"></script>
 <script src="js/install.js"></script>
 <script src="js/member.js"></script>
+<script src="js/media.js"></script>
+<script src="js/maps.js"></script>
+<script src="js/search.js"></script>
+<script src="js/place.js"></script>
 <script src="js/app.js"></script>
 <!-- preview:end -->
 </body>

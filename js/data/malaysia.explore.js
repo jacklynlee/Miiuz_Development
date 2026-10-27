@@ -1,0 +1,261 @@
+/* Miiuz Beyond Borders — Malaysia beyond the three planner cities: destinations, souvenirs,
+ * state names, city summaries and the Wikipedia articles whose lead photos illustrate them.
+ * Text fields carry all four hand-translated languages ({ zh, en, ko, ja }); other languages
+ * are AI-translated from the English like the rest of the app.
+ * `wp` lists English Wikipedia article titles, best first: api/media.mjs uses the first one
+ * whose lead photo is freely licensed on Wikimedia Commons.
+ * Facts last checked: October 2026. Loaded after malaysia.js. */
+(function (root) {
+  const MY = typeof module === "object" && module.exports ? require("./malaysia.js") : root.MBB.countries.my;
+
+  MY.states = {
+    kl: { zh: "吉隆坡", en: "Kuala Lumpur", ko: "쿠알라룸푸르", ja: "クアラルンプール", aka: ["Wilayah Persekutuan Kuala Lumpur", "Federal Territory of Kuala Lumpur"] },
+    putrajaya: { zh: "布城", en: "Putrajaya", ko: "푸트라자야", ja: "プトラジャヤ", aka: ["Wilayah Persekutuan Putrajaya"] },
+    labuan: { zh: "纳闽", en: "Labuan", ko: "라부안", ja: "ラブアン", aka: ["Wilayah Persekutuan Labuan"] },
+    selangor: { zh: "雪兰莪", en: "Selangor", ko: "슬랑오르", ja: "セランゴール" },
+    penang: { zh: "槟城", en: "Penang", ko: "페낭", ja: "ペナン", aka: ["Pulau Pinang"] },
+    melaka: { zh: "马六甲", en: "Melaka", ko: "말라카", ja: "マラッカ", aka: ["Malacca"] },
+    johor: { zh: "柔佛", en: "Johor", ko: "조호르", ja: "ジョホール" },
+    kedah: { zh: "吉打", en: "Kedah", ko: "크다", ja: "ケダ" },
+    kelantan: { zh: "吉兰丹", en: "Kelantan", ko: "클란탄", ja: "クランタン" },
+    terengganu: { zh: "登嘉楼", en: "Terengganu", ko: "트렝가누", ja: "トレンガヌ" },
+    pahang: { zh: "彭亨", en: "Pahang", ko: "파항", ja: "パハン" },
+    perak: { zh: "霹雳", en: "Perak", ko: "페락", ja: "ペラ" },
+    perlis: { zh: "玻璃市", en: "Perlis", ko: "펄리스", ja: "プルリス" },
+    negeri_sembilan: { zh: "森美兰", en: "Negeri Sembilan", ko: "느그리슴빌란", ja: "ヌグリ・スンビラン" },
+    sabah: { zh: "沙巴", en: "Sabah", ko: "사바", ja: "サバ" },
+    sarawak: { zh: "砂拉越", en: "Sarawak", ko: "사라왁", ja: "サラワク" },
+  };
+
+  // The three planner cities: where they are and what they're like.
+  const CITY = {
+    kl: { state: "kl", lat: 3.1478, lng: 101.6953, wp: ["Kuala Lumpur"], aka: ["KL", "吉隆坡", "Kuala Lumpur City Centre"],
+      sum: { zh: "热闹的马来西亚首都：双子塔、黑风洞、小吃街和大型商场，寺庙、清真寺和殖民时期建筑都在步行距离内。", en: "Malaysia's buzzing capital: the Petronas Twin Towers, Batu Caves, hawker streets and mega-malls, with temples, mosques and colonial landmarks a short walk apart.", ko: "활기찬 말레이시아의 수도. 페트로나스 트윈타워, 바투 동굴, 노점 거리와 대형 쇼핑몰, 그리고 걸어서 닿는 사원·모스크·식민지 시대 건축물.", ja: "活気あふれるマレーシアの首都。ペトロナス・ツインタワー、バトゥ洞窟、屋台街と巨大モール。寺院やモスク、コロニアル建築も徒歩圏内に。" } },
+    pg: { state: "penang", lat: 5.4141, lng: 100.3288, map: { zh: "槟城", en: "Penang", ko: "페낭", ja: "ペナン" }, wp: ["George Town, Penang", "Penang"], aka: ["Penang", "Pulau Pinang", "George Town", "Georgetown", "乔治市", "檳城"],
+      sum: { zh: "乔治市是联合国教科文组织世界遗产城市，有店屋、宗祠和街头壁画，也被称为马来西亚美食之都。升旗山和峇都丁宜海滩就在附近。", en: "George Town is a UNESCO-listed heritage city of shophouses, clan houses and street art, and arguably Malaysia's food capital. Penang Hill and the beaches of Batu Ferringhi are close by.", ko: "조지타운은 숍하우스, 씨족 회관, 거리 벽화가 가득한 유네스코 세계유산 도시이자 말레이시아의 음식 수도. 페낭 힐과 바투 페링기 해변도 가까워요.", ja: "ジョージタウンはショップハウスや宗祠、ウォールアートが並ぶユネスコ世界遺産の街で、マレーシアの食の都とも。ペナン・ヒルやバトゥ・フェリンギのビーチもすぐ近く。" } },
+    ml: { state: "melaka", lat: 2.1945, lng: 102.2490, wp: ["Malacca City", "Malacca"], aka: ["Malacca", "Melaka City", "麻六甲"],
+      sum: { zh: "联合国教科文组织世界遗产港口城市，马来、华人、葡萄牙、荷兰和英国的历史交汇于此：红色的荷兰广场、鸡场街夜市和娘惹菜。", en: "A UNESCO-listed port city where Malay, Chinese, Portuguese, Dutch and British history meet: the red Dutch Square, Jonker Street's night market and Nyonya food.", ko: "말레이, 중국, 포르투갈, 네덜란드, 영국의 역사가 만나는 유네스코 세계유산 항구 도시. 붉은 네덜란드 광장, 존커 스트리트 야시장, 뇨냐 음식.", ja: "マレー、中国、ポルトガル、オランダ、イギリスの歴史が交わるユネスコ世界遺産の港町。赤いオランダ広場、ジョンカー・ストリートのナイトマーケット、ニョニャ料理。" } },
+  };
+  for (const [id, x] of Object.entries(CITY)) Object.assign(MY.cities[id], x);
+
+  /* Destinations beyond the planner cities.
+   * kind: island | highlands | city | nature | mountain | beach | dive; map: short label for the overview map
+   * region: west | east | south | borneo */
+  MY.destinations = [
+    { id: "langkawi", state: "kedah", region: "west", kind: "island", lat: 6.3500, lng: 99.8000, wp: ["Langkawi", "Langkawi Sky Bridge"],
+      aka: ["Pulau Langkawi", "Kuah", "Pantai Cenang", "SkyCab", "浮罗交怡"],
+      name: { zh: "兰卡威", en: "Langkawi", ko: "랑카위", ja: "ランカウイ" },
+      sum: { zh: "由 99 个岛屿组成的群岛，有海滩、雨林和红树林，还是免税岛。可以坐缆车（SkyCab）上天空之桥，或在 Kilim 坐船游红树林。", en: "An archipelago of 99 islands with beaches, rainforest and mangroves, plus duty-free shopping. Ride the SkyCab cable car up to the Sky Bridge, or take a mangrove boat tour at Kilim.", ko: "99개 섬으로 이루어진 면세 섬. 해변, 열대우림, 맹그로브가 있어요. 스카이캡 케이블카로 스카이브리지에 오르거나 킬림에서 맹그로브 보트 투어를 해 보세요.", ja: "99の島からなる免税の島。ビーチ、熱帯雨林、マングローブが楽しめます。ケーブルカー「スカイキャブ」でスカイブリッジへ、キリムではマングローブのボートツアーを。" },
+      go: { zh: "从吉隆坡飞约 1 小时；或从玻璃市瓜拉（Kuala Perlis，约 1 小时 15 分）、吉打瓜拉（Kuala Kedah，约 1 小时 45 分）坐渡轮。岛上租车或叫 Grab。", en: "About 1 hour by plane from KL; ferries from Kuala Perlis (about 1 h 15 min) or Kuala Kedah (about 1 h 45 min). Rent a car or use Grab on the island.", ko: "쿠알라룸푸르에서 비행기로 약 1시간. 쿠알라 펄리스(약 1시간 15분)나 쿠알라 크다(약 1시간 45분)에서 페리도 있어요. 섬 안에서는 렌터카나 Grab.", ja: "クアラルンプールから飛行機で約1時間。クアラ・ペルリス（約1時間15分）やクアラ・ケダ（約1時間45分）からフェリーも。島内はレンタカーかGrab。" },
+      when: { zh: "11 月到次年 4 月最干爽，海面平静，日落好看。", en: "Driest from November to April, with calm seas and clear sunsets.", ko: "11월~4월이 가장 건조하고 바다가 잔잔해 석양이 예뻐요.", ja: "11〜4月が乾季で、海も穏やか。夕日もきれいです。" } },
+
+    { id: "genting", map: { zh: "云顶", en: "Genting", ko: "겐팅", ja: "ゲンティン" }, state: "pahang", region: "west", kind: "highlands", lat: 3.4236, lng: 101.7932, wp: ["Genting Highlands", "Resorts World Genting"],
+      aka: ["Resorts World Genting", "Awana SkyWay", "Genting SkyWorlds", "云顶"],
+      name: { zh: "云顶高原", en: "Genting Highlands", ko: "겐팅 하이랜드", ja: "ゲンティン・ハイランド" },
+      sum: { zh: "海拔约 1,800 米的凉爽山顶度假区，有马来西亚唯一的赌场、室内外主题乐园、商场和阿瓦娜缆车（Awana SkyWay）。", en: "A cool hilltop resort about 1,800 m up, with Malaysia's only casino, indoor and outdoor theme parks, malls and the Awana SkyWay cable car.", ko: "해발 약 1,800m의 시원한 산 위 리조트. 말레이시아 유일의 카지노, 실내외 테마파크, 쇼핑몰, 아와나 스카이웨이 케이블카가 있어요.", ja: "標高約1,800mの涼しい高原リゾート。マレーシア唯一のカジノ、屋内外のテーマパーク、モール、ロープウェイ「アワナ・スカイウェイ」があります。" },
+      go: { zh: "从吉隆坡开车或叫 Grab 约 1 小时；KL Sentral 和 TBS 有巴士到阿瓦娜缆车站。", en: "About 1 hour by car or Grab from KL; buses run from KL Sentral and TBS to the Awana SkyWay station.", ko: "쿠알라룸푸르에서 차나 Grab으로 약 1시간. KL Sentral과 TBS에서 아와나 스카이웨이 역까지 버스가 있어요.", ja: "クアラルンプールから車かGrabで約1時間。KL SentralとTBSからアワナ・スカイウェイ駅行きのバスも。" },
+      when: { zh: "全年凉爽（约 15–25°C），平日人少，带件薄外套。", en: "Cool all year (about 15–25°C). Weekdays are quieter; bring a light jacket.", ko: "일 년 내내 선선해요(약 15~25°C). 평일이 한산하고, 얇은 겉옷을 챙기세요.", ja: "一年中涼しく（約15〜25°C）、平日が空いています。薄手の上着を。" } },
+
+    { id: "cameron", map: { zh: "金马伦", en: "Cameron Highlands", ko: "캐머런", ja: "キャメロン" }, state: "pahang", region: "west", kind: "highlands", lat: 4.4718, lng: 101.3767, wp: ["Cameron Highlands"],
+      aka: ["Tanah Rata", "Brinchang", "BOH", "Mossy Forest", "金马仑"],
+      name: { zh: "金马伦高原", en: "Cameron Highlands", ko: "캐머런 하이랜드", ja: "キャメロン・ハイランド" },
+      sum: { zh: "连绵山坡上的茶园、草莓园、苔藓森林和英式旅馆，是避暑的好去处。", en: "Tea plantations rolling over the hills, strawberry farms, the Mossy Forest and colonial-style inns: a cool escape from the heat.", ko: "언덕을 덮은 차밭, 딸기 농장, 이끼 숲(모시 포레스트), 영국풍 숙소. 더위를 피하기 좋은 고원이에요.", ja: "丘一面の茶畑、イチゴ農園、苔むした「モッシーフォレスト」、英国風の宿。暑さを逃れる高原リゾートです。" },
+      go: { zh: "从吉隆坡坐巴士或开车约 3.5–4 小时（山路弯多），从怡保约 2 小时。", en: "About 3.5–4 hours by bus or car from KL on winding mountain roads; about 2 hours from Ipoh.", ko: "쿠알라룸푸르에서 버스나 차로 약 3.5~4시간(구불구불한 산길), 이포에서 약 2시간.", ja: "クアラルンプールからバスか車で約3.5〜4時間（カーブの多い山道）、イポーから約2時間。" },
+      when: { zh: "全年凉爽（约 15–25°C）；周末和学校假期山路很堵。", en: "Cool all year (about 15–25°C). Avoid weekends and school holidays, when the roads jam.", ko: "일 년 내내 선선해요(약 15~25°C). 주말과 방학 시즌엔 길이 막혀요.", ja: "一年中涼しく（約15〜25°C）、週末と学校の休みは道路が渋滞します。" } },
+
+    { id: "ipoh", state: "perak", region: "west", kind: "city", lat: 4.5975, lng: 101.0901, wp: ["Ipoh"],
+      aka: ["Ipoh Old Town", "Concubine Lane", "Kek Lok Tong", "Sam Poh Tong"],
+      name: { zh: "怡保", en: "Ipoh", ko: "이포", ja: "イポー" },
+      sum: { zh: "悠闲的锡矿老城，以白咖啡、芽菜鸡和点心闻名，还有老店屋、街头壁画和石灰岩山中的洞穴庙宇。", en: "A laid-back old tin-mining town famous for white coffee, bean sprout chicken and dim sum, with heritage shophouses, street murals and cave temples in limestone hills.", ko: "화이트 커피, 숙주 닭요리, 딤섬으로 유명한 느긋한 옛 주석 광산 도시. 옛 숍하우스, 거리 벽화, 석회암 산의 동굴 사원이 있어요.", ja: "ホワイトコーヒー、もやしチキン、飲茶で有名な、のんびりした元錫鉱山の町。古いショップハウス、壁画アート、石灰岩の山の洞窟寺院も。" },
+      go: { zh: "从 KL Sentral 坐 ETS 电动火车约 2–2.5 小时，开车约 2.5 小时。", en: "About 2–2.5 hours from KL Sentral by ETS train, or 2.5 hours by car.", ko: "KL Sentral에서 ETS 열차로 약 2~2.5시간, 차로 약 2.5시간.", ja: "KL SentralからETS特急で約2〜2.5時間、車で約2.5時間。" },
+      when: { zh: "全年适合；早点去吃早餐，也避开午后的炎热。", en: "Good all year; go early for breakfast and to beat the afternoon heat.", ko: "일 년 내내 좋아요. 아침 일찍 가서 아침을 먹고 오후 더위를 피하세요.", ja: "通年OK。朝食を楽しみつつ、午後の暑さを避けて早めに。" } },
+
+    { id: "putrajaya", state: "putrajaya", region: "west", kind: "city", lat: 2.9264, lng: 101.6964, wp: ["Putrajaya", "Putra Mosque"],
+      aka: ["Putra Mosque", "Masjid Putra", "Perdana Putra", "Cyberjaya", "布特拉再也"],
+      name: { zh: "布城", en: "Putrajaya", ko: "푸트라자야", ja: "プトラジャヤ" },
+      sum: { zh: "马来西亚规划的行政首都：粉红圆顶的布特拉清真寺、宏伟的桥梁和大道，还能在人工湖上坐游船。", en: "Malaysia's planned government capital: the pink-domed Putra Mosque, grand bridges and boulevards, and boat cruises on a large man-made lake.", ko: "계획도시로 만든 말레이시아 행정 수도. 분홍빛 돔의 푸트라 모스크, 웅장한 다리와 대로, 인공 호수 유람선이 있어요.", ja: "計画都市として造られたマレーシアの行政首都。ピンクのドームのプトラ・モスク、壮大な橋や大通り、人造湖のボートクルーズ。" },
+      go: { zh: "从吉隆坡开车约 30–40 分钟，或坐 KLIA Transit 到 Putrajaya & Cyberjaya 站再转车。", en: "About 30–40 minutes from KL by car, or take the KLIA Transit train to Putrajaya & Cyberjaya station, then a taxi or bus.", ko: "쿠알라룸푸르에서 차로 약 30~40분, 또는 KLIA Transit 열차로 Putrajaya & Cyberjaya역에 내려 택시나 버스로.", ja: "クアラルンプールから車で約30〜40分、またはKLIA TransitでPutrajaya & Cyberjaya駅へ行き、タクシーかバスで。" },
+      when: { zh: "傍晚到日落较凉快、最好拍；参观清真寺有长袍可借。", en: "Late afternoon to sunset is cooler and best for photos. Robes are lent for mosque visits.", ko: "선선한 늦은 오후~해 질 녘이 사진 찍기 가장 좋아요. 모스크 방문 시 가운을 빌려줘요.", ja: "涼しい夕方〜日没が写真に最適。モスクではローブを貸してくれます。" } },
+
+    { id: "kota_kinabalu", state: "sabah", region: "borneo", kind: "city", lat: 5.9804, lng: 116.0735, wp: ["Kota Kinabalu"],
+      aka: ["KK", "Jesselton", "Tunku Abdul Rahman Park", "哥打京那巴鲁"],
+      name: { zh: "亚庇", en: "Kota Kinabalu", ko: "코타키나발루", ja: "コタキナバル" },
+      sum: { zh: "沙巴首府，海边城市：在东姑阿都拉曼公园跳岛游，看南中国海日落，在海边夜市大吃。也是攀登京那巴鲁山的门户。", en: "Sabah's seaside capital: island-hop in Tunku Abdul Rahman Park, watch the sunset over the South China Sea and feast at the waterfront night market. Gateway to Mount Kinabalu.", ko: "바닷가 사바주 주도. 툰쿠 압둘 라만 해양공원 호핑 투어, 남중국해 석양, 해변 야시장. 키나발루산으로 가는 관문이에요.", ja: "海辺のサバ州都。トゥンク・アブドゥル・ラーマン公園でアイランドホッピング、南シナ海の夕日、海辺のナイトマーケット。キナバル山への玄関口です。" },
+      go: { zh: "从吉隆坡飞约 2.5 小时。沙巴有独立的入境检查，坐国内航班也要带护照。", en: "About 2.5 hours by plane from KL. Sabah runs its own immigration check, so carry your passport even on domestic flights.", ko: "쿠알라룸푸르에서 비행기로 약 2.5시간. 사바는 자체 입국 심사가 있어 국내선이라도 여권을 꼭 챙기세요.", ja: "クアラルンプールから飛行機で約2.5時間。サバ州は独自の入国審査があるため、国内線でもパスポート必携。" },
+      when: { zh: "全年适合，2–4 月通常最干。", en: "Good all year; February to April are usually the driest months.", ko: "일 년 내내 좋아요. 보통 2~4월이 가장 건조해요.", ja: "通年OK。2〜4月が比較的乾燥しています。" } },
+
+    { id: "kinabalu", map: { zh: "神山", en: "Mt Kinabalu", ko: "키나발루산", ja: "キナバル山" }, state: "sabah", region: "borneo", kind: "mountain", lat: 6.0063, lng: 116.5425, wp: ["Mount Kinabalu", "Kinabalu Park"],
+      aka: ["Gunung Kinabalu", "Kinabalu Park", "Laban Rata", "神山", "京那巴鲁山"],
+      name: { zh: "京那巴鲁山（神山）", en: "Mount Kinabalu", ko: "키나발루산", ja: "キナバル山" },
+      sum: { zh: "马来西亚最高峰（4,095 米），位于联合国教科文组织世界遗产公园内。可以在公园总部走植物步道，或两天一夜登顶看日出。", en: "Malaysia's highest peak (4,095 m), in a UNESCO World Heritage park. Walk the botanical trails at park HQ, or climb to the summit for sunrise on a two-day trek.", ko: "유네스코 세계유산 공원 안에 있는 말레이시아 최고봉(4,095m). 공원 본부의 식물 탐방로를 걷거나, 1박 2일 등반으로 정상 일출을 봐요.", ja: "ユネスコ世界遺産の公園にそびえるマレーシア最高峰（4,095m）。公園本部で植物観察の遊歩道を歩くか、1泊2日の登山で山頂の日の出を。" },
+      go: { zh: "从亚庇开车约 2 小时。登顶需要许可证、持证向导和拉班拉塔（Laban Rata）的床位，要提前几个月订。", en: "About 2 hours by car from Kota Kinabalu. Summit climbs need a permit, a licensed guide and a bed at Laban Rata: book months ahead.", ko: "코타키나발루에서 차로 약 2시간. 정상 등반에는 허가증, 공인 가이드, 라반 라타 숙소가 필요해요. 몇 달 전에 예약하세요.", ja: "コタキナバルから車で約2時間。山頂登山には許可証、公認ガイド、ラバンラタの宿が必要で、数か月前の予約を。" },
+      when: { zh: "2–4 月早晨最晴朗；山顶黎明前接近 0°C。", en: "Clearest mornings from February to April; the summit can drop close to freezing before dawn.", ko: "2~4월 아침이 가장 맑아요. 정상은 새벽에 0°C 가까이 떨어져요.", ja: "2〜4月の朝が最も晴れやすい。山頂は夜明け前に0°C近くまで冷えます。" } },
+
+    { id: "semporna", map: { zh: "仙本那", en: "Semporna", ko: "셈포르나", ja: "センポルナ" }, state: "sabah", region: "borneo", kind: "dive", lat: 4.4818, lng: 118.6111, wp: ["Sipadan", "Semporna"],
+      aka: ["Sipadan", "Mabul", "Mataking", "Bohey Dulang", "Tawau", "仙本那", "西巴丹"],
+      name: { zh: "仙本那（西巴丹）", en: "Semporna & Sipadan", ko: "셈포르나·시파단", ja: "センポルナ（シパダン）" },
+      sum: { zh: "世界顶级潜水和浮潜胜地西巴丹、马布、马达京的大本营，海水碧绿，还有巴瑶族的水上高脚屋。", en: "Base for some of the world's best diving and snorkelling around Sipadan, Mabul and Mataking, with turquoise water and the stilt villages of the Bajau Laut.", ko: "시파단, 마불, 마타킹 등 세계적인 다이빙·스노클링 명소의 거점. 에메랄드빛 바다와 바자우족 수상 가옥이 있어요.", ja: "シパダン、マブール、マタキンなど世界屈指のダイビング・シュノーケリングの拠点。エメラルドの海とバジャウ族の水上集落。" },
+      go: { zh: "先飞斗湖（Tawau，吉隆坡出发约 2.5–3 小时），再开车约 1 小时到仙本那，在镇上码头坐船上岛。", en: "Fly to Tawau (about 2.5–3 hours from KL), then about 1 hour by car to Semporna; boats to the islands leave from the town jetty.", ko: "타와우까지 비행기(쿠알라룸푸르에서 약 2.5~3시간), 셈포르나까지 차로 약 1시간. 시내 선착장에서 섬으로 가는 배를 타요.", ja: "タワウまで飛行機（クアラルンプールから約2.5〜3時間）、センポルナまで車で約1時間。町の桟橋から島へボートで。" },
+      when: { zh: "全年可潜，4–9 月最好。西巴丹每天限额，要通过潜水店提前很久订许可证。沙巴东海岸夜间有海上宵禁，出发前查看本国旅行提示。", en: "Diving is good all year, best April to September. Sipadan has a daily permit limit, booked through a dive operator well ahead. Night-time sea curfews apply off east Sabah; check your government's travel advice first.", ko: "다이빙은 연중 가능, 4~9월이 가장 좋아요. 시파단은 하루 허가 인원이 정해져 있어 다이빙 업체를 통해 미리 예약해야 해요. 사바 동부 해역은 야간 해상 통행 금지가 있으니 자국 여행 안전 정보를 확인하세요.", ja: "ダイビングは通年可、4〜9月がベスト。シパダンは1日の入島許可数が限られ、ダイビング業者を通じて早めの予約が必要。サバ東部の海域には夜間の海上外出禁止令があるため、各国の渡航情報を確認してください。" } },
+
+    { id: "sepilok", map: { zh: "山打根", en: "Sandakan", ko: "산다칸", ja: "サンダカン" }, state: "sabah", region: "borneo", kind: "nature", lat: 5.8650, lng: 117.9500, wp: ["Sepilok Orangutan Rehabilitation Centre", "Sandakan"],
+      aka: ["Sandakan", "Sepilok", "Kinabatangan", "Bornean Sun Bear Conservation Centre", "山打根", "西必洛"],
+      name: { zh: "山打根·西必洛", en: "Sandakan & Sepilok", ko: "산다칸·세필록", ja: "サンダカン＆セピロック" },
+      sum: { zh: "在西必洛红毛猩猩康复中心看获救的红毛猩猩，旁边还有马来熊保护中心；再去京那巴登岸河坐船看长鼻猴、犀鸟和侏儒象。", en: "See rescued orangutans at the Sepilok Rehabilitation Centre and sun bears next door, then cruise the Kinabatangan River for proboscis monkeys, hornbills and pygmy elephants.", ko: "세필록 재활센터에서 구조된 오랑우탄을, 바로 옆에서 말레이곰을 보고, 키나바탕안강 크루즈로 코주부원숭이, 코뿔새, 피그미코끼리를 만나요.", ja: "セピロックのリハビリセンターで保護されたオランウータンを、隣ではマレーグマを。キナバタンガン川のクルーズでテングザル、サイチョウ、ボルネオゾウにも出会えます。" },
+      go: { zh: "从吉隆坡飞约 2.5–3 小时（亚庇飞约 45 分钟）。西必洛离机场约 25 分钟，京那巴登岸河的营地车程约 2.5 小时。", en: "About 2.5–3 hours by plane from KL (45 minutes from Kota Kinabalu). Sepilok is about 25 minutes from the airport; Kinabatangan lodges are about 2.5 hours by road.", ko: "쿠알라룸푸르에서 비행기로 약 2.5~3시간(코타키나발루에서 45분). 세필록은 공항에서 약 25분, 키나바탕안 롯지는 차로 약 2.5시간.", ja: "クアラルンプールから飛行機で約2.5〜3時間（コタキナバルから約45分）。セピロックは空港から約25分、キナバタンガンのロッジは車で約2.5時間。" },
+      when: { zh: "全年适合；留意西必洛的喂食时间（通常上午和下午各一次）。", en: "Good all year; check feeding times at Sepilok (usually mid-morning and mid-afternoon).", ko: "일 년 내내 좋아요. 세필록 먹이 주는 시간(보통 오전·오후 한 번씩)을 확인하세요.", ja: "通年OK。セピロックの餌やり時間（通常は午前と午後に1回ずつ）を確認して。" } },
+
+    { id: "kuching", state: "sarawak", region: "borneo", kind: "city", lat: 1.5535, lng: 110.3593, wp: ["Kuching"],
+      aka: ["Cat City", "Semenggoh", "Bako National Park", "Main Bazaar", "古晋"],
+      name: { zh: "古晋", en: "Kuching", ko: "쿠칭", ja: "クチン" },
+      sum: { zh: "砂拉越悠闲的河畔首府：河滨步道、猫雕像、砂拉越叻沙，还能去实蒙谷看红毛猩猩，去巴哥国家公园看长鼻猴。", en: "Sarawak's easy-going riverside capital: the waterfront, cat statues, Sarawak laksa, orangutans at Semenggoh and proboscis monkeys in Bako National Park.", ko: "느긋한 강변 사라왁주 주도. 워터프런트, 고양이 조형물, 사라왁 락사, 세멩고의 오랑우탄, 바코 국립공원의 코주부원숭이.", ja: "のんびりした川沿いのサラワク州都。ウォーターフロント、猫の像、サラワク・ラクサ、セメンゴのオランウータン、バコ国立公園のテングザル。" },
+      go: { zh: "从吉隆坡飞约 1 小时 45 分。砂拉越有独立的入境检查，要带护照。", en: "About 1 hour 45 minutes by plane from KL. Sarawak runs its own immigration check, so carry your passport.", ko: "쿠알라룸푸르에서 비행기로 약 1시간 45분. 사라왁은 자체 입국 심사가 있어 여권을 챙기세요.", ja: "クアラルンプールから飛行機で約1時間45分。サラワク州は独自の入国審査があるのでパスポート必携。" },
+      when: { zh: "全年适合，12–2 月最多雨。雨林音乐节通常在 6 或 7 月。", en: "Good all year; wettest from December to February. The Rainforest World Music Festival is usually in June or July.", ko: "일 년 내내 좋아요. 12~2월이 가장 비가 많아요. 열대우림 월드 뮤직 페스티벌은 보통 6~7월.", ja: "通年OK。12〜2月が最も雨が多い。レインフォレスト・ワールド・ミュージック・フェスティバルは例年6月か7月。" } },
+
+    { id: "mulu", map: { zh: "姆禄", en: "Mulu", ko: "물루", ja: "ムル" }, state: "sarawak", region: "borneo", kind: "nature", lat: 4.0450, lng: 114.8130, wp: ["Gunung Mulu National Park"],
+      aka: ["Gunung Mulu", "Mulu Caves", "Deer Cave", "Pinnacles", "Miri", "姆禄"],
+      name: { zh: "姆禄国家公园", en: "Gunung Mulu National Park", ko: "구능 물루 국립공원", ja: "グヌン・ムル国立公園" },
+      sum: { zh: "联合国教科文组织世界遗产雨林，拥有世界上最大的洞穴之一：傍晚看数百万只蝙蝠飞出鹿洞，走树冠步道，或徒步到石林（Pinnacles）。", en: "A UNESCO World Heritage rainforest with some of the world's largest caves: watch millions of bats leave Deer Cave at dusk, walk the canopy skywalk or trek to the Pinnacles.", ko: "세계 최대급 동굴이 있는 유네스코 세계유산 열대우림. 해 질 녘 디어 동굴에서 수백만 마리 박쥐가 날아오르는 장면, 캐노피 스카이워크, 피너클스 트레킹.", ja: "世界最大級の洞窟があるユネスコ世界遺産の熱帯雨林。夕暮れにディアケーブから飛び立つ数百万匹のコウモリ、キャノピー・スカイウォーク、ピナクルズへのトレッキング。" },
+      go: { zh: "不通公路：从美里（约 30 分钟）或古晋坐飞机。公园总部离姆禄机场几分钟。", en: "No road access: fly from Miri (about 30 minutes) or Kuching. Park HQ is a few minutes from Mulu airport.", ko: "도로가 없어요. 미리(약 30분)나 쿠칭에서 비행기로 가요. 공원 본부는 물루 공항에서 몇 분 거리.", ja: "道路はなく、ミリ（約30分）かクチンから飛行機で。公園本部はムル空港から数分。" },
+      when: { zh: "全年适合；洞穴导览和石林徒步要提前订。蝙蝠出洞看天气。", en: "Good all year; book cave tours and the Pinnacles trek ahead. The bat exodus depends on the weather.", ko: "일 년 내내 좋아요. 동굴 투어와 피너클스 트레킹은 미리 예약하세요. 박쥐 비행은 날씨에 따라 달라요.", ja: "通年OK。洞窟ツアーとピナクルズのトレッキングは事前予約を。コウモリの飛翔は天候次第。" } },
+
+    { id: "johor_bahru", state: "johor", region: "south", kind: "city", lat: 1.4927, lng: 103.7414, wp: ["Johor Bahru", "Legoland Malaysia Resort"],
+      aka: ["JB", "Legoland", "Iskandar Puteri", "Causeway", "柔佛巴鲁"],
+      name: { zh: "新山", en: "Johor Bahru", ko: "조호르바루", ja: "ジョホールバル" },
+      sum: { zh: "隔着新柔长堤与新加坡相望的南部门户：依斯干达公主城的乐高乐园等主题乐园、美食街，以及陈旭年街一带的老街。", en: "The southern gateway across the Causeway from Singapore: LEGOLAND Malaysia and other theme parks in Iskandar Puteri, food streets and the old town around Jalan Tan Hiok Nee.", ko: "코즈웨이 건너 싱가포르와 마주한 남쪽 관문. 이스칸다르 푸테리의 레고랜드 말레이시아 등 테마파크, 먹자골목, 탄히옥니 거리 주변 구시가지.", ja: "コーズウェイを挟んでシンガポールと向き合う南の玄関口。イスカンダル・プテリのレゴランド・マレーシアなどのテーマパーク、屋台街、タン・ヒオック・ニー通り周辺の旧市街。" },
+      go: { zh: "从吉隆坡坐巴士或开车约 4–5 小时，飞机约 1 小时。从新加坡可坐巴士或 Shuttle Tebrau 火车过长堤。", en: "About 4–5 hours by bus or car from KL, or about 1 hour by plane. From Singapore, cross the Causeway by bus or the Shuttle Tebrau train.", ko: "쿠알라룸푸르에서 버스나 차로 약 4~5시간, 비행기로 약 1시간. 싱가포르에서는 버스나 셔틀 테브라우 열차로 코즈웨이를 건너요.", ja: "クアラルンプールからバスか車で約4〜5時間、飛行機で約1時間。シンガポールからはバスかシャトル・テブラウ列車でコーズウェイを渡ります。" },
+      when: { zh: "全年适合；周五傍晚和公共假期从新加坡过关排队很久。", en: "Good all year. Avoid crossing from Singapore on Friday evenings and public holidays, when border queues are long.", ko: "일 년 내내 좋아요. 금요일 저녁과 공휴일엔 싱가포르 국경 줄이 길어요.", ja: "通年OK。金曜の夕方と祝日はシンガポールからの国境が大混雑。" } },
+
+    { id: "perhentian", map: { zh: "停泊岛", en: "Perhentian", ko: "페르헨티안", ja: "プルフンティアン" }, state: "terengganu", region: "east", kind: "island", lat: 5.9100, lng: 102.7400, wp: ["Perhentian Islands"],
+      aka: ["Pulau Perhentian", "Perhentian Kecil", "Perhentian Besar", "Kuala Besut", "停泊岛"],
+      name: { zh: "停泊岛", en: "Perhentian Islands", ko: "페르헨티안 제도", ja: "プルフンティアン諸島" },
+      sum: { zh: "两座小岛，白沙、清澈海水，下水就是珊瑚礁：可以和海龟、礁鲨一起浮潜，然后彻底放空。岛上没有汽车。", en: "Two small islands with white sand, clear water and reefs right off the beach: snorkel with turtles and reef sharks, then slow right down. There are no cars.", ko: "하얀 모래와 맑은 바다, 해변 바로 앞 산호초가 있는 두 개의 작은 섬. 바다거북, 암초상어와 스노클링하고 푹 쉬어요. 자동차가 없어요.", ja: "白砂と透明な海、ビーチのすぐ先にサンゴ礁がある2つの小さな島。ウミガメやリーフシャークとシュノーケリングして、のんびり。車はありません。" },
+      go: { zh: "先飞哥打巴鲁（吉隆坡出发约 1 小时），再开车约 1 小时到瓜拉勿述（Kuala Besut）码头，坐快艇 30–45 分钟。", en: "Fly to Kota Bharu (about 1 hour from KL), drive about 1 hour to Kuala Besut jetty, then 30–45 minutes by speedboat.", ko: "코타바루까지 비행기(쿠알라룸푸르에서 약 1시간), 쿠알라 베숫 선착장까지 차로 약 1시간, 스피드보트로 30~45분.", ja: "コタバルまで飛行機（クアラルンプールから約1時間）、クアラ・ブスット桟橋まで車で約1時間、スピードボートで30〜45分。" },
+      when: { zh: "大约 3–10 月开放；11–2 月季风期大多数度假村关闭。多带现金，岛上刷卡和提款机有限。", en: "Open roughly March to October; most resorts close in the November–February monsoon. Bring enough cash: cards and ATMs are limited.", ko: "대략 3~10월에 운영해요. 11~2월 몬순 기간엔 리조트 대부분이 문을 닫아요. 카드·ATM이 제한적이니 현금을 넉넉히.", ja: "おおむね3〜10月。11〜2月のモンスーン期はほとんどのリゾートが休業。カードやATMは限られるので現金を多めに。" } },
+
+    { id: "redang", map: { zh: "热浪岛", en: "Redang", ko: "르당", ja: "レダン" }, state: "terengganu", region: "east", kind: "island", lat: 5.7800, lng: 103.0100, wp: ["Redang Island"],
+      aka: ["Pulau Redang", "Merang", "热浪岛"],
+      name: { zh: "热浪岛", en: "Redang Island", ko: "르당섬", ja: "レダン島" },
+      sum: { zh: "海洋公园岛屿，海水是马来西亚最清澈之一，沙滩细软、珊瑚丰富。大多数人买度假村套餐，含船接送和浮潜行程。", en: "A marine-park island with some of Malaysia's clearest water, powdery beaches and coral gardens. Most visits are resort packages with boat transfers and snorkelling trips.", ko: "말레이시아에서 손꼽히게 맑은 바다, 고운 모래, 산호 정원이 있는 해양공원 섬. 대부분 배편과 스노클링이 포함된 리조트 패키지로 가요.", ja: "マレーシア屈指の透明度を誇る海、さらさらの砂浜、サンゴの庭が広がる海洋公園の島。ほとんどがボート送迎とシュノーケリング付きのリゾートパッケージ。" },
+      go: { zh: "先飞瓜拉登嘉楼（吉隆坡出发约 1 小时），再从 Merang 或 Shahbandar 码头坐船约 45–90 分钟。", en: "Fly to Kuala Terengganu (about 1 hour from KL), then take a boat from Merang or the Shahbandar jetty (about 45–90 minutes).", ko: "쿠알라 트렝가누까지 비행기(쿠알라룸푸르에서 약 1시간), 메랑이나 샤반다르 선착장에서 배로 약 45~90분.", ja: "クアラ・トレンガヌまで飛行機（クアラルンプールから約1時間）、メランかシャーバンダル桟橋からボートで約45〜90分。" },
+      when: { zh: "大约 3–10 月开放；11–2 月季风期度假村关闭。上岛需付海洋公园费。", en: "Open roughly March to October; resorts close in the November–February monsoon. A marine park fee applies.", ko: "대략 3~10월 운영, 11~2월 몬순 기간엔 리조트가 문을 닫아요. 해양공원 입장료가 있어요.", ja: "おおむね3〜10月。11〜2月のモンスーン期はリゾートが休業。海洋公園の入園料が必要です。" } },
+
+    { id: "tioman", map: { zh: "刁曼岛", en: "Tioman", ko: "티오만", ja: "ティオマン" }, state: "pahang", region: "east", kind: "island", lat: 2.8100, lng: 104.1600, wp: ["Tioman Island"],
+      aka: ["Pulau Tioman", "Tekek", "Juara", "Mersing", "刁曼岛"],
+      name: { zh: "刁曼岛", en: "Tioman Island", ko: "티오만섬", ja: "ティオマン島" },
+      sum: { zh: "被丛林覆盖的大岛，有悠闲的海滩村落、潜水浮潜、瀑布和丛林步道，也是免税岛。", en: "A large, jungle-covered island with laid-back beach villages, diving and snorkelling, waterfalls and jungle trails. It is also duty-free.", ko: "정글로 덮인 큰 섬. 느긋한 해변 마을, 다이빙과 스노클링, 폭포와 정글 트레일이 있고 면세 섬이에요.", ja: "ジャングルに覆われた大きな島。のどかなビーチの村、ダイビングやシュノーケリング、滝やジャングルトレイル。免税の島でもあります。" },
+      go: { zh: "从丰盛港（Mersing，柔佛）或丹绒格莫（Tanjung Gemok）坐渡轮约 1.5–2 小时；吉隆坡坐巴士到丰盛港约 5–6 小时。", en: "Ferry from Mersing (Johor) or Tanjung Gemok, about 1.5–2 hours; Mersing is about 5–6 hours by bus from KL.", ko: "메르싱(조호르)이나 탄중 게목에서 페리로 약 1.5~2시간. 쿠알라룸푸르에서 메르싱까지 버스로 약 5~6시간.", ja: "メルシン（ジョホール州）かタンジュン・グモックからフェリーで約1.5〜2時間。クアラルンプールからメルシンまではバスで約5〜6時間。" },
+      when: { zh: "3–10 月最好；11–2 月季风期渡轮减少、风浪大。", en: "Best March to October; ferries are fewer and seas rough in the November–February monsoon.", ko: "3~10월이 가장 좋아요. 11~2월 몬순엔 페리가 줄고 파도가 높아요.", ja: "3〜10月がベスト。11〜2月のモンスーン期はフェリーが減り、海が荒れます。" } },
+
+    { id: "taman_negara", map: { zh: "国家公园", en: "Taman Negara", ko: "타만 네가라", ja: "タマン・ヌガラ" }, state: "pahang", region: "east", kind: "nature", lat: 4.3830, lng: 102.4000, wp: ["Taman Negara"],
+      aka: ["Kuala Tahan", "National Park", "Kuala Tembeling", "国家公园"],
+      name: { zh: "大汉山国家公园（Taman Negara）", en: "Taman Negara", ko: "타만 네가라", ja: "タマン・ヌガラ" },
+      sum: { zh: "世界上最古老的热带雨林之一：走树冠吊桥、坐河船、丛林徒步，晚上还可以跟夜间徒步找动物。", en: "One of the world's oldest tropical rainforests: walk the canopy walkway, ride a river boat, trek jungle trails and join a night walk to spot wildlife.", ko: "세계에서 가장 오래된 열대우림 중 하나. 캐노피 워크웨이, 강 보트, 정글 트레킹, 야간 탐방으로 야생동물 찾기.", ja: "世界最古級の熱帯雨林。キャノピーウォークウェイ、川のボート、ジャングルトレッキング、ナイトウォークで野生動物探し。" },
+      go: { zh: "从吉隆坡坐巴士或开车到瓜拉大汉（Kuala Tahan）约 4–5 小时；旅游接驳常包含从瓜拉登比岭（Kuala Tembeling）出发的河船。", en: "About 4–5 hours from KL to Kuala Tahan by bus or car; tour shuttles often include a scenic river boat from Kuala Tembeling.", ko: "쿠알라룸푸르에서 쿠알라 타한까지 버스나 차로 약 4~5시간. 투어 셔틀은 쿠알라 템벨링에서 출발하는 강 보트를 포함하기도 해요.", ja: "クアラルンプールからクアラ・タハンまでバスか車で約4〜5時間。ツアーのシャトルにはクアラ・テンベリンからの川下りボートが含まれることも。" },
+      when: { zh: "3–10 月最好；雨季步道泥泞、蚂蟥多，穿长袜。", en: "Best March to October; in the wetter months trails get muddy and leeches come out, so wear long socks.", ko: "3~10월이 가장 좋아요. 우기엔 길이 질척하고 거머리가 많으니 긴 양말을 신으세요.", ja: "3〜10月がベスト。雨の多い時期は道がぬかるみ、ヒルが増えるので長い靴下を。" } },
+
+    { id: "kuala_terengganu", state: "terengganu", region: "east", kind: "city", lat: 5.3302, lng: 103.1408, wp: ["Kuala Terengganu", "Crystal Mosque"],
+      aka: ["KT", "Crystal Mosque", "Masjid Kristal", "Pasar Payang", "瓜拉登嘉楼"],
+      name: { zh: "瓜拉登嘉楼", en: "Kuala Terengganu", ko: "쿠알라 트렝가누", ja: "クアラ・トレンガヌ" },
+      sum: { zh: "东海岸首府：闪亮的水晶清真寺、色彩缤纷的唐人街、买峇迪和宋谷布的巴雅市场（Pasar Payang），还有炸鱼饼 keropok lekor。", en: "An east-coast capital with the glittering Crystal Mosque, a colourful Chinatown, Pasar Payang market for batik and songket, and keropok lekor fish crackers.", ko: "반짝이는 크리스털 모스크, 알록달록한 차이나타운, 바틱·송켓을 파는 파사르 파양 시장, 생선 어묵 크로폭 레코르가 있는 동해안 주도.", ja: "きらめくクリスタル・モスク、カラフルなチャイナタウン、バティックやソンケットが揃うパサール・パヤン市場、魚のすり身揚げクロポッ・レコーがある東海岸の州都。" },
+      go: { zh: "从吉隆坡飞约 1 小时，巴士约 5–6 小时；也是去热浪岛的出发点。", en: "About 1 hour by plane from KL, or about 5–6 hours by bus. Also the jumping-off point for Redang.", ko: "쿠알라룸푸르에서 비행기로 약 1시간, 버스로 약 5~6시간. 르당섬으로 가는 출발점이기도 해요.", ja: "クアラルンプールから飛行機で約1時間、バスで約5〜6時間。レダン島への起点でもあります。" },
+      when: { zh: "3–10 月最好。这里的周末是周五、周六，很多机构周五休息。", en: "Best March to October. The weekend here is Friday–Saturday, so many offices close on Friday.", ko: "3~10월이 가장 좋아요. 이곳 주말은 금·토요일이라 금요일에 쉬는 곳이 많아요.", ja: "3〜10月がベスト。週末は金・土曜日なので、金曜休みの施設が多いです。" } },
+
+    { id: "kota_bharu", state: "kelantan", region: "east", kind: "city", lat: 6.1254, lng: 102.2381, wp: ["Kota Bharu"],
+      aka: ["KB", "Siti Khadijah Market", "Pasar Siti Khadijah", "哥打峇鲁"],
+      name: { zh: "哥打巴鲁", en: "Kota Bharu", ko: "코타바루", ja: "コタバル" },
+      sum: { zh: "马来文化的心脏：以女性摊贩为主的 Siti Khadijah 市场，风筝（wau）制作、峇迪和银器工艺，还有蓝色米饭 nasi kerabu 等吉兰丹菜。", en: "The heart of Malay culture: Siti Khadijah market, run mostly by women, kite-making, batik and silverwork, and Kelantan dishes like nasi kerabu with blue rice.", ko: "말레이 문화의 중심지. 여성 상인이 대부분인 시티 카디자 시장, 연(와우) 만들기, 바틱과 은세공, 파란 밥 나시 크라부 같은 클란탄 음식.", ja: "マレー文化の中心地。女性の売り手が多いシティ・カディジャ市場、凧（ワウ）作り、バティックや銀細工、青いご飯のナシ・クラブなどクランタン料理。" },
+      go: { zh: "从吉隆坡飞约 1 小时；也是去停泊岛的必经之地。", en: "About 1 hour by plane from KL; also the way to the Perhentian Islands.", ko: "쿠알라룸푸르에서 비행기로 약 1시간. 페르헨티안 제도로 가는 길목이에요.", ja: "クアラルンプールから飛行機で約1時間。プルフンティアン諸島への玄関口でもあります。" },
+      when: { zh: "3–10 月最好。穿着要保守；周末是周五、周六，周五礼拜时间很多店会暂停。", en: "Best March to October. Dress modestly; the weekend is Friday–Saturday and shops pause for Friday prayers.", ko: "3~10월이 가장 좋아요. 단정한 옷차림을 하고, 주말은 금·토요일이며 금요 예배 시간엔 가게들이 잠시 닫아요.", ja: "3〜10月がベスト。肌の露出は控えめに。週末は金・土曜日で、金曜礼拝の時間は店が一時閉まります。" } },
+
+    { id: "frasers_hill", state: "pahang", region: "west", kind: "highlands", lat: 3.7120, lng: 101.7360, wp: ["Fraser's Hill"],
+      aka: ["Bukit Fraser", "福隆港"],
+      name: { zh: "福隆港", en: "Fraser's Hill", ko: "프레이저스 힐", ja: "フレーザーズ・ヒル" },
+      sum: { zh: "安静的英式殖民山城，有钟楼、石砌小屋、雾气缭绕的森林步道，是马来西亚观鸟最好的地方之一。", en: "A quiet colonial hill station with a clock tower, stone cottages, misty forest trails and some of the best birdwatching in Malaysia.", ko: "시계탑, 돌집, 안개 낀 숲길이 있는 조용한 영국 식민지 시대 고원 휴양지. 말레이시아 최고의 탐조지 중 하나예요.", ja: "時計塔、石造りのコテージ、霧に包まれた森の小道がある静かなコロニアル調の高原避暑地。マレーシア屈指のバードウォッチングの名所です。" },
+      go: { zh: "从吉隆坡开车约 2 小时；没有定期公共巴士，需要自驾或包车。", en: "About 2 hours by car from KL; there is no regular public bus, so drive or book a driver.", ko: "쿠알라룸푸르에서 차로 약 2시간. 정기 대중교통 버스가 없어 직접 운전하거나 차를 대절하세요.", ja: "クアラルンプールから車で約2時間。定期の路線バスはないので、レンタカーかチャーターで。" },
+      when: { zh: "全年凉爽（约 18–25°C）；早上最适合观鸟，也少雾。", en: "Cool all year (about 18–25°C); mornings are best for birds and mist-free views.", ko: "일 년 내내 선선해요(약 18~25°C). 새를 보기에도, 안개 없는 경치에도 아침이 좋아요.", ja: "一年中涼しく（約18〜25°C）、朝は野鳥観察に最適で霧も少なめ。" } },
+
+    { id: "cherating", state: "pahang", region: "east", kind: "beach", lat: 4.1290, lng: 103.3940, wp: ["Cherating", "Kuantan"],
+      aka: ["Kuantan", "Chendor", "关丹", "珍拉丁"],
+      name: { zh: "珍拉丁（关丹）", en: "Cherating", ko: "체라팅", ja: "チェラティン" },
+      sum: { zh: "东海岸悠闲的海滩小村：季风季可以冲浪，有海龟保育中心、河边萤火虫和峇迪工坊，离关丹市区不远。", en: "A relaxed east-coast beach village known for monsoon-season surfing, a turtle sanctuary, fireflies on the river and batik workshops. Kuantan city is nearby.", ko: "몬순 시즌 서핑으로 유명한 느긋한 동해안 해변 마을. 바다거북 보호소, 강가의 반딧불이, 바틱 공방이 있고 콴탄 시내와 가까워요.", ja: "モンスーン期のサーフィンで知られる東海岸ののんびりしたビーチ村。ウミガメ保護施設、川のホタル、バティック工房があり、クアンタンの街も近い。" },
+      go: { zh: "从吉隆坡开车或坐巴士约 3.5–4 小时，在关丹北边约 45 分钟。", en: "About 3.5–4 hours by car or bus from KL; about 45 minutes north of Kuantan.", ko: "쿠알라룸푸르에서 차나 버스로 약 3.5~4시간, 콴탄에서 북쪽으로 약 45분.", ja: "クアラルンプールから車かバスで約3.5〜4時間、クアンタンから北へ約45分。" },
+      when: { zh: "11–2 月适合冲浪，3–10 月风平浪静适合玩海滩。", en: "Surf from November to February; calm beach days from March to October.", ko: "11~2월엔 서핑, 3~10월엔 잔잔한 해변 휴가.", ja: "11〜2月はサーフィン、3〜10月は穏やかなビーチ日和。" } },
+  ];
+
+  // Souvenirs worth bringing home (shown in Home and the Shopping guide).
+  MY.souvenirs = [
+    { id: "batik", wp: ["Batik"],
+      name: { zh: "峇迪布（Batik）", en: "Batik", ko: "바틱", ja: "バティック" },
+      desc: { zh: "手绘或蜡印的热带图案布料，有丝巾、衬衫和纱笼。吉隆坡中央艺术坊和吉兰丹、登嘉楼的市场选择最多。", en: "Hand-drawn or block-printed fabric in bright tropical patterns: scarves, shirts and sarongs. Central Market in KL and the Kelantan and Terengganu markets have the widest choice.", ko: "손으로 그리거나 찍어낸 화려한 열대 무늬 천. 스카프, 셔츠, 사롱이 있어요. 쿠알라룸푸르 센트럴 마켓과 클란탄·트렝가누 시장에 종류가 가장 많아요.", ja: "手描きや型押しで鮮やかな南国柄を染めた布。スカーフ、シャツ、サロンなど。KLのセントラル・マーケットやクランタン、トレンガヌの市場が品揃え豊富。" } },
+    { id: "songket", wp: ["Songket"],
+      name: { zh: "宋谷锦缎（Songket）", en: "Songket", ko: "송켓", ja: "ソンケット" },
+      desc: { zh: "以金银线织成的手工丝绸或棉布锦缎，是马来婚礼礼服。小幅装框或围巾更方便带。", en: "Handwoven silk or cotton brocade shot with gold or silver thread, worn at Malay weddings. A small framed piece or a scarf is easier to carry.", ko: "금사·은사를 넣어 손으로 짠 비단이나 면 직물로, 말레이 결혼식 의상이에요. 액자에 넣은 작은 조각이나 스카프가 들고 가기 편해요.", ja: "金糸・銀糸を織り込んだ手織りの絹や綿の錦で、マレーの婚礼衣装に使われます。額装の小品やスカーフなら持ち帰りやすい。" } },
+    { id: "pewter", wp: ["Royal Selangor", "Pewter"],
+      name: { zh: "皇家雪兰莪锡器", en: "Royal Selangor pewter", ko: "로열 슬랑오르 주석 공예", ja: "ロイヤル・セランゴールのピューター" },
+      desc: { zh: "自 1885 年起用马来西亚锡制作的酒杯、茶杯和纪念品。可以去吉隆坡的皇家雪兰莪访客中心看制作过程，商场里也有专卖店。", en: "Tankards, cups and keepsakes made from Malaysian tin since 1885. See them made at the Royal Selangor Visitor Centre in KL, or buy at mall boutiques.", ko: "1885년부터 말레이시아산 주석으로 만든 맥주잔, 컵, 기념품. 쿠알라룸푸르의 로열 슬랑오르 방문자 센터에서 제작 과정을 보거나 쇼핑몰 매장에서 살 수 있어요.", ja: "1885年からマレーシア産の錫で作られるタンカードやカップ、記念品。KLのロイヤル・セランゴール・ビジターセンターで製作を見学でき、モールの店舗でも買えます。" } },
+    { id: "wau", wp: ["Wau bulan", "Wau (kite)"],
+      name: { zh: "月亮风筝（Wau）", en: "Wau kite", ko: "와우 연", ja: "ワウ（凧）" },
+      desc: { zh: "吉兰丹的月形风筝，绘有花卉图案。迷你版和壁挂款可以压平带走。", en: "Kelantan's crescent-tailed 'moon kite', painted with floral patterns. Miniatures and wall pieces pack flat.", ko: "꽃무늬를 그린 클란탄의 초승달 꼬리 '달 연'. 미니어처나 벽걸이는 납작하게 챙길 수 있어요.", ja: "花模様を描いた、三日月形の尾をもつクランタンの「月の凧」。ミニチュアや壁飾りは平たく持ち帰れます。" } },
+    { id: "labu_sayong", wp: ["Labu sayong"],
+      name: { zh: "葫芦陶壶（Labu Sayong）", en: "Labu Sayong pottery", ko: "라부 사용 도자기", ja: "ラブ・サヨン（ひょうたん形の壺）" },
+      desc: { zh: "霹雳瓜拉江沙出产的黑色葫芦形陶水壶，据说能让水保持清凉。坐飞机要包好。", en: "Black, gourd-shaped clay water jugs from Kuala Kangsar, Perak, said to keep water cool. Wrap them well for the flight.", ko: "페락주 쿠알라캉사르에서 만드는 검은 표주박 모양의 물 항아리로, 물을 시원하게 유지한다고 해요. 비행기 탈 땐 잘 포장하세요.", ja: "ペラ州クアラ・カンサーで作られる黒いひょうたん形の素焼きの水差しで、水が冷たく保たれるといわれます。飛行機では、しっかり梱包を。" } },
+    { id: "pua_kumbu", wp: ["Pua kumbu"],
+      name: { zh: "伊班族织布（Pua kumbu）", en: "Pua kumbu (Iban textile)", ko: "푸아 쿰부(이반족 직물)", ja: "プア・クンブ（イバン族の織物）" },
+      desc: { zh: "砂拉越伊班族手织的扎经染布料，图案来自他们的传说和梦境。可以在古晋的 Main Bazaar 找到。", en: "Hand-woven ikat cloth made by Sarawak's Iban people, with motifs from their stories and dreams. Look for it in Kuching's Main Bazaar.", ko: "사라왁 이반족이 손으로 짠 이카트 천으로, 전설과 꿈에서 온 문양이 담겨 있어요. 쿠칭 메인 바자에서 찾아보세요.", ja: "サラワクのイバン族が手織りする絣（イカット）の布で、伝説や夢に由来する文様が描かれます。クチンのメイン・バザールで探してみて。" } },
+    { id: "white_coffee", wp: ["Ipoh white coffee", "White coffee"],
+      name: { zh: "怡保白咖啡", en: "Ipoh white coffee", ko: "이포 화이트 커피", ja: "イポーのホワイトコーヒー" },
+      desc: { zh: "咖啡豆用棕榈油人造黄油烘焙，口感顺滑带焦糖香。三合一速溶包（OldTown、益昌）轻便，各大超市都有。", en: "Beans roasted with palm-oil margarine for a smooth, caramel taste. 3-in-1 sachets (OldTown, Aik Cheong) are light and sold in every supermarket.", ko: "팜유 마가린으로 원두를 볶아 부드럽고 캐러멜 같은 맛. 3-in-1 스틱(올드타운, 아익청)은 가볍고 어느 슈퍼에서나 팔아요.", ja: "パーム油のマーガリンで焙煎した、なめらかでキャラメルのような風味のコーヒー。3in1のスティック（OldTown、Aik Cheong）は軽く、どのスーパーにもあります。" } },
+    { id: "tea", wp: ["Boh Plantations", "Cameron Highlands"],
+      name: { zh: "金马伦高原红茶", en: "Cameron Highlands tea", ko: "캐머런 하일랜드 홍차", ja: "キャメロン・ハイランドの紅茶" },
+      desc: { zh: "马来西亚高原茶园出产的红茶，例如 BOH。茶园商店或超市都买得到。", en: "Black tea from Malaysia's highland estates, such as BOH. Buy it at the estates' tea shops or any supermarket.", ko: "BOH 등 말레이시아 고원 차밭에서 나는 홍차. 차밭 매장이나 슈퍼마켓에서 살 수 있어요.", ja: "BOHなどマレーシアの高原の茶園で作られる紅茶。茶園のショップやスーパーで買えます。" } },
+    { id: "kaya", wp: ["Kaya (jam)", "Kaya toast"],
+      name: { zh: "咖椰酱（Kaya）", en: "Kaya jam", ko: "카야 잼", ja: "カヤジャム" },
+      desc: { zh: "椰浆加鸡蛋和班兰叶熬成的甜酱，咖椰吐司的灵魂。罐装要放托运行李，并留意你国家的食品入境规定。", en: "Sweet coconut-and-egg jam scented with pandan, the spread on kaya toast. Jars go in checked luggage; check your country's food rules.", ko: "판단 향이 나는 코코넛·달걀 잼으로 카야 토스트의 핵심. 병은 위탁 수하물로 부치고, 자국의 식품 반입 규정을 확인하세요.", ja: "パンダンが香るココナッツと卵の甘いジャムで、カヤトーストの主役。瓶は預け荷物に。自国の食品持ち込み規則も確認を。" } },
+    { id: "tambun", wp: ["Tambun biscuit"],
+      name: { zh: "淡汶饼（Tambun）", en: "Tambun biscuits", ko: "탐분 비스킷", ja: "タンブン・ビスケット" },
+      desc: { zh: "槟城的酥皮小饼，内馅是甜绿豆沙。义香等老字号饼家有礼盒装。", en: "Penang's flaky pastries filled with sweet mung-bean paste. Ghee Hiang and other old bakeries sell gift boxes.", ko: "달콤한 녹두소를 넣은 페낭의 바삭한 페이스트리. 기향(Ghee Hiang) 같은 오래된 빵집에서 선물 상자로 팔아요.", ja: "甘い緑豆あんを包んだペナンのサクサクのお菓子。義香（Ghee Hiang）などの老舗でギフトボックスを販売。" } },
+    { id: "kek_lapis", wp: ["Kek lapis Sarawak", "Kek lapis"],
+      name: { zh: "砂拉越千层糕（Kek lapis）", en: "Sarawak layer cake", ko: "사라왁 레이어 케이크", ja: "サラワクのレイヤーケーキ" },
+      desc: { zh: "古晋出产、一层层烤出来的彩色花纹蛋糕，能放好几天，买密封包装的方便带。", en: "Bright, patterned cakes from Kuching, baked one layer at a time. They keep for days; buy sealed ones for travel.", ko: "쿠칭에서 한 층씩 구워 만드는 알록달록한 무늬 케이크. 며칠 보관되니 밀봉 포장된 것을 사세요.", ja: "クチン名物、一層ずつ焼き重ねるカラフルな模様のケーキ。日持ちするので、密封パックがおすすめ。" } },
+    { id: "durian_treats", wp: ["Durian"],
+      name: { zh: "榴莲零食", en: "Durian treats", ko: "두리안 간식", ja: "ドリアンのお菓子" },
+      desc: { zh: "冻干榴莲、榴莲蛋糕和巧克力，把“水果之王”带回家。新鲜榴莲不能带上飞机或进酒店。", en: "Freeze-dried durian, durian cakes and chocolates let you take the 'king of fruits' home. Fresh durian isn't allowed on planes or in hotels.", ko: "동결건조 두리안, 두리안 케이크와 초콜릿으로 '과일의 왕'을 가져가세요. 생두리안은 비행기와 호텔에 반입할 수 없어요.", ja: "フリーズドライのドリアン、ドリアンケーキやチョコで「果物の王様」をお持ち帰り。生のドリアンは飛行機やホテルに持ち込めません。" } },
+  ];
+
+  // Photos for the planner places and dishes (English Wikipedia titles, best first).
+  MY.photos = {
+    poi: {
+      klcc_park: ["KLCC Park", "Petronas Towers"], skybridge: ["Petronas Towers"], suria: ["Suria KLCC"], aquaria: ["Aquaria KLCC"],
+      batu: ["Batu Caves"], thean_hou: ["Thean Hou Temple"], petaling: ["Petaling Street"], kwai_chai: ["Kwai Chai Hong", "Petaling Street"],
+      kopitiam_ct: ["Kopi tiam"], mahamariamman: ["Sri Mahamariamman Temple, Kuala Lumpur"], central_market: ["Central Market, Kuala Lumpur"],
+      merdeka: ["Merdeka Square, Kuala Lumpur", "Sultan Abdul Samad Building"], masjid_jamek: ["Masjid Jamek"], river_of_life: ["River of Life (Kuala Lumpur)", "Masjid Jamek"],
+      pavilion: ["Pavilion Kuala Lumpur"], jalan_alor: ["Jalan Alor"], kl_tower: ["Kuala Lumpur Tower"], forest_eco: ["Bukit Nanas", "Kuala Lumpur Tower"],
+      botanical: ["Perdana Botanical Garden"], islamic_arts: ["Islamic Arts Museum Malaysia"], national_mosque: ["National Mosque of Malaysia"],
+      kampung_baru: ["Kampung Baru"], bird_park: ["Kuala Lumpur Bird Park"],
+      street_art: ["Street art in George Town", "Armenian Street, George Town"], khoo_kongsi: ["Khoo Kongsi"], clan_jetties: ["Clan Jetties", "Chew Jetty"],
+      blue_mansion: ["Cheong Fatt Tze Mansion"], peranakan: ["Pinang Peranakan Mansion"], fort: ["Fort Cornwallis"], little_india_pg: ["Little India, Penang"],
+      cendol: ["Cendol"], kopitiam_pg: ["Kopi tiam"], penang_hill: ["Penang Hill"], kek_lok_si: ["Kek Lok Si"], komtar: ["Komtar"],
+      gurney: ["Gurney Drive"], chulia: ["Chulia Street"], ferringhi: ["Batu Ferringhi"],
+      dutch_square: ["Stadthuys", "Dutch Square, Malacca"], st_paul: ["St. Paul's Church, Malacca"], famosa: ["A Famosa"], cheng_hoon: ["Cheng Hoon Teng"],
+      baba_nyonya: ["Baba & Nyonya Heritage Museum"], jonker_day: ["Jonker Street"], jonker_night: ["Jonker Street"], chicken_rice: ["Chicken rice ball", "Hainanese chicken rice"],
+      nyonya_food: ["Peranakan cuisine"], river_cruise: ["Malacca River"], taming_sari: ["Taming Sari Tower"], masjid_selat: ["Malacca Straits Mosque"],
+      kampung_morten: ["Kampung Morten"], river_walk: ["Malacca River"],
+    },
+    // Same order as the dishes in the Food guide (as are dishNames below).
+    dishes: [["Nasi lemak"], ["Char kway teow"], ["Roti canai"], ["Satay"], ["Asam laksa", "Laksa"], ["Curry laksa", "Laksa"], ["Bak kut teh"],
+      ["Nasi kandar", "Banana leaf rice"], ["Cendol"], ["Teh tarik", "White coffee"], ["Durian"]],
+  };
+
+  // What travellers call the dishes in their own language, so search finds them.
+  MY.dishNames = [
+    { zh: "椰浆饭", ko: "나시 르막", ja: "ナシレマ" }, { zh: "炒粿条", ko: "차퀘이티아오", ja: "チャー・クエティアオ" },
+    { zh: "印度煎饼 煎饼", ko: "로티 차나이", ja: "ロティ・チャナイ" }, { zh: "沙爹", ko: "사테", ja: "サテ" },
+    { zh: "亚参叻沙 叻沙", ko: "아삼 락사 락사", ja: "アッサム・ラクサ ラクサ" }, { zh: "咖喱叻沙 叻沙", ko: "커리 락사 락사", ja: "カレー・ラクサ ラクサ" },
+    { zh: "肉骨茶", ko: "바쿠테", ja: "バクテー" }, { zh: "印度饭 香蕉叶饭", ko: "나시 칸다르 바나나잎 밥", ja: "ナシ・カンダール バナナリーフ" },
+    { zh: "煎蕊", ko: "첸돌", ja: "チェンドル" }, { zh: "拉茶 白咖啡", ko: "테타릭 화이트 커피", ja: "テタリ ホワイトコーヒー" },
+    { zh: "榴莲 猫山王", ko: "두리안", ja: "ドリアン" },
+  ];
+
+  if (typeof module === "object" && module.exports) module.exports = MY;
+})(typeof window !== "undefined" ? window : globalThis);

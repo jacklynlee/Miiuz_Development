@@ -22,6 +22,7 @@
         <h1>${esc(t("guide.title"))}</h1>
         <p>${esc(t("guide.lead"))}</p>
       </div>
+      <a class="search-launch" href="#search" data-search>${icon("search")}<span>${esc(t("search.ph"))}</span></a>
       <div class="topics">${MBB.C.guide.map(topicCard).join("")}</div>`;
   }
 
@@ -35,9 +36,17 @@
     // City-specific sections: the traveller's own city first and marked.
     const sections = [...g.sections].sort((a, b) => (b.city === city) - (a.city === city));
     const facts = (g.facts || []).map(f => `<div class="fact"><span>${esc(L(f.k))}</span><b>${esc(L(f.v))}</b></div>`).join("");
-    const dishes = g.dishes ? `<section class="card g-sec">
-        <h2>${esc(t("guide.dishes"))}</h2>
-        <dl class="dishes">${g.dishes.map(d => `<div class="dish"><dt>${esc(d.ms)}</dt><dd>${esc(L(d))}</dd></div>`).join("")}</dl>
+    const item = (id, photo, ic, title, text) => `<article class="g-item" id="${id}">
+        ${MBB.media.html(photo, { alt: title, ic, link: true })}
+        <div><h3>${esc(title)}</h3><p>${esc(text)}</p></div>
+      </article>`;
+    const dishes = g.dishes ? `<section class="g-gallery">
+        <div class="section-title"><h2>${esc(t("guide.dishes"))}</h2></div>
+        <div class="gallery">${g.dishes.map((d, i) => item(`dish-${i}`, `dish:${i}`, "bowl", d.ms, L(d))).join("")}</div>
+      </section>` : "";
+    const souvenirs = g.id === "shopping" ? `<section class="g-gallery">
+        <div class="section-title"><h2>${esc(t("guide.souvenirs"))}</h2></div>
+        <div class="gallery">${MBB.C.souvenirs.map(sv => item(`souv-${sv.id}`, `souv:${sv.id}`, "gift", L(sv.name), L(sv.desc))).join("")}</div>
       </section>` : "";
     const secs = sections.map(s => {
       const mine = s.city && s.city === city;
@@ -60,6 +69,7 @@
       </div>
       ${facts ? `<div class="facts">${facts}</div>` : ""}
       ${dishes}
+      ${souvenirs}
       <div class="g-sections">${secs}</div>
       ${links}
       <p class="checked-note">${esc(t("guide.checked", { d: checkedLabel() }))}</p>

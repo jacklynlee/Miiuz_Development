@@ -8,6 +8,5 @@ export default function handler(req, res) {
   const env = process.env;
   const supabaseUrl = env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL || "";
   const supabaseKey = env.SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-  res.setHeader("Cache-Control", "public, max-age=300");
-  sendJson(res, 200, { supabaseUrl, supabaseKey });
+  sendJson(res, 200, { supabaseUrl, supabaseKey }); // not cached, so new settings apply on the next visit
 }

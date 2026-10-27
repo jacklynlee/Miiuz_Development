@@ -23,6 +23,17 @@ create table if not exists public.profiles (
   marketing_opt_in_at timestamptz,
   created_at timestamptz not null default now()
 );
+-- Details members give when they join: nationality (the app requires it), and optionally a
+-- phone number and an emergency contact (shown in the app's SOS screen). Phone numbers are
+-- stored in international form (+ country code, digits only). National ID and passport
+-- numbers are deliberately not collected.
+alter table public.profiles add column if not exists nationality text check (nationality ~ '^[A-Z]{2}$');
+alter table public.profiles add column if not exists phone text check (phone ~ '^\+[0-9]{7,15}$');
+alter table public.profiles add column if not exists sms_opt_in boolean not null default false;
+alter table public.profiles add column if not exists sms_opt_in_at timestamptz;
+alter table public.profiles add column if not exists emergency_name text check (char_length(emergency_name) <= 80);
+alter table public.profiles add column if not exists emergency_relation text check (char_length(emergency_relation) <= 40);
+alter table public.profiles add column if not exists emergency_phone text check (emergency_phone ~ '^\+[0-9]{7,15}$');
 
 create table if not exists public.points_ledger (
   id bigint generated always as identity primary key,
@@ -96,16 +107,18 @@ declare
   meta jsonb := coalesce(new.raw_user_meta_data, '{}'::jsonb);
   code text := upper(trim(coalesce(meta ->> 'ref', '')));
   wants_news boolean := coalesce(meta ->> 'marketing', '') = 'true';
+  nat text := upper(coalesce(meta ->> 'nationality', ''));
   inviter uuid;
 begin
   if code <> '' then
     select id into inviter from public.profiles where referral_code = code;
   end if;
-  insert into public.profiles (id, referral_code, referred_by, display_name, language, marketing_opt_in, marketing_opt_in_at)
+  insert into public.profiles (id, referral_code, referred_by, display_name, language, marketing_opt_in, marketing_opt_in_at, nationality)
   values (new.id, public.new_referral_code(), inviter,
           nullif(left(trim(coalesce(meta ->> 'name', '')), 60), ''),
           nullif(left(coalesce(meta ->> 'lang', ''), 16), ''),
-          wants_news, case when wants_news then now() end)
+          wants_news, case when wants_news then now() end,
+          case when nat ~ '^[A-Z]{2}$' then nat end)
   on conflict (id) do nothing;
   if new.email_confirmed_at is not null then
     perform public.award_join_points(new.id);
@@ -130,12 +143,15 @@ drop trigger if exists on_auth_user_confirmed on auth.users;
 create trigger on_auth_user_confirmed after update of email_confirmed_at on auth.users
   for each row execute function public.handle_user_confirmed();
 
--- Keep a record of when someone agreed to (or stopped) receiving offers by email.
+-- Keep a record of when someone agreed to (or stopped) receiving offers by email or WhatsApp/SMS.
 create or replace function public.stamp_opt_in() returns trigger
 language plpgsql set search_path = public as $$
 begin
   if new.marketing_opt_in is distinct from old.marketing_opt_in then
     new.marketing_opt_in_at := case when new.marketing_opt_in then now() end;
+  end if;
+  if new.sms_opt_in is distinct from old.sms_opt_in then
+    new.sms_opt_in_at := case when new.sms_opt_in then now() end;
   end if;
   return new;
 end $$;
@@ -200,7 +216,8 @@ drop policy if exists "members update own profile" on public.profiles;
 create policy "members update own profile" on public.profiles
   for update to authenticated using ((select auth.uid()) = id) with check ((select auth.uid()) = id);
 revoke insert, update, delete on public.profiles from anon, authenticated;
-grant update (display_name, language, marketing_opt_in) on public.profiles to authenticated;
+grant update (display_name, language, marketing_opt_in, nationality, phone, sms_opt_in, emergency_name, emergency_relation, emergency_phone)
+  on public.profiles to authenticated;
 
 drop policy if exists "members read own points" on public.points_ledger;
 create policy "members read own points" on public.points_ledger

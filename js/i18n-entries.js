@@ -35,6 +35,10 @@
     C.guide.forEach(g => { add(`guide.${g.id}.title`, g.title.en, into(g.title)); add(`guide.${g.id}.lead`, g.lead.en, into(g.lead)); });
     C.checklist.forEach(g => { add(`check.${g.id}.title`, g.title.en, into(g.title)); g.items.forEach(it => add(`check.${g.id}.${it.id}`, it.en, into(it))); });
     add("driver", C.driverCard.en, into(C.driverCard));
+    // Home's Explore, food and souvenir strips.
+    for (const [id, st] of Object.entries(C.states || {})) add(`state.${id}`, st.en, into(st));
+    (C.destinations || []).forEach(d => add(`dest.${d.id}.name`, d.name.en, into(d.name)));
+    (C.souvenirs || []).forEach(s => { add(`souv.${s.id}.name`, s.name.en, into(s.name)); add(`souv.${s.id}.desc`, s.desc.en, into(s.desc)); });
     C.phrases.forEach(c => { add(`phr.${c.id}.title`, c.title.en, into(c.title)); c.items.forEach((p, i) => add(`phr.${c.id}.${i}`, p.en, into(p))); });
 
     C.guide.forEach(g => {
@@ -49,6 +53,8 @@
       add(`poi.${p.id}.why`, p.why.en, into(p.why));
       add(`poi.${p.id}.tip`, p.tip.en, into(p.tip));
     });
+    for (const [id, c] of Object.entries(C.cities)) if (c.sum) add(`city.${id}.sum`, c.sum.en, into(c.sum));
+    (C.destinations || []).forEach(d => ["sum", "go", "when"].forEach(k => add(`dest.${d.id}.${k}`, d[k].en, into(d[k]))));
     return out;
   }
 

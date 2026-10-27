@@ -14,10 +14,10 @@ let client = null;
 export const anthropic = () => (client ??= new Anthropic());
 export const configured = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
-export function sendJson(res, status, body) {
+export function sendJson(res, status, body, cache = "no-store") {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("Cache-Control", cache);
   res.end(JSON.stringify(body));
 }
 

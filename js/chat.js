@@ -281,6 +281,14 @@
       detect();
     },
     ask,
+    // Open the chat and send a question (from place pages and search); if Miiuz can't answer
+    // right now, leave it in the box instead.
+    async askAbout(text) {
+      MBB.go("ask");
+      await MBB.ai.ready;
+      if ((mode === "server" || mode === "artifact") && !busy) ask(text);
+      else MBB.chat.prefill(text);
+    },
     prefill(text) {
       MBB.go("ask");
       const box = $("#c-input");

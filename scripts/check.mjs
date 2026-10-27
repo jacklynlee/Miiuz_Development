@@ -24,6 +24,8 @@ for (const f of files) {
 
 globalThis.window = globalThis;
 const C = require(path.join(root, "js/data/malaysia.js"));
+require(path.join(root, "js/data/malaysia.explore.js"));
+const MAP = require(path.join(root, "js/data/malaysia.map.js"));
 const { LANGS } = require(path.join(root, "js/locales.js"));
 const { buildSystem, planTool } = require(path.join(root, "js/prompt.js"));
 const E = require(path.join(root, "js/i18n-entries.js"));
@@ -47,6 +49,33 @@ for (const g of C.guide) {
   g.sections.forEach((s, i) => { bi(s.h, `${g.id}.sections[${i}]`); s.items.forEach((it, j) => bi(it, `${g.id}.sections[${i}].items[${j}]`)); });
 }
 if (C.climate.length !== 12) fail("climate needs 12 months");
+
+// Explore data: every destination, souvenir, state and city summary in all four hand languages.
+const four = (v, where) => { for (const l of ["zh", "en", "ko", "ja"]) if (!v?.[l]) fail(`${where} missing ${l}`); };
+const dids = new Set();
+for (const d of C.destinations) {
+  if (dids.has(d.id)) fail(`duplicate destination ${d.id}`);
+  dids.add(d.id);
+  for (const k of ["name", "sum", "go", "when"]) four(d[k], `destination ${d.id}.${k}`);
+  if (!C.states[d.state]) fail(`destination ${d.id}: unknown state ${d.state}`);
+  if (!(d.lat > 0.8 && d.lat < 7.5 && d.lng > 99.5 && d.lng < 119.5)) fail(`destination ${d.id}: coordinates outside Malaysia`);
+  if (!d.wp?.length) fail(`destination ${d.id}: no photo article`);
+}
+for (const s of C.souvenirs) { four(s.name, `souvenir ${s.id}.name`); four(s.desc, `souvenir ${s.id}.desc`); if (!s.wp?.length) fail(`souvenir ${s.id}: no photo article`); }
+for (const [id, st] of Object.entries(C.states)) four(st, `state ${id}`);
+for (const [id, c] of Object.entries(C.cities)) { four(c.sum, `city ${id}.sum`); if (!C.states[c.state] || !c.lat || !c.wp?.length) fail(`city ${id}: state, position or photo missing`); }
+for (const p of C.pois) if (!C.photos.poi[p.id]?.length) fail(`place ${p.id}: no photo article`);
+const dishes = C.guide.find(g => g.id === "food").dishes;
+if (C.photos.dishes.length !== dishes.length || C.dishNames.length !== dishes.length) fail("photos.dishes / dishNames must match the Food guide's dishes");
+if (!MAP.land || !MAP.near || !(MAP.k > 0)) fail("map data missing (run scripts/build-map.mjs)");
+
+// Every literal t("key") in the app must exist (dynamic keys like t(`ptype.${k}`) are checked by prefix).
+const { readFileSync } = await import("node:fs");
+for (const f of readdirSync(path.join(root, "js")).filter(f => f.endsWith(".js"))) {
+  const src = readFileSync(path.join(root, "js", f), "utf8");
+  for (const [, key] of src.matchAll(/\bt\(\s*"([a-zA-Z][\w.]*)"/g)) if (!STR[key]) fail(`${f}: unknown string "${key}"`);
+  for (const [, pre] of src.matchAll(/\bt\(\s*`([a-zA-Z][\w.]*\.)\$\{/g)) if (!Object.keys(STR).some(k => k.startsWith(pre))) fail(`${f}: no strings start with "${pre}"`);
+}
 
 // Interface strings: every hand-translated language present.
 for (const [k, v] of Object.entries(STR)) for (const l of full) if (v[l] == null) fail(`i18n ${k} missing ${l}`);

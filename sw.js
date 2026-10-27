@@ -1,10 +1,10 @@
 /* Miiuz Beyond Borders — offline support. Bump VERSION whenever app files change. */
-const VERSION = "mbb-v4";
+const VERSION = "mbb-v5";
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
-  "js/data/malaysia.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
+  "js/data/malaysia.js", "js/data/malaysia.explore.js", "js/data/malaysia.map.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
   "js/i18n.js", "js/locales.js", "js/core.js", "js/i18n-entries.js", "js/ai.js", "js/prompt.js", "js/translate.js",
-  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/member.js", "js/app.js",
+  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/member.js", "js/media.js", "js/maps.js", "js/search.js", "js/place.js", "js/app.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
 ];
 

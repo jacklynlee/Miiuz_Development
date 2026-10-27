@@ -1,7 +1,9 @@
 # Miiuz Beyond Borders (Miiuz BB / MyBB)
 
-A travel companion web app for tourists who have just arrived in a new country. It starts
-with **Malaysia** (Kuala Lumpur, Penang, Melaka) and is built so more countries can be added.
+**Cuti-cuti Malaysia!** A travel companion web app for tourists who have just arrived in a new
+country. It starts with **Malaysia**: hand-written day plans for Kuala Lumpur, Penang and Melaka,
+20 more destinations from Langkawi to Kuching, and search for any place in the country. It is
+built so more countries can be added.
 
 It grew out of the original *Miiuz Beyond Borders* half-day planner artifact: the planner is
 still here, now alongside everything else a visitor needs.
@@ -10,8 +12,10 @@ still here, now alongside everything else a visitor needs.
 
 | Tab | What it does |
 |---|---|
-| **Home** | Local time vs. your phone, live exchange rate, this month's weather, one-tap 999, "just landed" shortcuts, checklist progress |
-| **Guide** | 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
+| **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, a map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, "just landed" shortcuts, checklist progress |
+| **Search** | Type to search the app's own places, guide, dishes, souvenirs and phrases instantly (offline, in every language); press Search to find *any* place in Malaysia on OpenStreetMap |
+| **Place pages** | Photo, what it is (plus a Wikipedia summary in the traveller's language), opening hours / phone / website where known, street map, directions (Google Maps, Waze), "show the driver" card, distance from your city or from you, nearby Miiuz picks and destinations, nearby hospitals / police / ATMs, one-tap questions for Miiuz |
+| **Guide** | Photo galleries of 11 must-try dishes and 12 souvenirs, and 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
 | **Plan** | The day planner from the original artifact: pick city, time window (or work back from a flight), travel style, interests, group and budget; get a route with travel times, map links and ticket links |
 | **Tools** | Currency converter (live rates), bill splitter (10% service + 6% SST), "show the driver" hotel card, Malay phrasebook with audio and full-screen "show" mode, trip checklist |
 | **Ask Miiuz** | AI travel assistant on Claude: answers in the traveller's language, searches the web for current prices/hours, cites sources, and can rewrite the day plan on screen |
@@ -71,6 +75,10 @@ password) and get:
 
 - **+10 points** when they join, and **+10 points** for every friend who joins with their
   invite link (`https://your-app/?ref=CODE`). The friend gets their own +10 too.
+- **Details at sign-up:** nationality (required), and optionally a phone number (with a
+  WhatsApp/SMS offers opt-in) and an emergency contact, which members can call in one tap from
+  the SOS screen. National ID and passport numbers are deliberately **not** collected. Members
+  can view and edit their details any time; already-registered members use the **Sign in** tab.
 - **Tiers** by points ever earned: Basic (0) → Silver (1,000) → Gold (5,000) → Platinum (10,000).
   Spending points never lowers a tier, and neither points nor tiers expire.
 - **Member offers, goodies and news**, optionally limited to a tier and above.
@@ -84,7 +92,8 @@ address is verified, once per person; members can read but never change their ow
 ### Set up (once)
 
 1. Create a project at [supabase.com](https://supabase.com) (region: Southeast Asia / Singapore).
-2. **SQL Editor** → paste all of `supabase/schema.sql` → Run. (Safe to run again after updates.)
+2. **SQL Editor** → paste all of `supabase/schema.sql` → Run. Safe to run again: after any
+   update to the file (such as the member-details columns), run it again to upgrade.
 3. **Authentication → URL Configuration**: Site URL `https://miiuz-bb.vercel.app`; add redirect
    URLs `https://miiuz-bb.vercel.app/**` and `http://localhost:3000/**`.
 4. **Authentication → Emails → Templates**: in both **Confirm signup** and **Magic Link**, add
@@ -120,10 +129,18 @@ select id, -1000, 'redeem', 'Free cendol voucher' from auth.users where email = 
 update member_tiers set min_points = 2000 where tier = 'silver';
 
 -- Members who agreed to marketing emails (for your newsletter tool)
-select p.display_name, u.email, p.language, p.marketing_opt_in_at
+select p.display_name, u.email, p.nationality, p.language, p.marketing_opt_in_at
 from profiles p join auth.users u on u.id = p.id
 where p.marketing_opt_in and u.email_confirmed_at is not null
 order by p.created_at;
+
+-- Members who agreed to WhatsApp/SMS offers
+select p.display_name, p.phone, p.nationality, p.sms_opt_in_at
+from profiles p join auth.users u on u.id = p.id
+where p.sms_opt_in and p.phone is not null and u.email_confirmed_at is not null;
+
+-- Members by nationality
+select coalesce(nationality, '(not given)') as nationality, count(*) from profiles group by 1 order by 2 desc;
 
 -- Top inviters
 select u.email, count(*) as friends
@@ -131,8 +148,31 @@ from points_ledger l join auth.users u on u.id = l.user_id
 where l.reason = 'referral' group by u.email order by friends desc limit 20;
 ```
 
-Marketing emails go only to members who ticked the opt-in box (unticked by default); each
-member can change it any time under **Account**.
+Marketing emails and WhatsApp/SMS offers go only to members who ticked the opt-in boxes
+(unticked by default); members can change them any time. Malaysia's PDPA expects a privacy
+notice in Malay and English that says what you collect and why; have one reviewed before
+launching membership. Phone numbers and emergency contacts are visible only to the member
+and to you (the Supabase project owner).
+
+## Search, maps and photos
+
+- **Search anywhere** uses OpenStreetMap's Nominatim through `api/places.mjs`, limited to
+  Malaysia. Nominatim's free service allows about one request a second and no
+  search-as-you-type, so the app searches only when the traveller presses Search, the function
+  spaces requests out, and Vercel caches answers for a week. If traffic grows, sign up for a
+  Nominatim-compatible service (e.g. LocationIQ) and set `MIIUZ_GEOCODER_URL` /
+  `MIIUZ_GEOCODER_KEY`.
+- **Summaries** come from Wikipedia in the traveller's language when that edition has the
+  article (CC BY-SA, credited on the page).
+- **Photos** are the Wikipedia lead photos of each destination, place, dish and souvenir, used
+  only when freely licensed on Wikimedia Commons; logos, maps and photos flagged for
+  personality rights are skipped. Author and licence show on every photo and on the
+  **Photo & map credits** page (footer). To change a photo, edit the article titles (`wp`) in
+  `js/data/malaysia.explore.js`; the first title with a usable photo wins.
+- **Maps**: the Malaysia overview is drawn offline from Natural Earth (public domain;
+  rebuild with `scripts/build-map.mjs`). Street maps use MapLibre GL with OpenFreeMap tiles
+  (free, no key, © OpenStreetMap contributors) and fall back to the overview plus a Google Maps
+  link when offline.
 
 ## How the AI parts work
 
@@ -159,10 +199,15 @@ js/translate.js         on-demand AI translation    js/i18n-entries.js  translat
 js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
 js/guide.js · planner.js · tools.js · chat.js · app.js   the screens
-js/member.js            membership: sign-in by emailed code, points, tiers, invites, offers, nudges
+js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo article titles
+js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
+js/search.js · place.js      search and place pages      js/maps.js  overview + street maps
+js/media.js             photos with credits, credits page
+js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
 js/install.js           "install the app" card (Android prompt / iPhone instructions)
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
 api/config.mjs          hands the public Supabase URL + key to the app
+api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)
 supabase/schema.sql     membership database: tables, points triggers, tiers, access rules
 sw.js · manifest.webmanifest · icons/   PWA
 scripts/                check, translate, build-preview

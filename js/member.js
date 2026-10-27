@@ -12,13 +12,17 @@
   const TIERS = ["basic", "silver", "gold", "platinum"];
   const NUDGE_FIRST = 5 * 60e3, NUDGE_GAP = 10 * 60e3, NUDGE_MAX_GAP = 60 * 60e3;
   const RESEND_SECONDS = 60;
+  // Nationality list (ISO 3166-1, plus Kosovo); names come from the browser in the reader's language.
+  const COUNTRIES = ("AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW").split(" ");
+  const COMMON = ["MY", "SG", "ID", "CN", "TH", "IN", "BN", "PH", "KR", "VN", "JP", "TW", "HK", "AU", "GB", "US", "SA"];
+  const DETAILS = "nationality, phone, sms_opt_in, emergency_name, emergency_relation, emergency_phone";
   const fromLink = /access_token=|error_description=/.test(location.hash); // came back from an email link
 
   const M = {
     status: "loading", // loading | off (membership not connected) | guest | member
     sb: null, user: null, profile: null, stat: null, ledger: [], offers: [], offerCount: null,
     tiers: [{ tier: "basic", min_points: 0 }, { tier: "silver", min_points: 1000 }, { tier: "gold", min_points: 5000 }, { tier: "platinum", min_points: 10000 }],
-    stage: "form", email: "", busy: false, error: "", resendAt: 0, setupError: false,
+    stage: "form", mode: "join", email: "", busy: false, error: "", resendAt: 0, setupError: false, editing: false,
   };
 
   const num = n => { try { return new Intl.NumberFormat(MBB.locale()).format(n); } catch { return String(n); } };
@@ -26,6 +30,16 @@
   const tierName = k => t(`tier.${k}`);
   const refCode = () => MBB.store.get("ref", "");
   const inviteUrl = () => `${location.origin}/?ref=${encodeURIComponent(M.profile?.referral_code || "")}`;
+  function country(code) {
+    try { return new Intl.DisplayNames([MBB.locale(), "en"], { type: "region" }).of(code) || code; } catch { return code; }
+  }
+  // "+60 12-345 6789" → "+60123456789"; null if it isn't an international number.
+  const phone = raw => { const v = String(raw || "").replace(/[\s().-]/g, ""); return v ? (/^\+\d{7,15}$/.test(v) ? v : null) : ""; };
+  // Details typed at sign-up wait here (this tab only) until the email code is verified.
+  const pending = {
+    get() { try { return JSON.parse(sessionStorage.getItem("mbb.pending") || "null"); } catch { return null; } },
+    set(v) { try { v ? sessionStorage.setItem("mbb.pending", JSON.stringify(v)) : sessionStorage.removeItem("mbb.pending"); } catch { /* private mode */ } },
+  };
 
   /* ---------- set-up ---------- */
   function captureRef() {
@@ -97,6 +111,7 @@
       return setStatus("guest");
     }
     if (same && M.status === "member" && !fresh) return;
+    await savePending();
     await loadMember();
     M.stage = "form"; M.error = "";
     setStatus("member");
@@ -111,7 +126,7 @@
 
   async function loadMember() {
     const [p, s, l, o] = await Promise.all([
-      M.sb.from("profiles").select("referral_code, display_name, marketing_opt_in, created_at").eq("id", M.user.id).maybeSingle(),
+      M.sb.from("profiles").select(`referral_code, display_name, marketing_opt_in, created_at, ${DETAILS}`).eq("id", M.user.id).maybeSingle(),
       M.sb.rpc("my_status"),
       M.sb.from("points_ledger").select("points, reason, created_at").order("created_at", { ascending: false }).limit(30),
       M.sb.from("member_offers").select("id, kind, min_tier, title, body, code, link, starts_at, ends_at").order("starts_at", { ascending: false }).limit(30),
@@ -122,6 +137,12 @@
     M.ledger = l.data || [];
     M.offers = o.data || [];
     celebrateTierUp();
+  }
+  async function savePending() {
+    const p = pending.get();
+    if (!p || !M.user) return;
+    const { error } = await M.sb.from("profiles").update(p).eq("id", M.user.id);
+    if (!error) pending.set(null);
   }
   async function loadPublic() {
     const [c, tr] = await Promise.all([
@@ -147,22 +168,57 @@
     if (/otp|token|expired|invalid/i.test(code + " " + msg)) return t("member.badCode");
     return t("member.failed");
   }
-  function fail(msg) { M.error = msg; M.busy = false; render(); }
+  // Busy state and errors are shown in place, so nothing the traveller typed is lost.
+  function setBusy(b) {
+    M.busy = b;
+    document.querySelectorAll("#view-member form [type=submit]").forEach(btn => { btn.disabled = b; });
+  }
+  function showError(msg) {
+    M.error = msg;
+    const el = $("#view-member .m-error[role=alert]");
+    if (!el) return render();
+    el.textContent = msg; el.hidden = !msg;
+  }
+  function fail(msg) { setBusy(false); showError(msg); }
+
+  // The optional details from a form, checked; returns an error message or the values.
+  function readDetails(f) {
+    const ph = phone(f.elements.phone.value), eph = phone(f.elements.emergency_phone.value);
+    if (ph === null || eph === null) return { error: t("member.badPhone") };
+    const nat = f.elements.nationality.value;
+    if (!/^[A-Z]{2}$/.test(nat)) return { error: t("member.needNationality") };
+    return {
+      nationality: nat, phone: ph || null, sms_opt_in: Boolean(ph && f.elements.sms.checked),
+      emergency_name: f.elements.emergency_name.value.trim().slice(0, 80) || null,
+      emergency_relation: f.elements.emergency_relation.value.trim().slice(0, 40) || null,
+      emergency_phone: eph || null,
+    };
+  }
 
   async function sendCode(form) {
     const email = form.elements.email.value.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail(t("member.badEmail"));
     if (M.status !== "guest") return fail(t("member.off"));
-    M.busy = true; M.error = ""; render();
+    const joining = M.mode === "join";
+    let details = null;
+    if (joining) {
+      details = readDetails(form);
+      if (details.error) return fail(details.error);
+    }
+    setBusy(true); showError("");
     const { error } = await M.sb.auth.signInWithOtp({
       email,
-      options: {
+      options: joining ? {
         shouldCreateUser: true,
         emailRedirectTo: location.origin + location.pathname,
-        data: { name: form.elements.name.value.trim().slice(0, 60), ref: refCode(), marketing: form.elements.marketing.checked, lang: MBB.state.lang },
-      },
+        data: { name: form.elements.name.value.trim().slice(0, 60), ref: refCode(), marketing: form.elements.marketing.checked, lang: MBB.state.lang, nationality: details.nationality },
+      } : { shouldCreateUser: false, emailRedirectTo: location.origin + location.pathname },
     });
-    if (error) return fail(authError(error));
+    if (error) {
+      if (!joining && /signups? not allowed|otp_disabled|user not found/i.test(`${error.code} ${error.message}`)) return fail(t("member.noAccount"));
+      return fail(authError(error));
+    }
+    if (joining) pending.set(details);
     Object.assign(M, { email, stage: "code", busy: false, error: "", resendAt: Date.now() + RESEND_SECONDS * 1000 });
     render();
     $("#m-code")?.focus();
@@ -171,7 +227,7 @@
   async function verify(raw) {
     const token = String(raw || "").replace(/\D/g, "");
     if (token.length < 6) return fail(t("member.badCode"));
-    M.busy = true; M.error = ""; render();
+    setBusy(true); showError("");
     let { error } = await M.sb.auth.verifyOtp({ email: M.email, token, type: "email" });
     if (error) ({ error } = await M.sb.auth.verifyOtp({ email: M.email, token, type: "signup" }));
     if (error) return fail(authError(error));
@@ -180,8 +236,8 @@
 
   async function resend() {
     if (Date.now() < M.resendAt || M.busy) return;
-    M.busy = true; render();
-    const { error } = await M.sb.auth.signInWithOtp({ email: M.email, options: { shouldCreateUser: true, emailRedirectTo: location.origin + location.pathname } });
+    setBusy(true);
+    const { error } = await M.sb.auth.signInWithOtp({ email: M.email, options: { shouldCreateUser: M.mode === "join", emailRedirectTo: location.origin + location.pathname } });
     if (error) return fail(authError(error));
     Object.assign(M, { busy: false, error: "", resendAt: Date.now() + RESEND_SECONDS * 1000 });
     render();
@@ -213,6 +269,43 @@
       <p class="hint">${esc(t("member.tierNote"))}</p>`;
   }
 
+  // Nationality, phone and emergency contact fields, shared by the join form and "Your details".
+  function detailFields(p, id) {
+    const names = COUNTRIES.map(c => [c, country(c)]);
+    let coll;
+    try { coll = new Intl.Collator(MBB.locale()); } catch { coll = new Intl.Collator("en"); }
+    names.sort((a, b) => coll.compare(a[1], b[1]));
+    const opt = ([c, n]) => `<option value="${c}"${c === p.nationality ? " selected" : ""}>${esc(n)}</option>`;
+    return `
+      <label for="m-${id}-nat"><span>${esc(t("member.nationality"))} <b class="req" aria-hidden="true">*</b></span>
+        <select id="m-${id}-nat" name="nationality" required autocomplete="country">
+          <option value="">${esc(t("member.natPick"))}</option>
+          <optgroup label="${esc(t("member.natPopular"))}">${COMMON.map(c => opt([c, country(c)])).join("")}</optgroup>
+          <optgroup label="${esc(t("member.natAll"))}">${names.map(opt).join("")}</optgroup>
+        </select>
+      </label>
+      <label for="m-${id}-phone">${esc(t("member.phone"))}
+        <input id="m-${id}-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" maxlength="24" placeholder="+" value="${esc(p.phone || "")}">
+        <small class="hint">${esc(t("member.phoneHint"))}</small>
+      </label>
+      <label class="toggle m-sms" for="m-${id}-sms"${p.phone ? "" : " hidden"}><input type="checkbox" id="m-${id}-sms" name="sms"${p.sms_opt_in ? " checked" : ""}> <span>${esc(t("member.sms"))}</span></label>
+      <fieldset class="m-emergency">
+        <legend>${esc(t("member.emergency"))}</legend>
+        <p class="hint">${esc(t("member.emergencyHint"))}</p>
+        <label for="m-${id}-en">${esc(t("member.emName"))}<input id="m-${id}-en" name="emergency_name" maxlength="80" autocomplete="off" value="${esc(p.emergency_name || "")}"></label>
+        <label for="m-${id}-er">${esc(t("member.emRelation"))}<input id="m-${id}-er" name="emergency_relation" maxlength="40" autocomplete="off" value="${esc(p.emergency_relation || "")}"></label>
+        <label for="m-${id}-ep">${esc(t("member.emPhone"))}<input id="m-${id}-ep" name="emergency_phone" type="tel" inputmode="tel" maxlength="24" placeholder="+" autocomplete="off" value="${esc(p.emergency_phone || "")}"></label>
+      </fieldset>`;
+  }
+  // Offer the WhatsApp/SMS opt-in only once there's a phone number.
+  function bindDetailFields(root) {
+    root.querySelectorAll("input[name=phone]").forEach(inp => inp.addEventListener("input", () => {
+      const box = inp.form.querySelector(".m-sms");
+      box.hidden = !inp.value.trim();
+      if (box.hidden) box.querySelector("input").checked = false;
+    }));
+  }
+
   function renderJoin(view) {
     const invited = refCode();
     const offers = M.offerCount ? `<small class="em">${esc(t("home.member.offers", { n: M.offerCount }))}</small>` : "";
@@ -227,15 +320,25 @@
           <button type="button" class="linkish" id="m-other">${esc(t("member.otherEmail"))}</button>
           <button type="button" class="linkish" id="m-resend"></button>
         </div>
+      </form>` : M.mode === "signin" ? `
+      <form id="m-join" class="m-form" novalidate>
+        <p>${esc(t("member.signinLead"))}</p>
+        <label for="m-email">${esc(t("member.email"))}<input id="m-email" name="email" type="email" autocomplete="email" inputmode="email" required value="${esc(M.email)}"></label>
+        <button type="submit" class="btn btn-main"${M.busy ? " disabled" : ""}>${esc(t("member.sendSignin"))}</button>
       </form>` : `
       <form id="m-join" class="m-form" novalidate>
         <label for="m-name">${esc(t("member.name"))}<input id="m-name" name="name" autocomplete="name" maxlength="60"></label>
         <label for="m-email">${esc(t("member.email"))}<input id="m-email" name="email" type="email" autocomplete="email" inputmode="email" required value="${esc(M.email)}"></label>
+        ${detailFields({}, "j")}
         <label class="toggle" for="m-marketing"><input type="checkbox" id="m-marketing" name="marketing"> <span>${esc(t("member.marketing"))}</span></label>
         <button type="submit" class="btn btn-main"${M.busy ? " disabled" : ""}>${icon("gift")}${esc(t("member.send"))}</button>
         <p class="hint">${esc(t("member.consent"))}</p>
-        <p class="hint">${esc(t("member.signinNote"))}</p>
+        <p class="hint">${esc(t("member.privacy"))}</p>
       </form>`;
+    const tabs = M.stage === "code" ? "" : `<div class="m-tabs" role="tablist">
+        <button type="button" role="tab" data-mode="join" aria-selected="${M.mode === "join"}">${esc(t("member.tabJoin"))}</button>
+        <button type="button" role="tab" data-mode="signin" aria-selected="${M.mode === "signin"}">${esc(t("member.tabSignIn"))}</button>
+      </div>`;
 
     view.innerHTML = `
       <div class="view-head">
@@ -257,6 +360,7 @@
         <section class="card m-join">
           ${invited ? `<p class="m-invited">${icon("users")}<span>${esc(t("member.invited"))}</span></p>` : ""}
           ${M.status === "off" ? `<p class="m-off">${esc(t("member.off"))}</p>` : ""}
+          ${tabs}
           ${form}
           <p class="m-error" role="alert"${M.error ? "" : " hidden"}>${esc(M.error)}</p>
         </section>
@@ -265,6 +369,8 @@
     $("#m-join")?.addEventListener("submit", e => { e.preventDefault(); sendCode(e.currentTarget); });
     $("#m-verify")?.addEventListener("submit", e => { e.preventDefault(); verify(e.currentTarget.elements.code.value); });
     $("#m-other")?.addEventListener("click", () => { M.stage = "form"; M.error = ""; render(); });
+    view.querySelectorAll("[data-mode]").forEach(b => b.addEventListener("click", () => { M.mode = b.dataset.mode; M.error = ""; render(); }));
+    bindDetailFields(view);
     const rs = $("#m-resend");
     if (rs) {
       const tick = () => {
@@ -302,8 +408,24 @@
     const history = M.ledger.length ? `<ul class="history">${M.ledger.map(x => `
       <li><span>${esc(t(`member.r.${x.reason}`))}<small>${esc(date(x.created_at))}</small></span><b class="mono ${x.points < 0 ? "neg" : ""}">${x.points > 0 ? "+" : ""}${num(x.points)}</b></li>`).join("")}</ul>` : `<p class="hint">—</p>`;
 
+    const details = M.editing ? `
+        <form id="m-details" class="m-form" novalidate>
+          <label for="m-dname">${esc(t("member.name"))}<input id="m-dname" name="name" autocomplete="name" maxlength="60" value="${esc(p.display_name || "")}"></label>
+          ${detailFields(p, "e")}
+          <div class="actions"><button type="submit" class="btn btn-main btn-sm">${esc(t("member.save"))}</button><button type="button" class="btn btn-ghost btn-sm" id="m-cancel">${esc(t("member.cancel"))}</button></div>
+          <p class="m-error" role="alert" hidden></p>
+        </form>` : `
+        <dl class="m-dl">
+          <div><dt>${esc(t("member.emName"))}</dt><dd>${esc(p.display_name || t("member.notSet"))}</dd></div>
+          <div><dt>${esc(t("member.nationality"))}</dt><dd>${esc(p.nationality ? country(p.nationality) : t("member.notSet"))}</dd></div>
+          <div><dt>${esc(t("member.phoneLabel"))}</dt><dd>${esc(p.phone || t("member.notSet"))}</dd></div>
+          <div><dt>${esc(t("member.emergencyLabel"))}</dt><dd>${p.emergency_phone ? esc([p.emergency_name, p.emergency_relation && `(${p.emergency_relation})`, p.emergency_phone].filter(Boolean).join(" ")) : esc(t("member.notSet"))}</dd></div>
+        </dl>
+        <div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="m-edit">${esc(t("member.edit"))}</button></div>`;
+
     view.innerHTML = `
       ${M.setupError ? `<p class="m-error">${esc(t("member.setupMissing"))}</p>` : ""}
+      ${M.profile && !p.nationality && !M.editing ? `<button type="button" class="card m-complete" id="m-complete">${icon("user")}<span>${esc(t("member.complete"))}</span>${icon("next", "next")}</button>` : ""}
       <section class="mcard tier-${s.tier}">
         <div class="mcard-top"><span class="tier-badge">${icon("star")}${esc(tierName(s.tier))}</span><span class="mcard-brand">Miiuz BB</span></div>
         <div class="mcard-name">${esc(name)}</div>
@@ -343,6 +465,11 @@
           <h2 class="m-sub">${esc(t("member.history"))}</h2>
           ${history}
         </section>
+        <section class="card m-details" id="m-details-card">
+          <h2 class="m-sub">${esc(t("member.detailsTitle"))}</h2>
+          ${details}
+          <p class="hint">${esc(t("member.privacy"))}</p>
+        </section>
         <section class="card m-settings">
           <h2 class="m-sub">${esc(t("member.settingsTitle"))}</h2>
           <p class="hint">${esc(M.user.email)}</p>
@@ -363,9 +490,28 @@
       const { error } = await M.sb.from("profiles").update({ marketing_opt_in: on }).eq("id", M.user.id);
       if (error) { e.target.checked = !on; MBB.toast(t("member.failed")); return; }
       if (M.profile) M.profile.marketing_opt_in = on;
-      MBB.toast(t("tools.saved"));
+      MBB.toast(t("common.saved"));
     });
     $("#m-signout").addEventListener("click", async () => { await M.sb.auth.signOut(); MBB.go("home"); });
+    const edit = () => { M.editing = true; render(); $("#m-details-card").scrollIntoView({ block: "start" }); };
+    $("#m-edit")?.addEventListener("click", edit);
+    $("#m-complete")?.addEventListener("click", edit);
+    $("#m-cancel")?.addEventListener("click", () => { M.editing = false; render(); });
+    bindDetailFields(view);
+    $("#m-details")?.addEventListener("submit", async e => {
+      e.preventDefault();
+      const f = e.currentTarget, err = f.querySelector(".m-error");
+      const d = readDetails(f);
+      if (d.error) { err.textContent = d.error; err.hidden = false; return; }
+      d.display_name = f.elements.name.value.trim().slice(0, 60) || null;
+      f.querySelector("[type=submit]").disabled = true;
+      const { error } = await M.sb.from("profiles").update(d).eq("id", M.user.id);
+      if (error) { err.textContent = t("member.failed"); err.hidden = false; f.querySelector("[type=submit]").disabled = false; return; }
+      Object.assign(M.profile, d);
+      M.editing = false;
+      refresh();
+      MBB.toast(t("common.saved"));
+    });
   }
 
   function render() {

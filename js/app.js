@@ -2,13 +2,14 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
-  const VIEWS = ["home", "guide", "plan", "tools", "ask", "member"];
-  let route = { view: "home" }, pendingScroll = null;
+  const VIEWS = ["home", "guide", "plan", "tools", "ask", "member", "search", "place", "credits"];
+  let route = { view: "home" }, pendingScroll = null, moves = 0;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
   function parse() {
     const h = decodeURIComponent((location.hash || "").slice(1));
     if (h.startsWith("guide-")) return { view: "guide", sub: h.slice(6) };
+    if (h.startsWith("place-")) return { view: "place", sub: h.slice(6) };
     return { view: VIEWS.includes(h) ? h : "home" };
   }
   function show() {
@@ -19,6 +20,9 @@
     if (route.view === "home") renderHome();
     if (route.view === "guide") MBB.guide.render(route.sub);
     if (route.view === "member") { MBB.member.hideNudge(false); MBB.member.render(); }
+    if (route.view === "search") MBB.search.render();
+    if (route.view === "place") MBB.place.render(route.sub);
+    if (route.view === "credits") MBB.media.renderCredits($("#view-credits"));
     if (pendingScroll) {
       const el = document.getElementById(pendingScroll);
       pendingScroll = null;
@@ -60,9 +64,11 @@
       ${MBB.member.homeCard()}
       <section class="hero">
         <p class="eyebrow">${esc(t("home.eyebrow"))}</p>
+        <p class="slogan"><span lang="ms">Cuti-cuti Malaysia!</span>${MBB.state.lang === "ms" ? "" : `<small>${esc(t("home.sloganGloss"))}</small>`}</p>
         <h1>${esc(t("home.title"))}</h1>
         <p class="lead">${esc(t("home.lead"))}</p>
-        <div class="city-pick"><span>${esc(t("home.city"))}</span><div class="chips" id="h-city">${cityChips}</div></div>
+        <a class="search-launch" href="#search" data-search>${icon("search")}<span>${esc(t("search.ph"))}</span></a>
+        <div class="city-pick"><span>${esc(t("home.city"))}</span><div class="chips" id="h-city">${cityChips}<a class="chip-link" href="#search" data-search>${icon("search")}${esc(t("home.elsewhere"))}</a></div></div>
       </section>
 
       <div class="glance">
@@ -100,6 +106,25 @@
         </div>
       </section>
 
+      <section class="explore">
+        <div class="section-title"><h2>${esc(t("explore.title"))}</h2><a href="#search" data-search>${esc(t("explore.all"))}</a></div>
+        <p class="hint">${esc(t("explore.lead"))}</p>
+        <div class="mymap-wrap">${MBB.maps.overview()}</div>
+        <div class="strip">${C.destinations.map(MBB.place.destCard).join("")}</div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>${esc(t("home.food"))}</h2><a href="#guide-food">${esc(t("home.more"))}</a></div>
+        <div class="strip">${(C.guide.find(g => g.id === "food")?.dishes || []).map((d, i) => `<a class="pic-card" href="#guide-food" data-scroll="dish-${i}">
+          ${MBB.media.html(`dish:${i}`, { alt: "", ic: "bowl" })}<span><b>${esc(d.ms)}</b><small>${esc(L(d))}</small></span></a>`).join("")}</div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>${esc(t("home.souvenirs"))}</h2><a href="#guide-shopping">${esc(t("home.more"))}</a></div>
+        <div class="strip">${C.souvenirs.map(sv => `<a class="pic-card" href="#guide-shopping" data-scroll="souv-${sv.id}">
+          ${MBB.media.html(`souv:${sv.id}`, { alt: "", ic: "gift" })}<span><b>${esc(L(sv.name))}</b><small>${esc(L(sv.desc))}</small></span></a>`).join("")}</div>
+      </section>
+
       <section>
         <div class="section-title"><h2>${esc(t("home.guide"))}</h2><a href="#guide">${esc(t("home.allTopics"))}</a></div>
         <div class="topics">${C.guide.map(MBB.guide.topicCard).join("")}</div>
@@ -118,16 +143,20 @@
 
   /* ---------- SOS sheet ---------- */
   let sosReturn = null;
+  // Embassy lines shown by language, and also to members of that nationality.
+  const EMBASSY_NATION = { cn: "CN", kr: "KR", jp: "JP" };
   function renderSOS() {
     const C = MBB.C;
     const mine = MBB.store.get("sos", {});
+    const prof = MBB.member.state.profile || {};
+    const em = prof.emergency_phone ? prof : null;
     const hotel = MBB.store.get("hotel", "");
     $("#sos-sheet").innerHTML = `
       <div class="sheet-head">
         <div><h2 id="sos-title">${esc(t("sos.title"))}</h2><p>${esc(t("sos.lead"))}</p></div>
         <button type="button" class="btn btn-ghost btn-sm" id="sos-close">${esc(t("sos.close"))}</button>
       </div>
-      <ul class="sos-list">${C.emergency.filter(e => !e.only || e.only.includes(MBB.state.lang)).map((e, i) => `
+      <ul class="sos-list">${C.emergency.filter(e => !e.only || e.only.includes(MBB.state.lang) || (prof.nationality && EMBASSY_NATION[e.id] === prof.nationality)).map((e, i) => `
         <li class="${i === 0 ? "primary" : ""}">
           <span class="num">${esc(e.num)}</span>
           <span class="lbl">${esc(L(e.label))}</span>
@@ -149,6 +178,9 @@
       </div>
       <div class="sos-block">
         <h3>${esc(t("sos.mine"))}</h3>
+        ${em ? `<div class="sos-em"><span><b>${esc(t("sos.emergencyContact"))}</b><small>${esc([em.emergency_name, em.emergency_relation].filter(Boolean).join(" · "))} ${esc(em.emergency_phone)}</small></span>
+          <a class="icon-btn" href="tel:${esc(em.emergency_phone)}">${icon("phone")}${esc(t("sos.call"))}</a></div>`
+          : `<label for="sos-em">${esc(t("sos.emergencyLocal"))}<input type="text" id="sos-em" inputmode="text" value="${esc(mine.emergency || "")}"></label>`}
         <label for="sos-hotel">${esc(t("sos.hotel"))}<textarea id="sos-hotel" rows="2" placeholder="${esc(t("tools.driverPh"))}">${esc(hotel)}</textarea></label>
         <div class="actions"><button type="button" class="btn btn-main btn-sm" id="sos-driver">${icon("expand")}${esc(t("tools.driverShow"))}</button></div>
         <label for="sos-embassy">${esc(t("sos.embassy"))}<input type="text" id="sos-embassy" inputmode="tel" value="${esc(mine.embassy || "")}"></label>
@@ -162,8 +194,9 @@
     }));
     $("#sos-locate").addEventListener("click", locate);
     $("#sos-hotel").addEventListener("input", e => { MBB.store.set("hotel", e.target.value); MBB.emit("hotel"); });
-    const saveMine = () => MBB.store.set("sos", { embassy: $("#sos-embassy").value, insurance: $("#sos-ins").value });
+    const saveMine = () => MBB.store.set("sos", { ...MBB.store.get("sos", {}), embassy: $("#sos-embassy").value, insurance: $("#sos-ins").value, ...($("#sos-em") ? { emergency: $("#sos-em").value } : {}) });
     $("#sos-embassy").addEventListener("input", saveMine);
+    $("#sos-em")?.addEventListener("input", saveMine);
     $("#sos-ins").addEventListener("input", saveMine);
     $("#sos-driver").addEventListener("click", () => { closeSOS(); MBB.tools.showDriver(); });
   }
@@ -231,6 +264,15 @@
     document.addEventListener("click", e => {
       if (e.target.closest("#present-close")) { MBB.closePresent(); return; }
       if (e.target.closest("[data-sos]")) { openSOS(); return; }
+      // Open search and focus the box in the same tap, so phones show the keyboard.
+      if (e.target.closest("a[data-search]")) {
+        e.preventDefault();
+        if (location.hash !== "#search") { history.pushState(null, "", "#search"); moves++; show(); }
+        MBB.search.focus();
+        return;
+      }
+      // "Back" links return to the previous screen when there is one in this visit.
+      if (e.target.closest("a[data-back]") && moves > 0) { e.preventDefault(); history.back(); return; }
       const a = e.target.closest("a[data-scroll]");
       if (a) { e.preventDefault(); MBB.go(a.getAttribute("href").slice(1), a.dataset.scroll); }
     });
@@ -241,12 +283,14 @@
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
     MBB.on("member", () => { if (route.view === "home") renderHome(); });
     MBB.on("install", () => { if (route.view === "home") renderHome(); });
+    MBB.on("media", () => { if (route.view === "home") renderHome(); if (route.view === "guide" && route.sub) MBB.guide.render(route.sub); });
 
-    window.addEventListener("hashchange", show);
+    window.addEventListener("hashchange", () => { moves++; show(); });
     show();
 
     setInterval(() => { const c = $("#h-clock"); if (c) c.textContent = MBB.localNow().hhmm; }, 20000);
     MBB.refreshFx();
+    MBB.media.load();
     MBB.translator.ensure(MBB.state.lang);
 
     // Offline support when served as a web app (not available inside a Claude artifact).
