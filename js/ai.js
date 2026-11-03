@@ -22,6 +22,8 @@
     } catch {
       ai.mode = "off";
     }
+    // For developers only; travellers see a plain message (ask.footOff).
+    if (ai.mode === "off") console.info("Miiuz: Ask Miiuz and AI translation are off. GET /api/chat must report configured:true. Set ANTHROPIC_API_KEY in Vercel and redeploy (README → Deploy).");
     return ai;
   })();
 
