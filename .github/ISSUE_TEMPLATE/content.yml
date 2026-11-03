@@ -1,0 +1,31 @@
+name: Content update
+description: A fact, price, photo, translation or text that needs changing
+labels: ["content"]
+body:
+  - type: textarea
+    id: where
+    attributes:
+      label: Where in the app?
+      placeholder: Guide → Airport transfers → KLIA Ekspres fare
+    validations:
+      required: true
+  - type: textarea
+    id: change
+    attributes:
+      label: What is it now, and what should it be?
+    validations:
+      required: true
+  - type: input
+    id: source
+    attributes:
+      label: Official source
+      description: Link that confirms the new fact (government, operator, Wikipedia/Commons for photos).
+  - type: checkboxes
+    id: langs
+    attributes:
+      label: Languages affected
+      options:
+        - label: English
+        - label: 简体中文
+        - label: 한국어
+        - label: 日本語

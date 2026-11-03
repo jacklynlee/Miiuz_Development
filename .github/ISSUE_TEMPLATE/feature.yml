@@ -1,0 +1,30 @@
+name: Feature request
+description: A new feature or an improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Who is it for, and what problem does it solve?
+      placeholder: First-time visitors landing at KLIA don't know which SIM to buy…
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What should it do?
+    validations:
+      required: true
+  - type: textarea
+    id: done
+    attributes:
+      label: How will we know it's done?
+      description: A short checklist of what must work.
+      placeholder: |
+        - [ ] Works in EN, 简体中文, 한국어, 日本語
+        - [ ] Works offline / on phones
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      options: [P1 – needed soon, P2 – next up, P3 – nice to have]
