@@ -3,6 +3,10 @@
 ## Why
 Fixes #
 
+## Release
+- Milestone: <!-- same as the issue it fixes, e.g. v1.0.0 – First release -->
+- Change type: <!-- patch (fix) / minor (new feature) / major (breaking change) -->
+
 ## Checks
 - [ ] `npm run check` passes
 - [ ] Tested on a phone-size screen (light and dark)
