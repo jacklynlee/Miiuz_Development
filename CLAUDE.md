@@ -15,7 +15,10 @@ README.md is the full product and setup guide. Read it before larger changes.
   not endpoints. Function limits live in `vercel.json`.
 - **Local dev server:** `server.mjs` serves the static files and the `api/` handlers.
 - **Membership:** Supabase (`supabase/schema.sql`). Points are only ever written by database
-  triggers. Never put the `service_role` key in the app or in Vercel.
+  triggers. The app only uses `SUPABASE_URL` and `SUPABASE_PUBLISHABLE_KEY` (via `api/config.mjs`).
+  Jacklyn's Vercel ↔ Supabase integration also stores server-only secrets in Vercel Production
+  (`SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_SECRET_KEY`, `SUPABASE_JWT_SECRET`, `POSTGRES_*`).
+  **Never read them in app code, never send them to the browser, never copy them elsewhere.**
 - **AI:** Claude via `@anthropic-ai/sdk` in `api/chat.mjs` and `api/translate.mjs`. The default
   model is `claude-opus-5-5`, which `MIIUZ_MODEL` overrides. Prompts and the `update_plan` tool
   live in `js/prompt.js`.

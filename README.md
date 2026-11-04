@@ -108,7 +108,9 @@ address is verified, once per person; members can read but never change their ow
 6. **Project Settings → API**: copy the **Project URL** and the **publishable** key (or legacy
    `anon` key). In Vercel → Environment Variables add `SUPABASE_URL` and
    `SUPABASE_PUBLISHABLE_KEY` (or `SUPABASE_ANON_KEY`), then redeploy. These two are meant to be
-   public; never put the `service_role` / secret key in Vercel or the app.
+   public. If you connect Supabase through Vercel's integration it also adds secret keys
+   (service_role, JWT secret, Postgres password) to Vercel; the app never uses them. Never read
+   them in app code or put them in the browser.
 
 ### Everyday admin (Supabase → SQL Editor or Table Editor)
 
