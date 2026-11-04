@@ -142,6 +142,9 @@ create trigger on_auth_user_created after insert on auth.users
 drop trigger if exists on_auth_user_confirmed on auth.users;
 create trigger on_auth_user_confirmed after update of email_confirmed_at on auth.users
   for each row execute function public.handle_user_confirmed();
+-- Trigger functions are only for the triggers above, never for the app's API.
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
+revoke execute on function public.handle_user_confirmed() from public, anon, authenticated;
 
 -- Keep a record of when someone agreed to (or stopped) receiving offers by email or WhatsApp/SMS.
 create or replace function public.stamp_opt_in() returns trigger
@@ -189,6 +192,7 @@ language sql stable security definer set search_path = public as $$
   where t.tier = public.tier_for((select coalesce(sum(points) filter (where points > 0), 0)::int
                                   from public.points_ledger where user_id = auth.uid()));
 $$;
+revoke execute on function public.my_tier_rank() from public, anon;
 grant execute on function public.my_tier_rank() to authenticated;
 
 -- Guests may see how many member offers are live (not what they are).
@@ -197,6 +201,7 @@ language sql stable security definer set search_path = public as $$
   select count(*)::int from public.member_offers
   where active and starts_at <= now() and (ends_at is null or ends_at > now());
 $$;
+-- Intentionally public: guests see only a number (Supabase advisor flags it; that's expected).
 grant execute on function public.live_offer_count() to anon, authenticated;
 
 -- ---------- access rules ----------
