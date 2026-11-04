@@ -1,3 +1,5 @@
+<!-- Base branch: `staging` (everyday work). Only release PRs and hotfixes go to `main`. -->
+
 ## What changed
 
 ## Why
