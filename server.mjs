@@ -26,6 +26,11 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/config") return config(req, res);
   if (url.pathname === "/api/places") return places(req, res);
   if (url.pathname === "/api/media") return media(req, res);
+  // Vercel Web Analytics only runs on Vercel. Locally its script is empty, so nothing is sent and there's no 404.
+  if (url.pathname.startsWith("/_vercel/insights/")) {
+    res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" }).end("/* Vercel Web Analytics is off locally */\n");
+    return;
+  }
 
   const rel = decodeURIComponent(url.pathname).replace(/^\/+/, "") || "index.html";
   const file = path.resolve(ROOT, rel);

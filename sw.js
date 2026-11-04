@@ -25,8 +25,8 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
-  // Never cache the assistant, member data or live exchange rates.
-  if (url.pathname.startsWith("/api/") || url.hostname === "open.er-api.com" || url.hostname.endsWith(".supabase.co")) return;
+  // Never cache the assistant, member data, live exchange rates or Vercel Web Analytics.
+  if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_vercel/") || url.hostname === "open.er-api.com" || url.hostname.endsWith(".supabase.co")) return;
 
   // Google Fonts: cache after first use so text looks right offline.
   if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {

@@ -202,5 +202,16 @@
 <script src="js/place.js"></script>
 <script src="js/app.js"></script>
 <!-- preview:end -->
+<!-- Vercel Web Analytics (README → Deploy): cookieless, anonymous visit counts. After preview:end, so the
+     claude.ai preview leaves it out. Served by Vercel once Analytics is enabled; a no-op on the local server. -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  // Send only the page and the app screen (#guide-money). Never sign-in tokens (#access_token=…) or invite codes (?ref=).
+  window.va("beforeSend", function (e) {
+    try { var u = new URL(e.url); return Object.assign({}, e, { url: u.origin + u.pathname + (/^#[a-z][\w-]*$/.test(u.hash) ? u.hash : "") }); }
+    catch (err) { return null; }
+  });
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>

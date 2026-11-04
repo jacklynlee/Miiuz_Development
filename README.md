@@ -77,6 +77,12 @@ npm run check          # syntax + data + translation sanity checks
 4. Check that AI is on: open `https://your-app/api/chat`. It must say `"configured":true`. If it
    says `false`, the key is missing from that environment, or you haven't redeployed since adding
    it (a new variable only reaches new deployments).
+5. Visitor numbers (optional): in Vercel → **Analytics**, press **Enable**, then redeploy. The
+   script tag is already at the end of `index.html`; no npm package is needed for a plain HTML
+   site. It's cookieless and anonymous (page, referrer, country, device and browser). The page
+   strips sign-in tokens and invite codes from the address before anything is sent. Until it's
+   enabled, `/_vercel/insights/script.js` returns 404, which does no harm. Mention it in the
+   privacy notice.
 
 Without the key, everything except the AI assistant and AI translation works. Travellers see
 "Ask Miiuz isn't available right now", and the browser console says why.
