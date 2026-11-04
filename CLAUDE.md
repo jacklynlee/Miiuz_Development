@@ -58,8 +58,24 @@ npm run translate -- ms zh-Hant   # bundle AI translations into locales/<code>.j
 
 ## Git and tickets
 
-- Work on a feature branch and open a PR to `main`. `main` is meant to be the production branch
-  on Vercel (project `miiuz-bb`, https://miiuz-bb.vercel.app).
+- **Branches:**
+  - `main` = **live**: Vercel production, https://miiuz-bb.vercel.app.
+  - `staging` = **pre-production**: the fixed staging web address, where releases are tested.
+  - Both are long-lived and protected. Never push to them directly.
+- **Everyday work:** branch from `staging` (`feature/…`, `fix/…`, `claude/…`) and open the PR **to
+  `staging`**, never straight to `main`.
+- **Going live:** only through a release PR `staging` → `main` (see Cutting a release).
+- **Urgent live bug (hotfix):** branch from `main`, PR to `main`, then open a PR `main` →
+  `staging` so staging gets the fix too.
+- Merged branches are deleted. The commits stay in `main` and `staging`, and the PR page keeps
+  the full record (with a "Restore branch" button).
+- **One database:** staging and live share the single live Supabase project
+  (`dldriviphcluivceluqy`).
+  - Anything done on staging (sign-ups, points) is real. Test with own or team accounts only.
+  - Database changes must be additive (new tables or columns). Never rename or drop anything
+    `main` still uses.
+  - Claude only reads from Supabase unless Sze Yee explicitly OKs a change. Schema changes go
+    through `supabase/schema.sql` in a PR.
 - Tickets are GitHub Issues in this repo, using the templates in `.github/ISSUE_TEMPLATE/`.
   Reference the issue in the PR (`Fixes #12`).
 - Labels: type (`bug`, `enhancement`, `content`, `documentation`), area (`area: …`) and
@@ -92,10 +108,20 @@ Versions follow semantic versioning, **MAJOR.MINOR.PATCH**, judged by what trave
 
 ### Cutting a release (when every issue in its milestone is closed)
 
-1. In a PR, set `package.json` `version` to the milestone's version.
-2. After merging, tag `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
-3. Create a GitHub Release from the tag, with generated release notes.
-4. Close the milestone, and create the next one if it doesn't exist.
+1. In a PR to `staging`, set `package.json` `version` to the milestone's version.
+2. Open the **release PR** `staging` → `main`, titled `Release vX.Y.Z`, in the milestone. Its body
+   is this checklist, tested on the staging web address:
+   - [ ] Every issue in the milestone is closed
+   - [ ] `npm run check` passes
+   - [ ] Phone-size screen, light and dark mode, plus one RTL language (e.g. العربية)
+   - [ ] EN, 简体中文, 한국어, 日本語 read correctly on changed screens
+   - [ ] Ask Miiuz answers, Members sign-in works, SOS numbers and the share-location link work
+   - [ ] Offline: reload with the network off and the app still opens
+   - [ ] Facts changed in this release are checked against official sources
+3. Merge it (merge commit, not squash), then tag `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+4. Create a GitHub Release from the tag, with generated release notes.
+5. Close the milestone, and create the next one if it doesn't exist.
+6. Check https://miiuz-bb.vercel.app is updated and works.
 
 - History before this repo: the app was first built in the `mybb-app/` folder of
   `jacklynlee/Github` and moved here with its history on 2026-11-03.
