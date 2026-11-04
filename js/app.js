@@ -49,9 +49,79 @@
     if (!g) return t("home.timeSame");
     return t(g > 0 ? "home.timeAhead" : "home.timeBehind", { h: Math.abs(g) });
   }
+
+  /* ---------- home country: confirm once, change any time ---------- */
+  // Native <select> laid over a button, so one tap opens the phone's own picker.
+  function fromSelect(id, showCurrent) {
+    const O = MBB.origin, cur = showCurrent ? MBB.state.from : null;
+    let coll;
+    try { coll = new Intl.Collator(MBB.locale()); } catch { coll = new Intl.Collator("en"); }
+    const all = O.COUNTRIES.map(c => [c, MBB.countryName(c)]).sort((a, b) => coll.compare(a[1], b[1]));
+    const opt = ([c, n]) => `<option value="${c}"${c === cur ? " selected" : ""}>${esc(n)}</option>`;
+    return `<select id="${id}" aria-label="${esc(t("from.pick"))}">
+      <option value="" disabled${cur ? "" : " selected"}>${esc(t("from.pick"))}</option>
+      <optgroup label="${esc(t("member.natPopular"))}">${O.COMMON.map(c => opt([c, MBB.countryName(c)])).join("")}</optgroup>
+      <optgroup label="${esc(t("member.natAll"))}">${all.map(opt).join("")}</optgroup>
+      <option value="-"${showCurrent && !cur ? " selected" : ""}>${esc(t("from.none"))}</option>
+    </select>`;
+  }
+  function fromCard() {
+    if (MBB.state.fromOk) return "";
+    const c = MBB.state.from;
+    return `<section class="card from-card">
+      <span class="badge-ic">${icon("globe")}</span>
+      <div><b>${esc(c ? t("from.ask", { c: MBB.countryName(c) }) : t("from.askNone"))}</b><small>${esc(t("from.why"))}</small></div>
+      <div class="actions">
+        ${c ? `<button type="button" class="btn btn-main btn-sm" id="from-yes">${esc(t("from.yes"))}</button>` : ""}
+        <label class="btn btn-ghost btn-sm pick">${esc(t(c ? "from.change" : "from.pick"))}${fromSelect("from-card-select", false)}</label>
+      </div>
+    </section>`;
+  }
+  function fromLine() {
+    if (!MBB.state.fromOk) return "";
+    const c = MBB.state.from;
+    return `<div class="city-pick"><span>${esc(t("from.label"))}</span><label class="chip-link pick">${icon("globe")}${esc(c ? MBB.countryName(c) : t("from.none"))}${fromSelect("from-select", true)}</label></div>`;
+  }
+  function bindFrom() {
+    const saved = code => MBB.toast(t("from.saved", { c: code ? MBB.countryName(code) : t("from.none") }));
+    $$("#from-card-select, #from-select").forEach(s => s.addEventListener("change", e => {
+      const v = e.target.value;
+      if (!v) return;
+      const code = v === "-" ? null : v;
+      MBB.setFrom(code); saved(code);
+    }));
+    $("#from-yes")?.addEventListener("click", () => { MBB.setFrom(MBB.state.from); saved(MBB.state.from); });
+  }
+
+  /* ---------- "before you fly" or "in Malaysia" ---------- */
+  // Follows the phone's time zone until the traveller picks; a pick lasts while the time zone says the same.
+  function stage() {
+    const s = MBB.store.get("stage", null);
+    if (s && s.on === MBB.onTrip() && (s.s === "before" || s.s === "landed")) return s.s;
+    return MBB.onTrip() ? "landed" : "before";
+  }
+  function quickList(st) {
+    return st === "before"
+      ? quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
+        quick("#tools", "check", "home.check", "home.q.checkD", "warm", "tool-check") +
+        quick("#guide-connect", "signal", "home.q.connect", "home.q.connectD") +
+        quick("#guide-money", "coins", "home.q.money", "home.q.moneyD") +
+        quick("#plan", "plan", "home.q.plan", "home.q.planD") +
+        quick("#ask", "spark", "home.q.ask", "home.q.askD")
+      : quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
+        quick("#guide-airport", "plane", "home.q.airport", "home.q.airportD") +
+        quick("#guide-money", "coins", "home.q.money", "home.q.moneyD", "warm") +
+        quick("#tools", "pin", "tools.driver", "tools.driverLead", "", "tool-driver") +
+        quick("#plan", "plan", "home.q.plan", "home.q.planD") +
+        quick("#ask", "spark", "home.q.ask", "home.q.askD");
+  }
+
   function renderHome() {
     const C = MBB.C;
     const now = MBB.localNow();
+    const st = stage();
+    const stageChips = ["before", "landed"].map(k =>
+      `<div class="chip"><input type="radio" name="hstage" id="h-stage-${k}" value="${k}"${k === st ? " checked" : ""}><label for="h-stage-${k}">${esc(t(`home.stage.${k}`, { country: L(C.name) }))}</label></div>`).join("");
     const home = MBB.state.home, r = MBB.rate(home);
     let month;
     try { month = new Date(2026, now.month, 1).toLocaleDateString(MBB.locale(), { month: "long" }); } catch { month = String(now.month + 1); }
@@ -69,12 +139,15 @@
         <p class="lead">${esc(t("home.lead"))}</p>
         <a class="search-launch" href="#search" data-search>${icon("search")}<span>${esc(t("search.ph"))}</span></a>
         <div class="city-pick"><span>${esc(t("home.city"))}</span><div class="chips" id="h-city">${cityChips}<a class="chip-link" href="#search" data-search>${icon("search")}${esc(t("home.elsewhere"))}</a></div></div>
+        ${fromLine()}
       </section>
+
+      ${fromCard()}
 
       <div class="glance">
         <div class="tile">
           <span class="k">${icon("clock")}${esc(t("home.time"))}</span>
-          <span class="v" id="h-clock">${now.hhmm}</span>
+          <span class="v" id="h-clock">${esc(MBB.clock(now.minutes))}</span>
           <span class="n">${esc(gapText())}</span>
         </div>
         <a class="tile" href="#tools" data-scroll="tool-fx">
@@ -85,7 +158,7 @@
         <div class="tile">
           <span class="k">${icon("sun")}${esc(t("home.weather", { m: month }))}</span>
           <span class="v text">${esc(L(C.climate[now.month]))}</span>
-          <span class="n">24–33°C</span>
+          <span class="n">${esc(MBB.temp(24, 33))}</span>
         </div>
         <button type="button" class="tile sos" data-sos>
           <span class="k">${icon("phone")}${esc(t("home.sos"))}</span>
@@ -95,15 +168,9 @@
       </div>
 
       <section>
-        <div class="section-title"><h2>${esc(t("home.start"))}</h2></div>
-        <div class="quick">
-          ${quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot")}
-          ${quick("#guide-airport", "plane", "home.q.airport", "home.q.airportD")}
-          ${quick("#guide-money", "coins", "home.q.money", "home.q.moneyD", "warm")}
-          ${quick("#tools", "pin", "tools.driver", "tools.driverLead", "", "tool-driver")}
-          ${quick("#plan", "plan", "home.q.plan", "home.q.planD")}
-          ${quick("#ask", "spark", "home.q.ask", "home.q.askD")}
-        </div>
+        <div class="section-title"><h2 id="h-start">${esc(t(st === "before" ? "home.startBefore" : "home.start"))}</h2></div>
+        <div class="chips stage-pick" id="h-stage">${stageChips}</div>
+        <div class="quick" id="h-quick">${quickList(st)}</div>
       </section>
 
       <section class="explore">
@@ -137,14 +204,19 @@
       </section>`;
 
     $("#h-city").addEventListener("change", e => MBB.setCity(e.target.value));
+    $("#h-stage").addEventListener("change", e => {
+      const s = e.target.value;
+      MBB.store.set("stage", { s, on: MBB.onTrip() });
+      $("#h-start").textContent = t(s === "before" ? "home.startBefore" : "home.start");
+      $("#h-quick").innerHTML = quickList(s); // only the list changes, so focus stays on the chip
+    });
+    bindFrom();
     const inst = MBB.install.card();
     if (inst) { $(".glance").insertAdjacentHTML("afterend", inst); MBB.install.bind(); }
   }
 
   /* ---------- SOS sheet ---------- */
   let sosReturn = null;
-  // Embassy lines shown by language, and also to members of that nationality.
-  const EMBASSY_NATION = { cn: "CN", kr: "KR", jp: "JP" };
   function renderSOS() {
     const C = MBB.C;
     const mine = MBB.store.get("sos", {});
@@ -156,7 +228,7 @@
         <div><h2 id="sos-title">${esc(t("sos.title"))}</h2><p>${esc(t("sos.lead"))}</p></div>
         <button type="button" class="btn btn-ghost btn-sm" id="sos-close">${esc(t("sos.close"))}</button>
       </div>
-      <ul class="sos-list">${C.emergency.filter(e => !e.only || e.only.includes(MBB.state.lang) || (prof.nationality && EMBASSY_NATION[e.id] === prof.nationality)).map((e, i) => `
+      <ul class="sos-list">${C.emergency.filter(MBB.forMe).map((e, i) => `
         <li class="${i === 0 ? "primary" : ""}">
           <span class="num">${esc(e.num)}</span>
           <span class="lbl">${esc(L(e.label))}</span>
@@ -278,6 +350,10 @@
     });
 
     MBB.on("lang", () => { buildLangSelect(); show(); if (!$("#sos").hidden) renderSOS(); });
+    MBB.on("from", () => { show(); if (!$("#sos").hidden) renderSOS(); });
+    // Home-country hints that arrive after start-up. Malaysia is ignored (see js/country.js).
+    MBB.config().then(cfg => MBB.hintFrom("ip", cfg?.country));
+    MBB.on("member", () => MBB.hintFrom("member", MBB.member.state.profile?.nationality));
     MBB.on("city", () => { if (route.view === "home" || route.view === "guide") show(); });
     MBB.on("fx", () => { if (route.view === "home") renderHome(); });
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
@@ -288,7 +364,7 @@
     window.addEventListener("hashchange", () => { moves++; show(); });
     show();
 
-    setInterval(() => { const c = $("#h-clock"); if (c) c.textContent = MBB.localNow().hhmm; }, 20000);
+    setInterval(() => { const c = $("#h-clock"); if (c) c.textContent = MBB.clock(MBB.localNow().minutes); }, 20000);
     MBB.refreshFx();
     MBB.media.load();
     MBB.translator.ensure(MBB.state.lang);

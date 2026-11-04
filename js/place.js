@@ -125,7 +125,7 @@
       .map(({ d, x }) => ({ href: `#place-dest-${d.id}`, name: L(d.name), sub: stateName(d.state), photo: `dest:${d.id}`, ic: DEST_ICON[d.kind], d: x, lat: d.lat, lng: d.lng }));
     return { pois, dests };
   }
-  const distance = n => (n < 1 ? t("place.m", { n: Math.max(50, Math.round(n * 20) * 50) }) : t("place.km", { n: n < 10 ? n.toFixed(1) : Math.round(n) }));
+  const distance = km => MBB.dist(km); // miles first for travellers from the US
 
   const card = x => `<a class="near-card" href="${x.href}">${MBB.media.html(x.photo, { alt: "", ic: x.ic })}<span><b>${esc(x.name)}</b><small>${esc([distance(x.d), x.sub].filter(Boolean).join(" · "))}</small></span></a>`;
 

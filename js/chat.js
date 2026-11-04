@@ -89,6 +89,7 @@
   }
 
   /* ---------- context ---------- */
+  const englishName = c => { try { return new Intl.DisplayNames(["en"], { type: "region" }).of(c) || c; } catch { return c; } };
   function contextText() {
     const plan = MBB.planner.snapshot();
     const now = new Intl.DateTimeFormat("en-GB", { timeZone: MBB.C.timezone, weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
@@ -97,6 +98,7 @@
       localTime: `${now} (${MBB.C.name.en} time, UTC+8)`,
       appLang: MBB.LANGS[MBB.state.lang].name,
       replyLang: $("#c-lang").value,
+      from: MBB.state.from ? `${MBB.state.from} (${englishName(MBB.state.from)})${MBB.state.fromOk ? "" : ", guessed by the app"}` : null,
       home, rate: r ? (r >= 100 ? r.toFixed(0) : r.toFixed(3)) : null, rateLive: MBB.fx.live,
       cityName: MBB.C.cities[plan.city].en,
       plan,

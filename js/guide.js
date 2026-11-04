@@ -55,7 +55,7 @@
         <ul>${s.items.map(it => `<li>${esc(L(it))}</li>`).join("")}</ul>
       </section>`;
     }).join("");
-    const shown = (g.links || []).filter(l => !l.only || l.only.includes(MBB.state.lang));
+    const shown = (g.links || []).filter(MBB.forMe);
     const links = shown.length ? `<div>
         <div class="section-title"><h2>${esc(t("guide.links"))}</h2></div>
         <div class="links">${shown.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(L(l.label))}${icon("external")}</a>`).join("")}</div>

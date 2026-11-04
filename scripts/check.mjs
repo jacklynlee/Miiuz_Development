@@ -87,7 +87,8 @@ for (const l of ["ko", "ja"]) {
   for (const p of C.pois) if (!o.pois[p.id] || o.pois[p.id].length !== 3) fail(w(`place ${p.id}`));
   for (const k of Object.keys(C.cities)) if (!o.cities[k]) fail(w(`city ${k}`));
   if (o.climate.length !== 12) fail(w("climate"));
-  for (const e of C.emergency) if ((!e.only || e.only.includes(l)) && !o.emergency[e.id]) fail(w(`emergency ${e.id}`));
+  const own = { ko: "KR", ja: "JP" }[l]; // a hand-translated language must cover its own country's lines
+  for (const e of C.emergency) if ((!e.for || e.for.includes(own)) && !o.emergency[e.id]) fail(w(`emergency ${e.id}`));
   for (const g of C.guide) {
     const v = o.guide[g.id];
     if (!v) { fail(w(`guide ${g.id}`)); continue; }
@@ -100,6 +101,24 @@ for (const l of ["ko", "ja"]) {
   for (const c of C.phrases) if (!o.phrases[c.id] || o.phrases[c.id].items.length !== c.items.length) fail(w(`phrases ${c.id}`));
   for (const g of C.checklist) for (const it of g.items) if (!o.checklist[g.id]?.items[it.id]) fail(w(`checklist ${it.id}`));
 }
+
+// Home country (js/country.js): codes, currencies and detection.
+const O = require(path.join(root, "js/country.js"));
+for (const x of [...C.emergency, ...C.guide.flatMap(g => g.links || [])]) {
+  if (x.only) fail(`"only" (by language) was replaced by "for" (by home country): ${x.id || x.url}`);
+  for (const c of x.for || []) if (!O.valid(c)) fail(`unknown country code "${c}" in for: ${x.id || x.url}`);
+}
+for (const c of O.COMMON) if (!O.valid(c)) fail(`country.js COMMON: unknown code ${c}`);
+for (const [c, cur] of Object.entries(O.CURRENCY)) if (!O.valid(c) || !/^[A-Z]{3}$/.test(cur)) fail(`country.js CURRENCY: ${c} → ${cur}`);
+const guess = (o, want) => { const got = O.detect(o).code; if (got !== want) fail(`country.detect(${JSON.stringify(o)}) gave ${got}, expected ${want}`); };
+guess({ languages: ["en-US"], timeZone: "America/New_York" }, "US");
+guess({ languages: ["en-US"], timeZone: "Asia/Kuala_Lumpur" }, "US");
+guess({ languages: ["zh-CN"], timeZone: "Asia/Kuala_Lumpur" }, "CN");
+guess({ languages: ["zh-Hans-CN"], timeZone: "Asia/Shanghai" }, "CN");
+guess({ languages: ["en-GB"], timeZone: "Asia/Kuala_Lumpur", ip: "CN" }, "CN"); // roaming SIM
+guess({ languages: ["en-MY"], timeZone: "Asia/Kuala_Lumpur", ip: "MY", lang: "en" }, null); // Malaysia is never a guess
+guess({ languages: ["zh-Hans"], timeZone: "Asia/Kuala_Lumpur", lang: "zh" }, "CN");
+guess({ languages: ["en-US"], timeZone: "America/Chicago", member: "CN" }, "CN"); // nationality wins
 
 // AI-translation inventory and prompts.
 const entries = E.collect(STR, C);

@@ -31,6 +31,15 @@ Languages use BCP 47 tags (`js/locales.js`); numbers, dates and currencies are f
 the browser's `Intl` APIs for the chosen locale, and Arabic, Persian, Hebrew and Urdu switch the
 layout to right-to-left. The phone's language is detected on first open.
 
+**Home country is separate from language** (`js/country.js`). Language follows the phone; the
+home country decides the currency, date and time formats (English + US → `en-US`, 12-hour
+time), units (miles and °F for the US, metric in brackets) and country facts (content marked
+`for: ["CN"]`: consular hotline, embassy links, Amap links). It's guessed without permission
+prompts, strongest first: a member's nationality, the phone's time zone (if not Malaysia's), the
+request's country from Vercel (`/api/config`, if not Malaysia), the region in the phone's
+language settings, then the language's usual country. Home asks once ("Home country: United
+States? Yes · Change"); the choice is saved on the phone and can be changed from Home.
+
 - **Hand-translated:** English, 简体中文, 한국어, 日本語 — interface and all content, with
   facts adapted per audience (visa rules, payment apps, consular hotline, plug/voltage).
 - **39 more languages** (繁體中文, 粵語, Bahasa Melayu, Indonesia, ไทย, Tiếng Việt, Filipino, हिन्दी,
@@ -200,6 +209,7 @@ css/app.css             styles (design tokens, light/dark, per-script fonts, RTL
 js/data/malaysia.js     country pack: cities, places, guide, phrases, emergency, checklist (zh + en)
 js/data/malaysia.ko.js  Korean pack      js/data/malaysia.ja.js  Japanese pack
 js/i18n.js              interface strings      js/locales.js   language list (BCP 47)
+js/country.js           home country: detection, currency, 12-hour countries, country list
 js/core.js              state, storage, helpers, icons
 js/translate.js         on-demand AI translation    js/i18n-entries.js  translatable string inventory
 js/ai.js                where AI runs (server / Claude artifact / off)
@@ -212,7 +222,7 @@ js/media.js             photos with credits, credits page
 js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
 js/install.js           "install the app" card (Android prompt / iPhone instructions)
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
-api/config.mjs          hands the public Supabase URL + key to the app
+api/config.mjs          hands the public Supabase URL + key and the visitor's country to the app
 api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)
 supabase/schema.sql     membership database: tables, points triggers, tiers, access rules
 sw.js · manifest.webmanifest · icons/   PWA

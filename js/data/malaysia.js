@@ -190,15 +190,15 @@
         tip: { zh: "可以接着去鸡场街。", en: "Continue on to Jonker Street." } },
     ],
 
-    // `only` = shown only in those app languages (consular lines for that country's citizens).
+    // `for` = shown only to travellers from those home countries (ISO codes, see js/country.js), and to members of that nationality.
     emergency: [
       { id: "999", num: "999", tel: "999", label: { zh: "警察 · 救护车", en: "Police · Ambulance" }, note: { zh: "全国通用，免费拨打", en: "Nationwide and free" } },
       { id: "112", num: "112", tel: "112", label: { zh: "手机紧急号码", en: "Emergency from a mobile" }, note: { zh: "用手机拨打，会转接紧急服务", en: "From any mobile; connects to emergency services" } },
       { id: "994", num: "994", tel: "994", label: { zh: "消防与救援", en: "Fire & rescue" }, note: { zh: "火灾、受困、水灾", en: "Fire, entrapment, floods" } },
       { id: "tourist", num: "03-2149 6590", tel: "+60321496590", label: { zh: "吉隆坡旅游警察", en: "Tourist Police (KL)" }, note: { zh: "Jalan Ampang 的马来西亚旅游中心（MaTiC），柜台 8:00–17:00；其他时间打 999", en: "At MaTiC on Jalan Ampang, counter 8am–5pm; otherwise call 999" } },
-      { id: "cn", only: ["zh"], num: "+86 10 12308", tel: "+861012308", label: { zh: "外交部全球领事保护热线", en: "China consular hotline (12308)" }, note: { zh: "中国公民 24 小时求助，可转接驻马来西亚使馆", en: "24h, for Chinese citizens; can connect you to the embassy" } },
-      { id: "kr", only: ["ko"], num: "+82 2 3210 0404", tel: "+82232100404", label: { zh: "韩国外交部领事呼叫中心", en: "Korea consular call center" }, note: { zh: "韩国公民 24 小时求助", en: "24h, for Korean citizens" } },
-      { id: "jp", only: ["ja"], num: "+60 3 2177 2600", tel: "+60321772600", label: { zh: "日本驻马来西亚大使馆", en: "Embassy of Japan in Malaysia" }, note: { zh: "日本公民求助（吉隆坡）", en: "For Japanese citizens (Kuala Lumpur)" } },
+      { id: "cn", for: ["CN"], num: "+86 10 12308", tel: "+861012308", label: { zh: "外交部全球领事保护热线", en: "China consular hotline (12308)" }, note: { zh: "中国公民 24 小时求助，可转接驻马来西亚使馆", en: "24h, for Chinese citizens; can connect you to the embassy" } },
+      { id: "kr", for: ["KR"], num: "+82 2 3210 0404", tel: "+82232100404", label: { zh: "韩国外交部领事呼叫中心", en: "Korea consular call center" }, note: { zh: "韩国公民 24 小时求助", en: "24h, for Korean citizens" } },
+      { id: "jp", for: ["JP"], num: "+60 3 2177 2600", tel: "+60321772600", label: { zh: "日本驻马来西亚大使馆", en: "Embassy of Japan in Malaysia" }, note: { zh: "日本公民求助（吉隆坡）", en: "For Japanese citizens (Kuala Lumpur)" } },
     ],
 
     climate: [
@@ -450,9 +450,9 @@
           ] },
         ],
         links: [
-          { only: ["zh"], label: { zh: "中国驻马来西亚大使馆", en: "Chinese Embassy in Malaysia" }, url: "http://my.china-embassy.gov.cn" },
-          { only: ["ko"], label: { zh: "韩国驻马来西亚大使馆", en: "Korean Embassy in Malaysia" }, url: "https://overseas.mofa.go.kr/my-ko/index.do" },
-          { only: ["ja"], label: { zh: "日本驻马来西亚大使馆", en: "Embassy of Japan in Malaysia" }, url: "https://www.my.emb-japan.go.jp" },
+          { for: ["CN"], label: { zh: "中国驻马来西亚大使馆", en: "Chinese Embassy in Malaysia" }, url: "http://my.china-embassy.gov.cn" },
+          { for: ["KR"], label: { zh: "韩国驻马来西亚大使馆", en: "Korean Embassy in Malaysia" }, url: "https://overseas.mofa.go.kr/my-ko/index.do" },
+          { for: ["JP"], label: { zh: "日本驻马来西亚大使馆", en: "Embassy of Japan in Malaysia" }, url: "https://www.my.emb-japan.go.jp" },
         ],
       },
       {

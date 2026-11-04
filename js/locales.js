@@ -53,7 +53,8 @@
 
   // Pick the best supported language for a list of BCP 47 tags (e.g. navigator.languages).
   // Only hand-translated languages are chosen automatically, so nobody waits for AI on first open.
-  function negotiate(tags) {
+  // `fallback` is returned when none of the tags is supported (core.js passes null to try the home country next).
+  function negotiate(tags, fallback = "en") {
     for (const raw of tags || []) {
       const t = String(raw).toLowerCase();
       if (/^zh-(tw|hk|mo|hant)/.test(t)) continue; // Traditional Chinese is AI-translated; offer it, don't auto-pick it
@@ -61,7 +62,7 @@
       const key = base === "zh" ? "zh" : base;
       if (LANGS[key]?.full) return key;
     }
-    return "en";
+    return fallback;
   }
 
   const api = { LANGS, negotiate };

@@ -13,12 +13,34 @@
   };
   MBB.store = store;
 
-  /* ---------- languages ---------- */
-  // The language list lives in js/locales.js.
-  let lang = store.get("lang", MBB.negotiateLang(navigator.languages || [navigator.language]));
-  if (!MBB.LANGS[lang]) lang = "en";
-  MBB.locale = () => MBB.LANGS[MBB.state.lang].locale;
-  MBB.isChinese = () => ["zh", "zh-Hant", "yue"].includes(MBB.state.lang);
+  /* ---------- languages and home country ---------- */
+  // The language list lives in js/locales.js, the home-country rules in js/country.js.
+  const O = MBB.origin;
+  const phoneLangs = navigator.languages || [navigator.language];
+  let phoneTz = "";
+  try { phoneTz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch { /* old browser */ }
+  // Guess signals; the server's IP country and a member's nationality arrive later (MBB.hintFrom).
+  const sig = { member: "", timeZone: phoneTz, ip: store.get("ipc", ""), languages: phoneLangs };
+
+  // Phone language first. If the app doesn't have it, the home country's language, else English.
+  let lang = store.get("lang", null);
+  if (!MBB.LANGS[lang]) lang = MBB.negotiateLang(phoneLangs, null) || O.COUNTRY_LANG[O.detect(sig).code] || "en";
+
+  // Dates, times and numbers: the language, written the home country's way (English + US → en-US).
+  // Only combinations the browser really knows are used; otherwise the language's own locale.
+  let loc = { key: "", value: "" };
+  MBB.locale = () => {
+    const info = MBB.LANGS[MBB.state.lang], c = MBB.state.from, key = MBB.state.lang + "|" + c;
+    if (loc.key === key) return loc.value;
+    let value = info.locale;
+    if (c && c !== "MY") {
+      const base = { zh: "zh-Hans", "zh-Hant": "zh-Hant", yue: "zh-Hant" }[MBB.state.lang] || info.locale.split("-")[0];
+      const want = MBB.state.lang === "zh" && c === "CN" ? "zh-CN" : `${base}-${c}`;
+      try { if (new Intl.DateTimeFormat(want).resolvedOptions().locale === want) value = want; } catch { /* keep the language's */ }
+    }
+    loc = { key, value };
+    return value;
+  };
   MBB.applyDir = () => {
     const info = MBB.LANGS[MBB.state.lang];
     document.documentElement.lang = info.tag;
@@ -26,11 +48,17 @@
   };
 
   /* ---------- state ---------- */
+  // country = the destination's data pack. from = the traveller's home country (null = not known / not said).
+  // fromOk = the traveller confirmed or chose it, so guesses no longer change it.
+  const saved = store.get("from", null);
+  const first = saved ? { code: O.valid(saved.c) ? saved.c : null, by: "user" } : O.detect({ ...sig, lang });
   MBB.state = {
     lang,
     country: "my",
     city: store.get("city", "kl"),
-    home: store.get("home", MBB.LANGS[lang].currency),
+    from: first.code, fromBy: first.by, fromOk: Boolean(saved),
+    // Home currency: the traveller's own pick in the converter, else the home country's, else the language's.
+    home: store.get("home", O.currencyOf(first.code) || MBB.LANGS[lang].currency),
   };
   MBB.C = MBB.countries[MBB.state.country];
   if (!MBB.C.cities[MBB.state.city]) MBB.state.city = "kl";
@@ -87,6 +115,43 @@
     MBB.state.home = cur; store.set("home", cur);
     MBB.emit("fx");
   };
+  // The traveller confirmed or chose their home country (null = prefer not to say). Currency follows it.
+  MBB.setFrom = code => {
+    code = O.valid(code) ? code : null;
+    store.set("from", { c: code });
+    Object.assign(MBB.state, { from: code, fromBy: "user", fromOk: true });
+    const cur = O.currencyOf(code);
+    if (cur) { MBB.state.home = cur; store.set("home", cur); }
+    MBB.emit("from"); MBB.emit("fx");
+  };
+  // A new guess signal: "ip" (country of the request, from /api/config) or "member" (profile nationality).
+  // Ignored once the traveller has chosen. Currency only follows if they never picked one themselves.
+  MBB.hintFrom = (key, value) => {
+    value = O.valid(value) ? value : "";
+    if (sig[key] === value) return;
+    sig[key] = value;
+    if (key === "ip" && value && value !== "MY") store.set("ipc", value); // remembered for offline and later visits
+    if (MBB.state.fromOk) return;
+    const g = O.detect({ ...sig, lang: MBB.state.lang });
+    MBB.state.fromBy = g.by;
+    if (g.code === MBB.state.from) return;
+    MBB.state.from = g.code;
+    const cur = O.currencyOf(g.code);
+    if (cur && store.get("home", null) == null) MBB.state.home = cur;
+    MBB.emit("from"); MBB.emit("fx");
+  };
+  MBB.countryName = code => {
+    if (!code) return "";
+    try { return new Intl.DisplayNames([MBB.locale(), "en"], { type: "region" }).of(code) || code; } catch { return code; }
+  };
+  // Country-specific lines (`for: ["CN"]`): shown to travellers from that country and to members of that nationality.
+  MBB.forMe = x => !x.for || x.for.includes(MBB.state.from) || x.for.includes(MBB.member?.state?.profile?.nationality);
+  // Is the phone on Malaysian time? Then the traveller has most likely arrived.
+  MBB.onTrip = () => O.LOCAL_TZ.includes(phoneTz);
+
+  // Public settings from the server (Supabase keys, the request's country). Fetched once per visit.
+  let cfg = null;
+  MBB.config = () => (cfg ||= fetch("api/config", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null));
 
   /* ---------- text ---------- */
   MBB.L = v => {
@@ -115,7 +180,32 @@
 
   /* ---------- time ---------- */
   MBB.toMin = s => { const [h, m] = String(s).split(":").map(Number); return h * 60 + m; };
+  // HH:MM, for data (time inputs, the plan sent to Miiuz). Use MBB.clock for what travellers read.
   MBB.fmt = m => { m = Math.round(m); const h = Math.floor(m / 60) % 24, mm = ((m % 60) + 60) % 60; return `${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`; };
+  // Clock time to show: 14:30, or 2:30 PM where the home country reads 12-hour time.
+  MBB.h12 = () => O.H12.has(MBB.state.from);
+  MBB.clock = m => {
+    const s = MBB.fmt(m);
+    if (!MBB.h12()) return s;
+    const [h, mm] = s.split(":").map(Number);
+    try { return new Intl.DateTimeFormat(MBB.locale(), { hour: "numeric", minute: "2-digit", hour12: true, timeZone: "UTC" }).format(Date.UTC(2026, 0, 1, h, mm)); } catch { return s; }
+  };
+
+  /* ---------- units (miles and °F for travellers from the US, metric in brackets) ---------- */
+  MBB.imperial = () => MBB.state.from === "US";
+  MBB.dist = km => {
+    const metric = km < 1 ? MBB.t("place.m", { n: Math.max(50, Math.round(km * 20) * 50) }) : MBB.t("place.km", { n: km < 10 ? km.toFixed(1) : Math.round(km) });
+    if (!MBB.imperial()) return metric;
+    const mi = km * 0.621371;
+    const us = mi < 0.1 ? MBB.t("place.ft", { n: Math.max(100, Math.round((mi * 5280) / 50) * 50) }) : MBB.t("place.mi", { n: mi < 10 ? mi.toFixed(1) : Math.round(mi) });
+    return `${us} (${metric})`;
+  };
+  MBB.temp = (lo, hi) => {
+    const c = `${lo}–${hi}°C`;
+    if (!MBB.imperial()) return c;
+    const f = x => Math.round((x * 9) / 5 + 32);
+    return `${f(lo)}–${f(hi)}°F (${c})`;
+  };
   // Clock and weekday in the destination's time zone, whatever the phone is set to.
   MBB.localNow = () => {
     const parts = new Intl.DateTimeFormat("en-GB", { timeZone: MBB.C.timezone, hour: "2-digit", minute: "2-digit", weekday: "short", month: "numeric", day: "numeric", hourCycle: "h23" })
