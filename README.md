@@ -65,8 +65,12 @@ npm run check          # syntax + data + translation sanity checks
    - `MIIUZ_MODEL` (default `claude-opus-5-5`)
    - `MIIUZ_ALLOWED_ORIGINS` to only accept AI requests from your own domain (recommended)
    - `MIIUZ_RATE_LIMIT` / `MIIUZ_TRANSLATE_LIMIT` per-IP request limits
+4. Check that AI is on: open `https://your-app/api/chat`. It must say `"configured":true`. If it
+   says `false`, the key is missing from that environment, or you haven't redeployed since adding
+   it (a new variable only reaches new deployments).
 
-Without the key, everything except the AI assistant and AI translation works.
+Without the key, everything except the AI assistant and AI translation works. Travellers see
+"Ask Miiuz isn't available right now", and the browser console says why.
 
 ## Membership (Supabase)
 
