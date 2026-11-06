@@ -35,9 +35,9 @@ npm install
 npm run dev            # http://localhost:3000, AI features off
 npm run dev:env        # uses .env (ANTHROPIC_API_KEY) for AI chat + translation
 npm run check          # syntax, data and translation checks: run before every commit
+npm run emails         # rebuild the sign-in emails in supabase/email/ (then paste them into Supabase)
 npm run build:preview  # single-file claude.ai preview
 npm run translate -- ms zh-Hant   # bundle AI translations into locales/<code>.json
-npm run emails         # rebuild the sign-in emails in supabase/email/ (then paste them into Supabase)
 ```
 
 ## Where things live
