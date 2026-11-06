@@ -55,7 +55,7 @@
     <a href="#guide" data-tab="guide"><span class="tab-ic" data-icon="guide"></span><span data-i18n="nav.guide">指南</span></a>
     <a href="#plan" data-tab="plan"><span class="tab-ic" data-icon="plan"></span><span data-i18n="nav.plan">行程</span></a>
     <a href="#tools" data-tab="tools"><span class="tab-ic" data-icon="tools"></span><span data-i18n="nav.tools">工具</span></a>
-    <a href="#ask" data-tab="ask"><span class="tab-ic" data-icon="ask"></span><span data-i18n="nav.ask">问 Miiuz</span></a>
+    <a href="#ask" data-tab="ask"><span class="tab-soon" id="tab-soon" data-i18n="ask.soonTag" hidden>即将</span><span class="tab-ic" data-icon="ask"></span><span data-i18n="nav.ask">问 Miiuz</span></a>
   </div>
 </nav>
 
@@ -137,6 +137,16 @@
   <section class="view" id="view-credits" data-view="credits" hidden></section>
 
   <section class="view" id="view-ask" data-view="ask" hidden>
+    <div class="card ask-soon" id="ask-soon" hidden>
+      <span class="chat-avatar" data-icon="spark"></span>
+      <p><span class="pill teal" data-i18n="ask.soon">即将推出</span></p>
+      <h1 data-i18n="ask.title">Miiuz 旅行助手</h1>
+      <p data-i18n="ask.soonLead"></p>
+      <div class="actions">
+        <a class="btn btn-ai" href="#guide" data-i18n="ask.soonGuide">看旅行指南</a>
+        <a class="btn btn-ghost" href="#plan" data-i18n="home.q.plan">排一条今天的路线</a>
+      </div>
+    </div>
     <div class="chat" id="chat">
       <div class="chat-head">
         <div class="chat-title">

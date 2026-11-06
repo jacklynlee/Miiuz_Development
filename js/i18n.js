@@ -62,6 +62,10 @@
     "home.q.moneyD": { zh: "支付宝、微信能用吗？要给小费吗？", en: "Cards, QR payments and tipping", ko: "카드, QR 결제, 팁 문화", ja: "カード・QR決済・チップ事情" },
     "home.q.plan": { zh: "排一条今天的路线", en: "Plan today's route", ko: "오늘 동선 짜기", ja: "今日のルートを作る" },
     "home.q.planD": { zh: "按时间、性格和兴趣自动生成", en: "Built around your time, style and interests", ko: "시간·스타일·관심사에 맞춰 자동 생성", ja: "時間・スタイル・興味に合わせて自動作成" },
+    "home.q.weather": { zh: "天气与带什么", en: "Weather & packing", ko: "날씨와 준비물", ja: "天気と持ち物" },
+    "home.q.weatherD": { zh: "全年湿热，午后常下雨", en: "Hot and humid all year, with afternoon storms", ko: "1년 내내 덥고 습하고 오후엔 소나기", ja: "一年中蒸し暑く、午後はスコール" },
+    "home.q.food": { zh: "吃什么", en: "What to eat", ko: "뭐 먹지?", ja: "何を食べる？" },
+    "home.q.foodD": { zh: "必吃美食，大排档怎么点", en: "Dishes to try and how hawker centres work", ko: "꼭 먹어 볼 음식과 호커센터 이용법", ja: "名物料理と屋台街の使い方" },
     "home.q.ask": { zh: "问 Miiuz", en: "Ask Miiuz", ko: "Miiuz에게 물어보기", ja: "Miiuzに聞く" },
     "home.q.askD": { zh: "用任何语言提问，还能帮你改行程", en: "Ask in any language; it can edit your plan too", ko: "어떤 언어로든 질문하고 일정도 바꿔요", ja: "どの言語でも質問OK、プランの変更も" },
 
@@ -199,6 +203,10 @@
     "sos.mineNote": { zh: "只保存在这台设备上，出发前填好。", en: "Stored on this device only. Fill these in before you travel.", ko: "이 기기에만 저장돼요. 출발 전에 입력해 두세요.", ja: "この端末にのみ保存されます。出発前に入力しておきましょう。" },
     "sos.close": { zh: "关闭", en: "Close", ko: "닫기", ja: "閉じる" },
 
+    "ask.soon": { zh: "即将推出", en: "Coming soon", ko: "곧 출시", ja: "近日公開" },
+    "ask.soonTag": { zh: "即将", en: "Soon", ko: "곧", ja: "近日" },
+    "ask.soonLead": { zh: "Miiuz AI 旅行助手快要上线了：用你的语言随便问，它会查资料回答，还能帮你改行程。在那之前，旅行指南、行程规划和工具都能用，离线也可以。", en: "Miiuz's AI travel assistant is on its way: ask anything in your own language, and it will look things up and adjust your day plan. Until then, the guide, the day planner and the tools are all here, and they work offline.", ko: "Miiuz AI 여행 도우미가 곧 나와요. 어떤 언어로든 물어보면 찾아보고 답해 주고, 일정도 바꿔 줘요. 그전까지는 여행 가이드, 일정 짜기, 도구를 모두 쓸 수 있고 오프라인에서도 돼요.", ja: "MiiuzのAI旅アシスタントはまもなく登場します。好きな言語で質問すると、調べて答え、プランも調整してくれます。それまでは旅のガイド、プラン作成、ツールをすべて使えます。オフラインでもOKです。" },
+    "ask.soonGuide": { zh: "看旅行指南", en: "Open the travel guide", ko: "여행 가이드 보기", ja: "旅のガイドを見る" },
     "ask.title": { zh: "Miiuz 旅行助手", en: "Miiuz travel assistant", ko: "Miiuz 여행 도우미", ja: "Miiuz 旅のアシスタント" },
     "ask.lead": { zh: "用你习惯的语言问。Miiuz 会查资料再回答，还能直接帮你改行程。", en: "Ask in your own language. Miiuz looks things up, answers in your language and can edit your plan.", ko: "편한 언어로 물어보세요. Miiuz가 찾아보고 답하며 일정도 바로 고쳐 줘요.", ja: "普段の言葉で質問してください。Miiuzが調べて答え、プランも直接変更できます。" },
     "ask.lang": { zh: "回复语言", en: "Reply in", ko: "답변 언어", ja: "回答の言語" },

@@ -276,6 +276,7 @@
     $("#p-copy").addEventListener("click", () => {
       MBB.copy(planText()).then(ok => MBB.toast(ok ? t("plan.copied") : t("common.copyFail")));
     });
+    $("#p-ask").hidden = !MBB.features.ask;
     $("#p-ask").addEventListener("click", e => { e.preventDefault(); MBB.chat.prefill(""); });
     MBB.on("lang", () => { buildForm(); if (current) render(current); });
     MBB.on("from", () => { if (current) render(current); });

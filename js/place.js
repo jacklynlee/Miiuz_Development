@@ -230,10 +230,10 @@
 
       <div id="pl-wiki"></div>
 
-      <section class="card pl-ask">
+      ${MBB.features.ask ? `<section class="card pl-ask">
         <h2>${icon("spark")}${esc(t("place.askTitle"))}</h2>
         <div class="chips">${askChips(P)}</div>
-      </section>
+      </section>` : ""}
 
       ${cityPicks.length ? `<section><div class="section-title"><h2>${esc(t("place.cityPicks", { c: P.name }))}</h2></div><div class="near-grid">${cityPicks.map(card).join("")}</div></section>` : ""}
       ${pois.length && P.kind !== "city" ? `<section><div class="section-title"><h2>${esc(t("place.nearPicks"))}</h2></div><div class="near-grid">${pois.map(card).join("")}</div></section>` : ""}
@@ -265,7 +265,7 @@
           () => { out.textContent = t("sos.locFail"); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 });
       } catch { out.textContent = t("sos.locFail"); }
     });
-    view.querySelector(".pl-ask").addEventListener("click", e => {
+    view.querySelector(".pl-ask")?.addEventListener("click", e => {
       const b = e.target.closest("[data-ask]");
       if (b) MBB.chat.askAbout(askText(P, b.dataset.ask));
     });
