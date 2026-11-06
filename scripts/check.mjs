@@ -1,7 +1,7 @@
 /* Quick sanity checks: script syntax, data integrity, translations. Usage: npm run check */
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,7 +70,6 @@ if (C.photos.dishes.length !== dishes.length || C.dishNames.length !== dishes.le
 if (!MAP.land || !MAP.near || !(MAP.k > 0)) fail("map data missing (run scripts/build-map.mjs)");
 
 // Every literal t("key") in the app must exist (dynamic keys like t(`ptype.${k}`) are checked by prefix).
-const { readFileSync } = await import("node:fs");
 for (const f of readdirSync(path.join(root, "js")).filter(f => f.endsWith(".js"))) {
   const src = readFileSync(path.join(root, "js", f), "utf8");
   for (const [, key] of src.matchAll(/\bt\(\s*"([a-zA-Z][\w.]*)"/g)) if (!STR[key]) fail(`${f}: unknown string "${key}"`);
@@ -119,6 +118,15 @@ guess({ languages: ["en-GB"], timeZone: "Asia/Kuala_Lumpur", ip: "CN" }, "CN"); 
 guess({ languages: ["en-MY"], timeZone: "Asia/Kuala_Lumpur", ip: "MY", lang: "en" }, null); // Malaysia is never a guess
 guess({ languages: ["zh-Hans"], timeZone: "Asia/Kuala_Lumpur", lang: "zh" }, "CN");
 guess({ languages: ["en-US"], timeZone: "America/Chicago", member: "CN" }, "CN"); // nationality wins
+
+// No CDNs or Google Fonts in what the browser loads: blocked or unreliable in mainland China (#18).
+// Third-party files live in vendor/ and fonts/ (npm run vendor). The claude.ai preview is exempt.
+const shipped = ["index.html", "sw.js", "css/app.css", "css/fonts.css", ...readdirSync(path.join(root, "js")).filter(f => f.endsWith(".js")).map(f => `js/${f}`)];
+for (const f of shipped) {
+  const src = readFileSync(path.join(root, f), "utf8");
+  for (const host of ["cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"]) if (src.includes(host)) fail(`${f} loads from ${host}; vendor it instead (npm run vendor)`);
+}
+for (const m of readFileSync(path.join(root, "sw.js"), "utf8").matchAll(/"((?:fonts|vendor|css)\/[^"]+)"/g)) if (!existsSync(path.join(root, m[1]))) fail(`sw.js caches ${m[1]}, which doesn't exist`);
 
 // AI-translation inventory and prompts.
 const entries = E.collect(STR, C);

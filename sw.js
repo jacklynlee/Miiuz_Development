@@ -6,6 +6,10 @@ const SHELL = [
   "js/i18n.js", "js/locales.js", "js/country.js", "js/core.js", "js/i18n-entries.js", "js/ai.js", "js/prompt.js", "js/translate.js",
   "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/member.js", "js/media.js", "js/maps.js", "js/search.js", "js/place.js", "js/app.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
+  // Latin fonts, so text looks right offline from the first visit. Other subsets, MapLibre and the
+  // Supabase client (vendor/) are cached the first time they're used.
+  "css/fonts.css", "fonts/noto-sans-latin-400-normal.woff2", "fonts/noto-sans-latin-500-normal.woff2", "fonts/noto-sans-latin-700-normal.woff2",
+  "fonts/noto-serif-latin-600-normal.woff2", "fonts/noto-serif-latin-900-normal.woff2", "fonts/ibm-plex-mono-latin-500-normal.woff2", "fonts/ibm-plex-mono-latin-600-normal.woff2",
 ];
 
 self.addEventListener("install", e => {
@@ -15,7 +19,7 @@ self.addEventListener("install", e => {
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== "mbb-fonts").map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -27,18 +31,6 @@ self.addEventListener("fetch", e => {
 
   // Never cache the assistant, member data, live exchange rates or Vercel Web Analytics.
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_vercel/") || url.hostname === "open.er-api.com" || url.hostname.endsWith(".supabase.co")) return;
-
-  // Google Fonts: cache after first use so text looks right offline.
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
-    e.respondWith(caches.open("mbb-fonts").then(async c => {
-      const hit = await c.match(req);
-      if (hit) return hit;
-      const res = await fetch(req);
-      if (res.ok || res.type === "opaque") c.put(req, res.clone());
-      return res;
-    }));
-    return;
-  }
 
   if (url.origin !== location.origin) return;
 

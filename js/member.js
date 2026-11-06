@@ -8,7 +8,7 @@
 (function () {
   const MBB = window.MBB;
   const { $, esc, t, L, icon } = MBB;
-  const SDK = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js";
+  const SDK = "vendor/supabase-js@2.117.3/supabase.js"; // our own copy (npm run vendor): jsDelivr is unreliable in China
   const TIERS = ["basic", "silver", "gold", "platinum"];
   const NUDGE_FIRST = 5 * 60e3, NUDGE_GAP = 10 * 60e3, NUDGE_MAX_GAP = 60 * 60e3;
   const RESEND_SECONDS = 60;
@@ -479,7 +479,7 @@
     $("#m-copy").addEventListener("click", () => MBB.copy(inviteUrl()).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail"))));
     $("#m-share").addEventListener("click", async () => {
       const data = { title: "Miiuz BB", text: t("member.shareText"), url: inviteUrl() };
-      try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
+      try { if (navigator.share && !MBB.install.wechat) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
       MBB.copy(`${data.text} ${data.url}`).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail")));
     });
     view.querySelectorAll("[data-copy-code]").forEach(b => b.addEventListener("click", () => MBB.copy(b.dataset.copyCode).then(ok => MBB.toast(ok ? t("sos.copied", { x: b.dataset.copyCode }) : t("common.copyFail")))));

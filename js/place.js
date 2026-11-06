@@ -214,6 +214,8 @@
 
       <div class="actions pl-actions">
         <a class="btn btn-main btn-sm" href="https://www.google.com/maps/dir/?api=1&destination=${P.lat},${P.lng}" target="_blank" rel="noopener">${icon("route")}${esc(t("place.directions"))}</a>
+        ${MBB.state.from === "CN" ? `<a class="btn btn-ghost btn-sm" href="${esc(MBB.maps.amap(P.lat, P.lng, P.name))}" target="_blank" rel="noopener">${esc(t("plan.amap"))}</a>
+        <a class="btn btn-ghost btn-sm" href="${esc(MBB.maps.baidu(P.lat, P.lng, P.name))}" target="_blank" rel="noopener">${esc(t("place.baidu"))}</a>` : ""}
         <a class="btn btn-ghost btn-sm" href="https://waze.com/ul?ll=${P.lat},${P.lng}&navigate=yes" target="_blank" rel="noopener">Waze</a>
         <button type="button" class="btn btn-ghost btn-sm" id="pl-driver">${icon("expand")}${esc(t("tools.driverShow"))}</button>
         <button type="button" class="btn btn-ghost btn-sm" id="pl-share">${icon("share")}${esc(t("place.share"))}</button>
@@ -252,7 +254,7 @@
     $("#pl-driver").addEventListener("click", () => MBB.present({ kicker: MBB.C.driverCard.ms, big: P.local || P.name, sub: [P.local && P.local !== P.name ? P.name : "", P.addr || P.area].filter(Boolean).join(" · ") }));
     $("#pl-share").addEventListener("click", async () => {
       const data = { title: P.name, text: `${P.name} · Miiuz BB`, url: location.href };
-      try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
+      try { if (navigator.share && !MBB.install.wechat) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
       MBB.copy(location.href).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail")));
     });
     $("#pl-plan")?.addEventListener("click", () => { MBB.setCity(P.kind === "city" ? P.id : P.city); MBB.go("plan"); });
