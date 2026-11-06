@@ -16,7 +16,7 @@
       }
     }
     try {
-      const r = await fetch("api/chat", { method: "GET", cache: "no-store" });
+      const r = await MBB.api("api/chat", { method: "GET", cache: "no-store" });
       const j = r.ok ? await r.json() : null;
       ai.mode = j?.configured ? "server" : "off";
     } catch {

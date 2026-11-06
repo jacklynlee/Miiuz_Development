@@ -16,6 +16,8 @@ let page = html.slice(start + "<!-- preview:start -->".length, end)
   .replace(/<!-- pwa:start -->[\s\S]*?<!-- pwa:end -->\s*/, "")
   .replace(/<\/head>\s*<body>/, "")
   .replace('<link rel="stylesheet" href="css/app.css">', () => `<style>\n${read("css/app.css")}\n</style>`)
+  // The preview is a single file, so the self-hosted fonts aren't there; claude.ai allows Google Fonts.
+  .replace('<link rel="stylesheet" href="css/fonts.css">', '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@600;900&family=Noto+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">')
   .replace(/<script src="(js\/[^"]+)"><\/script>/g, (m, src) => {
     const code = read(src);
     if (/<\/script/i.test(code)) throw new Error(`${src} contains "</script"`);

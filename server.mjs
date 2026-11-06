@@ -13,10 +13,11 @@ import media from "./api/media.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
-const PUBLIC = ["index.html", "manifest.webmanifest", "sw.js", "css/", "js/", "icons/", "locales/"];
+const PUBLIC = ["index.html", "manifest.webmanifest", "sw.js", "css/", "js/", "icons/", "locales/", "fonts/", "vendor/"];
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
   ".json": "application/json", ".webmanifest": "application/manifest+json", ".svg": "image/svg+xml", ".png": "image/png",
+  ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8",
 };
 
 http.createServer(async (req, res) => {

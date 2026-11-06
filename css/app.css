@@ -10,8 +10,8 @@
   --turmeric: #d99a1e; --turmeric-soft: #f8ecd2;
   --on-accent: #ffffff;
   --shadow: 0 1px 2px rgba(22, 33, 30, .06), 0 6px 20px rgba(22, 33, 30, .06);
-  --display: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
-  --body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --display: "Noto Serif", "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+  --body: "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   --r: 12px;
   --tabbar-h: 64px;
@@ -47,20 +47,23 @@
   color-scheme: dark;
 }
 
-/* Type per script: CJK languages get their own Noto families; everything else uses Noto
-   Sans/Serif (Latin, Cyrillic, Greek, Vietnamese) and falls back to the system font for
-   other scripts (Thai, Arabic, Devanagari…). Fonts download only for the language in use. */
+/* Type per script. Noto Sans/Serif and IBM Plex Mono are served from this site (css/fonts.css,
+   Latin, Cyrillic, Greek and Vietnamese only). Chinese, Japanese and Korean use the phone's own
+   fonts, which every phone has, so nothing large downloads and nothing depends on Google Fonts
+   (blocked in mainland China, #18). Serif headings fall back to the platform's sans (YaHei,
+   Meiryo, Malgun) on Windows rather than its thin serif. Other scripts (Thai, Arabic,
+   Devanagari…) use the system font. */
 :root:lang(zh-Hant), :root:lang(yue) {
-  --display: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
-  --body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --display: "Noto Serif", "Songti TC", "Noto Serif CJK TC", "Source Han Serif TC", "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+  --body: "Noto Sans", "PingFang TC", "Noto Sans CJK TC", "Source Han Sans TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
 }
 :root:lang(ja) {
-  --display: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
-  --body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --display: "Noto Serif", "Hiragino Mincho ProN", "Noto Serif CJK JP", "Source Han Serif JP", "Noto Serif JP", "Yu Mincho", serif;
+  --body: "Noto Sans", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Source Han Sans JP", "Noto Sans JP", "Yu Gothic", "Meiryo", system-ui, sans-serif;
 }
 :root:lang(ko) {
-  --display: "Noto Serif KR", "AppleMyungjo", "Batang", serif;
-  --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --display: "Noto Serif", "AppleMyungjo", "Noto Serif CJK KR", "Source Han Serif K", "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --body: "Noto Sans", "Apple SD Gothic Neo", "Noto Sans CJK KR", "Source Han Sans K", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
   word-break: keep-all; /* Korean wraps between words, not syllables */
   overflow-wrap: break-word;
 }
@@ -128,6 +131,14 @@ h1, h2, h3 { text-wrap: balance; }
 .tier-platinum.member-btn, .mcard.tier-platinum { background: var(--tier-platinum); }
 .trbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 59px); z-index: 19; background: var(--teal-soft); color: var(--teal); font-size: 13px; border-bottom: 1px solid var(--line); }
 .trbar.warn { background: var(--turmeric-soft); color: var(--fg); }
+.wxbar { position: static; }
+.wxbar .trbar-in > span { flex: 1 1 220px; }
+/* "A new version is ready · Update" and "Please update" (#30) */
+.updbar .trbar-in > span { flex: 1 1 200px; font-weight: 700; }
+.must-update { z-index: 60; }
+.must-update .present-in { max-width: 420px; align-items: center; text-align: center; }
+.must-update h2 { margin: 0; font-family: var(--display); font-size: 24px; color: var(--teal); }
+.must-update p { margin: 0; color: var(--muted); }
 .trbar-in { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-block: 8px; }
 .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; flex: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -271,7 +282,7 @@ main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) +
 
 /* ---------- planner (ported) ---------- */
 .plan-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (min-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 370px) minmax(0, 1fr); } .panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 120px); max-height: calc(100vh - 140px); overflow-y: auto; } }
+@media (min-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 370px) minmax(0, 1fr); } .panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 120px); max-height: calc(100vh - 140px); max-height: calc(100dvh - 140px); overflow-y: auto; } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 18px; }
 fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 legend { font-weight: 700; font-size: 13px; letter-spacing: .06em; padding: 0; margin-bottom: 8px; }
@@ -354,7 +365,7 @@ textarea { min-height: 64px; resize: vertical; }
 .checklist input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
 
 /* ---------- chat ---------- */
-.chat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); display: flex; flex-direction: column; overflow: hidden; min-height: calc(100vh - 240px); }
+.chat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); display: flex; flex-direction: column; overflow: hidden; min-height: calc(100vh - 240px); min-height: calc(100dvh - 240px); }
 .chat-head { background: var(--teal); color: var(--on-accent); padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
 .chat-title { display: flex; gap: 10px; align-items: center; min-width: 0; flex: 1 1 260px; }
 .chat-title h1 { margin: 0; font-family: var(--display); font-size: 19px; line-height: 1.3; }
@@ -365,8 +376,8 @@ textarea { min-height: 64px; resize: vertical; }
 .chat-controls select { width: auto; font-size: 13px; padding: 4px 6px; border: 0; background: var(--surface); }
 .chat-head .btn-ghost { color: var(--on-accent); border-color: currentColor; }
 .chat-head .btn-ghost:hover { background: transparent; opacity: .85; }
-.msgs { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; overflow-y: auto; min-height: 200px; max-height: 60vh; }
-@media (min-width: 900px) { .msgs { max-height: 56vh; } }
+.msgs { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; overflow-y: auto; min-height: 200px; max-height: 60vh; max-height: 60dvh; }
+@media (min-width: 900px) { .msgs { max-height: 56vh; max-height: 56dvh; } }
 .msg { max-width: 88%; padding: 9px 13px; border-radius: 14px; overflow-wrap: anywhere; font-size: 14.5px; min-width: 0; }
 .msg p { margin: 0 0 6px; } .msg p:last-child { margin-bottom: 0; }
 .msg ul { margin: 4px 0 6px; padding-inline-start: 18px; }
@@ -387,11 +398,11 @@ textarea { min-height: 64px; resize: vertical; }
 /* ---------- SOS sheet, full-screen card, toast ---------- */
 .sheet-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(10, 16, 14, .5); display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
-  background: var(--surface); width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; overflow-y: auto;
   border-radius: 18px 18px 0 0; padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
   display: flex; flex-direction: column; gap: 16px;
 }
-@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 18px; max-height: 86vh; } }
+@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 18px; max-height: 86vh; max-height: 86dvh; } }
 .sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .sheet-head h2 { margin: 0; font-family: var(--display); font-size: 22px; color: var(--hibiscus); }
 .sheet-head p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
@@ -660,6 +671,8 @@ textarea { min-height: 64px; resize: vertical; }
 .credits small { display: block; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
 .credits small a { color: inherit; }
 .credits-more p { margin: 0 0 6px; font-size: 13px; color: var(--muted); }
+.credits-version { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.credits-version p { margin: 0; }
 .foot a { color: inherit; }
 
 /* ---------- member details ---------- */
@@ -685,3 +698,10 @@ textarea { min-height: 64px; resize: vertical; }
 [dir="rtl"] .back .ic, [dir="rtl"] .quick .next, [dir="rtl"] .s-row .next, [dir="rtl"] .ic-flip { transform: scaleX(-1); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* iPhone zooms in on any field under 16px when it gets focus, and stays zoomed (#31).
+   Last in the file, so it wins over smaller sizes set above. */
+@media (pointer: coarse) {
+  input[type=time], input[type=number], input[type=text], input[type=search], textarea, select, .chat-controls select { font-size: 16px; }
+  .fx-row input { font-size: 20px; }
+}
