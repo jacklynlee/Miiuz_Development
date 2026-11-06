@@ -7,18 +7,20 @@
 <title>Miiuz Beyond Borders</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Miiuz Beyond Borders (Miiuz BB) · Cuti-cuti Malaysia! Search any place in Malaysia, with maps, photos, entry and transport tips, food, souvenirs, day plans, phrases, emergency help and an AI assistant.">
-<meta name="theme-color" content="#0d6662">
+<meta name="theme-color" content="#0d6662" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17211e" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <meta name="copyright" content="© 2026 Miiuz Beyond Borders Sdn. Bhd. All rights reserved.">
 <!-- pwa:start -->
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Miiuz BB">
 <!-- pwa:end -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;900&family=Noto+Sans+SC:wght@400;500;700&family=Noto+Serif+TC:wght@600;900&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+JP:wght@600;900&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+KR:wght@600;900&family=Noto+Sans+KR:wght@400;500;700&family=Noto+Serif:wght@600;900&family=Noto+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="css/fonts.css">
 <link rel="stylesheet" href="css/app.css">
 </head>
 <body>
@@ -48,6 +50,8 @@
   </div>
 </header>
 <div class="trbar" id="trbar" role="status" hidden></div>
+<div class="trbar warn wxbar" id="wxbar" role="note" hidden></div>
+<div class="trbar updbar" id="updbar" role="status" hidden></div>
 
 <nav class="tabbar" data-i18n-aria="nav.label">
   <div class="tabbar-in">
@@ -175,6 +179,7 @@
 </div>
 <div class="sheet-backdrop" id="nudge" hidden></div>
 <div class="present" id="present" hidden></div>
+<div class="present must-update" id="must-update" hidden></div>
 <div class="toast" id="toast" hidden></div>
 <div class="sr-only" id="toast-polite" role="status"></div>
 <div class="sr-only" id="toast-alert" role="alert"></div>
@@ -197,6 +202,7 @@
 <script src="js/tools.js"></script>
 <script src="js/chat.js"></script>
 <script src="js/install.js"></script>
+<script src="js/update.js"></script>
 <script src="js/member.js"></script>
 <script src="js/media.js"></script>
 <script src="js/maps.js"></script>

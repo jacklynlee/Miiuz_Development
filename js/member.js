@@ -8,7 +8,7 @@
 (function () {
   const MBB = window.MBB;
   const { $, esc, t, L, icon } = MBB;
-  const SDK = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js";
+  const SDK = "vendor/supabase-js@2.117.3/supabase.js"; // our own copy (npm run vendor): jsDelivr is unreliable in China
   const TIERS = ["basic", "silver", "gold", "platinum"];
   const NUDGE_FIRST = 5 * 60e3, NUDGE_GAP = 10 * 60e3, NUDGE_MAX_GAP = 60 * 60e3;
   const RESEND_SECONDS = 60;
@@ -337,6 +337,7 @@
       </div>`;
 
     view.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head">
         <p class="eyebrow">Miiuz BB</p>
         <h1>${esc(t("member.title"))}</h1>
@@ -420,6 +421,7 @@
         <div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="m-edit">${esc(t("member.edit"))}</button></div>`;
 
     view.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       ${M.setupError ? `<p class="m-error">${esc(t("member.setupMissing"))}</p>` : ""}
       ${M.profile && !p.nationality && !M.editing ? `<button type="button" class="card m-complete" id="m-complete">${icon("user")}<span>${esc(t("member.complete"))}</span>${icon("next", "next")}</button>` : ""}
       <section class="mcard tier-${s.tier}">
@@ -477,7 +479,7 @@
     $("#m-copy").addEventListener("click", () => MBB.copy(inviteUrl()).then(ok => MBB.copied(ok, t("member.linkCopied"))));
     $("#m-share").addEventListener("click", async () => {
       const data = { title: "Miiuz BB", text: t("member.shareText"), url: inviteUrl() };
-      try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
+      try { if (navigator.share && !MBB.install.wechat) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
       MBB.copy(`${data.text} ${data.url}`).then(ok => MBB.copied(ok, t("member.linkCopied")));
     });
     view.querySelectorAll("[data-copy-code]").forEach(b => b.addEventListener("click", () => MBB.copy(b.dataset.copyCode).then(ok => MBB.copied(ok, t("sos.copied", { x: b.dataset.copyCode })))));
@@ -578,11 +580,13 @@
     $("#nudge-join").focus();
     $("#nudge-join").addEventListener("click", () => hideNudge(false));
     $("#nudge-later").addEventListener("click", () => hideNudge(true));
+    MBB.overlay.opened(() => hideNudge(true));
   }
   function hideNudge(restoreFocus = true) {
     const el = $("#nudge");
     if (el.hidden) return;
     el.hidden = true;
+    MBB.overlay.closed();
     if (restoreFocus) nudgeReturn?.focus?.();
   }
 

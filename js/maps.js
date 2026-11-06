@@ -7,7 +7,7 @@
 (function () {
   const MBB = window.MBB;
   const { esc, t, L, icon } = MBB;
-  const LIB = "https://cdn.jsdelivr.net/npm/maplibre-gl@5.24.0/dist/";
+  const LIB = "vendor/maplibre-gl@5.24.0/"; // our own copy (npm run vendor): jsDelivr is unreliable in China
   const STYLE = "https://tiles.openfreemap.org/styles/liberty";
   // Label side for dots that would otherwise collide: [anchor, dx, dy].
   const LABEL = {
@@ -78,6 +78,11 @@
   }
 
   const gmaps = (lat, lng) => `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+  // For travellers from China: Google is blocked on Chinese SIMs (roaming traffic goes back through
+  // China), and Amap (高德) and Baidu Maps are what they use at home. Both take GPS (WGS-84) positions
+  // and open the app when it's installed.
+  const amap = (lat, lng, name) => `https://uri.amap.com/marker?position=${lng},${lat}&name=${encodeURIComponent(name || "")}&coordinate=wgs84&callnative=1&src=miiuz-bb`;
+  const baidu = (lat, lng, name) => `https://api.map.baidu.com/marker?location=${lat},${lng}&title=${encodeURIComponent(name || "")}&content=${encodeURIComponent(name || "")}&coord_type=wgs84&output=html&src=webapp.miiuz.miiuzbb`;
 
   function fallback(el, o) {
     el.classList.add("street-off");
@@ -123,5 +128,5 @@
     return 12742 * Math.asin(Math.sqrt(h));
   }
 
-  MBB.maps = { overview, street, km, gmaps, spots };
+  MBB.maps = { overview, street, km, gmaps, amap, baidu, spots };
 })();

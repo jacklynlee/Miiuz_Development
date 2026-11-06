@@ -5,7 +5,7 @@
  * Server-Sent Events, and returns the finished assistant turn for the browser to
  * append. The page runs the update_plan tool itself and sends the result back as
  * the next turn. Requires ANTHROPIC_API_KEY. GET reports whether it is configured. */
-import { Anthropic, COUNTRY, PROMPT, MODEL, MAX_BODY_BYTES, anthropic, configured, errorCode, originAllowed, rateLimiter, readJson, sendJson } from "./_shared.mjs";
+import { Anthropic, COUNTRY, PROMPT, MODEL, MAX_BODY_BYTES, anthropic, configured, errorCode, originAllowed, rateLimiter, readJson, sendJson, tooOld } from "./_shared.mjs";
 
 const MAX_MESSAGES = 60;
 const limited = rateLimiter(Number(process.env.MIIUZ_RATE_LIMIT || 40));
@@ -48,6 +48,7 @@ function sourcesOf(content) {
 }
 
 export default async function handler(req, res) {
+  if (tooOld(req)) return sendJson(res, 426, { code: "update" }); // the app shows "Please update" (#30)
   if (req.method === "GET") return sendJson(res, 200, { ok: true, configured: configured(), web: true });
   if (req.method !== "POST") { res.setHeader("Allow", "GET, POST"); return sendJson(res, 405, { code: "method_not_allowed" }); }
   if (!configured()) return sendJson(res, 503, { code: "not_configured" });

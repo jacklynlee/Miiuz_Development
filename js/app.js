@@ -10,6 +10,7 @@
     const h = decodeURIComponent((location.hash || "").slice(1));
     if (h.startsWith("guide-")) return { view: "guide", sub: h.slice(6) };
     if (h.startsWith("place-")) return { view: "place", sub: h.slice(6) };
+    if (h === "sos") return { view: "home", sos: true }; // the app's SOS shortcut (manifest)
     return { view: VIEWS.includes(h) ? h : "home" };
   }
   function show() {
@@ -29,6 +30,7 @@
       if (el) { requestAnimationFrame(() => el.scrollIntoView({ block: "start" })); return; }
     }
     if (prev.view !== route.view || prev.sub !== route.sub) window.scrollTo(0, 0);
+    if (route.sos) { history.replaceState(null, "", "#home"); openSOS(); }
   }
   MBB.go = (view, scrollId) => {
     pendingScroll = scrollId || null;
@@ -296,10 +298,12 @@
     renderSOS();
     $("#sos").hidden = false;
     $("#sos-close").focus();
+    MBB.overlay.opened(closeSOS);
   }
   function closeSOS() {
     if ($("#sos").hidden) return;
     $("#sos").hidden = true;
+    MBB.overlay.closed();
     sosReturn?.focus?.();
   }
 
@@ -334,6 +338,9 @@
     $("#sos").addEventListener("click", e => { if (e.target.id === "sos") closeSOS(); });
     document.addEventListener("keydown", e => { if (e.key === "Escape") { MBB.toast.hide(); MBB.closePresent(); closeSOS(); MBB.member.hideNudge(); } });
     document.addEventListener("click", e => {
+      // External links open outside the app, so the installed app's own window stays (#31).
+      const ext = e.target.closest("a[href^='http']");
+      if (ext && !ext.target && ext.origin !== location.origin) { ext.target = "_blank"; ext.rel = "noopener"; }
       if (e.target.closest("#present-close")) { MBB.closePresent(); return; }
       if (e.target.closest("[data-sos]")) { openSOS(); return; }
       // Open search and focus the box in the same tap, so phones show the keyboard.
@@ -349,7 +356,8 @@
       if (a) { e.preventDefault(); MBB.go(a.getAttribute("href").slice(1), a.dataset.scroll); }
     });
 
-    MBB.on("lang", () => { buildLangSelect(); show(); if (!$("#sos").hidden) renderSOS(); });
+    MBB.on("lang", () => { buildLangSelect(); show(); MBB.install.wxBar(); if (!$("#sos").hidden) renderSOS(); });
+    MBB.install.wxBar();
     MBB.on("from", () => { show(); if (!$("#sos").hidden) renderSOS(); });
     // Home-country hints that arrive after start-up. Malaysia is ignored (see js/country.js).
     MBB.config().then(cfg => MBB.hintFrom("ip", cfg?.country));
@@ -369,10 +377,8 @@
     MBB.media.load();
     MBB.translator.ensure(MBB.state.lang);
 
-    // Offline support when served as a web app (not available inside a Claude artifact).
-    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !window.claude) {
-      try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch { /* ignore */ }
-    }
+    // Offline support and updates when served as a web app (not inside a Claude artifact): js/update.js.
+    MBB.update.init();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

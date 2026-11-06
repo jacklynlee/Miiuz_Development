@@ -1,21 +1,44 @@
-/* Miiuz Beyond Borders — offline support. Bump VERSION whenever app files change. */
-const VERSION = "mbb-v7";
+/* Miiuz Beyond Borders — offline support and updates (#30).
+ * The page registers "sw.js?v=<build>", with the build from /api/config (the deployment's commit),
+ * so every deployment installs a new worker with its own cache ("mbb-<build>"):
+ *  - Installing stores all the app files below in one go, straight from the network. If any of them
+ *    fails, the install fails and the previous version stays.
+ *  - App files are served from that build's cache, so a page never mixes files from two versions.
+ *    Files that aren't listed (other font subsets, vendor/, locales/) are added the first time.
+ *  - A new build waits until the traveller taps Update (js/update.js) or the app closes, then
+ *    takes over on reload. Old builds' caches are deleted.
+ * Locally (v=dev), and for copies registered before #30 without ?v, app files are network first
+ * (fresh when online, cache when offline), so edits show on reload. Nothing to bump by hand. */
+const BUILD = new URL(self.location.href).searchParams.get("v") || "dev";
+const DEV = BUILD === "dev";
+const VERSION = "mbb-" + BUILD;
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "js/data/malaysia.js", "js/data/malaysia.explore.js", "js/data/malaysia.map.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
   "js/i18n.js", "js/locales.js", "js/country.js", "js/core.js", "js/i18n-entries.js", "js/ai.js", "js/prompt.js", "js/translate.js",
-  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/member.js", "js/media.js", "js/maps.js", "js/search.js", "js/place.js", "js/app.js",
-  "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
+  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/update.js", "js/member.js", "js/media.js", "js/maps.js", "js/search.js", "js/place.js", "js/app.js",
+  "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
+  // Latin fonts, so text looks right offline from the first visit. Other subsets, MapLibre and the
+  // Supabase client (vendor/) are cached the first time they're used.
+  "css/fonts.css", "fonts/noto-sans-latin-400-normal.woff2", "fonts/noto-sans-latin-500-normal.woff2", "fonts/noto-sans-latin-700-normal.woff2",
+  "fonts/noto-serif-latin-600-normal.woff2", "fonts/noto-serif-latin-900-normal.woff2", "fonts/ibm-plex-mono-latin-500-normal.woff2", "fonts/ibm-plex-mono-latin-600-normal.woff2",
 ];
 
 self.addEventListener("install", e => {
-  e.waitUntil(caches.open(VERSION).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil((async () => {
+    const cache = await caches.open(VERSION);
+    await cache.addAll(SHELL.map(u => new Request(u, { cache: "reload" })));
+    // The first install, and local dev, take over straight away. A new build waits for Update.
+    if (DEV || !self.registration.active) await self.skipWaiting();
+  })());
 });
+
+self.addEventListener("message", e => { if (e.data === "skipWaiting") self.skipWaiting(); });
 
 self.addEventListener("activate", e => {
   e.waitUntil(
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== "mbb-fonts").map(k => caches.delete(k))))
+      .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim()),
   );
 });
@@ -28,27 +51,23 @@ self.addEventListener("fetch", e => {
   // Never cache the assistant, member data, live exchange rates or Vercel Web Analytics.
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_vercel/") || url.hostname === "open.er-api.com" || url.hostname.endsWith(".supabase.co")) return;
 
-  // Google Fonts: cache after first use so text looks right offline.
-  if (url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com") {
-    e.respondWith(caches.open("mbb-fonts").then(async c => {
-      const hit = await c.match(req);
-      if (hit) return hit;
-      const res = await fetch(req);
-      if (res.ok || res.type === "opaque") c.put(req, res.clone());
-      return res;
-    }));
+  if (url.origin !== location.origin) return;
+
+  const page = req.mode === "navigate" && (url.pathname === "/" || url.pathname === "/index.html");
+  const save = res => { if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); } return res; };
+
+  // Local dev and old registrations: network first, cache when offline.
+  if (DEV) {
+    e.respondWith(fetch(req).then(save).catch(async () => (await caches.match(req)) || (page ? caches.match("index.html") : Response.error())));
     return;
   }
 
-  if (url.origin !== location.origin) return;
-
-  // App files: network first (fresh when online), cache when offline.
-  e.respondWith(
-    fetch(req)
-      .then(res => {
-        if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
-        return res;
-      })
-      .catch(async () => (await caches.match(req)) || (req.mode === "navigate" ? caches.match("index.html") : Response.error())),
-  );
+  // A build: its own files first, then the network (stored for next time).
+  e.respondWith((async () => {
+    const cache = await caches.open(VERSION);
+    const hit = await cache.match(page ? "index.html" : req);
+    if (hit) return hit;
+    try { return save(await fetch(req)); }
+    catch { return (await caches.match(req)) || Response.error(); }
+  })());
 });
