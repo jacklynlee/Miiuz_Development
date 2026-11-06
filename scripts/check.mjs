@@ -121,6 +121,16 @@ guess({ languages: ["zh-Hans"], timeZone: "Asia/Kuala_Lumpur", lang: "zh" }, "CN
 guess({ languages: ["en-US"], timeZone: "America/Chicago", member: "CN" }, "CN"); // nationality wins
 
 // AI-translation inventory and prompts.
+// Sign-in emails (#28): supabase/email/ must match scripts/build-emails.mjs.
+{
+  const { FILES } = await import("./build-emails.mjs"), fs = await import("node:fs");
+  for (const [f, src] of Object.entries(FILES)) {
+    const p = path.join(root, f);
+    if (!fs.existsSync(p) || fs.readFileSync(p, "utf8") !== src) fail(`${f} is out of date: run npm run emails`);
+    if (!src.includes("{{ .Token }}") || !src.includes("{{ .ConfirmationURL }}")) fail(`${f} has no code or link`);
+  }
+}
+
 const entries = E.collect(STR, C);
 if (new Set(entries.map(e => e.key)).size !== entries.length) fail("duplicate translation keys");
 const sys = buildSystem(C, "server");
