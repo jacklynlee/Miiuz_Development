@@ -20,6 +20,7 @@
     HU: "HUF", RO: "RON", TR: "TRY", RU: "RUB", UA: "UAH", KZ: "KZT", UZ: "UZS", SA: "SAR", AE: "AED", QA: "QAR",
     KW: "KWD", BH: "BHD", OM: "OMR", IL: "ILS", EG: "EGP", ZA: "ZAR", NG: "NGN", KE: "KES", CA: "CAD", MX: "MXN",
     BR: "BRL", AR: "ARS", CL: "CLP", CO: "COP", PE: "PEN", MV: "MVR", MN: "MNT",
+    MY: "MYR", // residents: prices are already in their currency, so nothing is converted
   };
   for (const c of EURO) CURRENCY[c] = "EUR";
 

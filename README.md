@@ -35,11 +35,17 @@ layout to right-to-left. The phone's language is detected on first open.
 home country decides the currency, date and time formats (English + US → `en-US`, 12-hour
 time), units (miles and °F for the US, metric in brackets) and country facts (content marked
 `for: ["US"]`: visa, embassy and STEP, payments and tipping, plugs, customs at home, "Malaysia's
-911" in SOS). It's guessed without permission
-prompts, strongest first: a member's nationality, the phone's time zone (if not Malaysia's), the
+911" in SOS). It's guessed without permission prompts, strongest first: a member's nationality, the phone's time zone (if not Malaysia's), the
 request's country from Vercel (`/api/config`, if not Malaysia), the region in the phone's
 language settings, then the language's usual country. Home asks once ("Home country: United
 States? Yes · Change"); the choice is saved on the phone and can be changed from Home.
+
+**Prices follow the home currency.** Content and strings write prices as plain ringgit
+(`RM55`, `RM1–RM10`, `RM30–100`, `RM100+`) in every language, and the app adds the home-currency
+amount after each one: "RM55 (≈ US$14)", "RM55（约 ¥93）". It uses the live rate when online and
+the saved one offline, rounds it (≈), adds nothing for travellers whose home currency is the
+ringgit, and updates in place when the rate or home country changes. In code, render any text that
+may contain a price with `MBB.priceHtml(text)` instead of `esc(text)` (`js/core.js`).
 
 - **Hand-translated:** English, 简体中文, 한국어, 日本語 — interface and all content. Country facts
   (visa rules, payment apps, consular help, plugs and voltage, customs back home) follow the home

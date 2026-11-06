@@ -56,6 +56,8 @@ npm run translate -- ms zh-Hant   # bundle AI translations into locales/<code>.j
   working.
 - Facts (visas, MDAC, fares, SST, emergency numbers) must be accurate. When you re-verify them,
   update `checked` in `js/data/malaysia.js`.
+- Write prices as plain ringgit (`RM55`, `RM1–RM10`) in every language. The app adds the
+  traveller's own currency. Render text that may contain a price with `MBB.priceHtml()`, not `esc()`.
 - Photos must be freely licensed (Wikimedia Commons) with credits shown. Never hot-link
   unlicensed images.
 - Never commit `.env` or any API key. Secrets belong in Vercel → Environment Variables.

@@ -226,7 +226,7 @@
   /* ---------- currency ---------- */
   const fxSaved = store.get("fx", null);
   MBB.fx = fxSaved && fxSaved.rates ? fxSaved : { rates: MBB.C.rates, live: false, updated: null };
-  MBB.rate = cur => MBB.fx.rates[cur] ?? MBB.C.rates[cur] ?? null; // 1 MYR = x cur
+  MBB.rate = cur => (cur === MBB.C.currency.code ? 1 : MBB.fx.rates[cur] ?? MBB.C.rates[cur] ?? null); // 1 MYR = x cur
   MBB.refreshFx = async (force) => {
     const fresh = MBB.fx.live && MBB.fx.updated && Date.now() - MBB.fx.updated < 6 * 36e5;
     if (fresh && !force) return true;
@@ -249,6 +249,31 @@
     catch { return `${cur} ${n.toFixed(digits)}`; }
   };
   MBB.rm = n => `RM ${n.toFixed(2)}`;
+
+  /* ---------- RM prices in text, with the home-currency amount (#19) ----------
+   * Content and strings keep plain "RM55" in every language (AI translations keep it too), and the
+   * app adds "(≈ US$13)" after each one: "RM1–RM10", "RM30–100", "RM1~RM10" and "RM100+" count as
+   * one price. Uses the live rate when online and the saved one offline; "≈" marks it as approximate.
+   * Nothing is added when the home currency is the ringgit. On a new rate or home currency the
+   * amounts update in place ([data-fx]), without re-rendering the screen. */
+  const RM_PRICE = /\bRM\s?(\d+(?:,\d{3})*(?:\.\d+)?)(?:\s?[–~〜～-]\s?(?:RM\s?)?(\d+(?:,\d{3})*(?:\.\d+)?))?(\+)?/g;
+  const approxMoney = (n, cur) => {
+    if (n >= 1000) { const step = 10 ** (Math.floor(Math.log10(n)) - 1); n = Math.round(n / step) * step; } // ₩9,977 → ₩10,000
+    const digits = ["JPY", "KRW", "IDR", "VND"].includes(cur) || n >= 10 ? 0 : 2;
+    try { return new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n); }
+    catch { return `${cur} ${n.toFixed(digits)}`; }
+  };
+  const fxSuffix = (a, b, plus) => {
+    const home = MBB.state.home, r = home && home !== "MYR" ? MBB.rate(home) : null;
+    if (!r) return "";
+    const v = x => approxMoney(Number(String(x).replace(/,/g, "")) * r, home);
+    const s = MBB.t("fx.approx", { v: (b ? `${v(a)}–${v(b)}` : v(a)) + (plus || "") });
+    return s.startsWith("（") ? s : " " + s; // full-width brackets (Chinese, Japanese) need no space
+  };
+  // Escaped HTML for a text that may contain RM prices. Use it instead of esc() wherever prices can appear.
+  MBB.priceHtml = text => MBB.esc(text).replace(RM_PRICE, (m, a, b, plus) =>
+    `${m}<span class="fx" data-fx="${a}|${b || ""}|${plus || ""}">${MBB.esc(fxSuffix(a, b, plus))}</span>`);
+  MBB.on("fx", () => MBB.$$("[data-fx]").forEach(el => { el.textContent = fxSuffix(...el.dataset.fx.split("|")); }));
 
   /* ---------- feedback ---------- */
   MBB.toast = msg => {
