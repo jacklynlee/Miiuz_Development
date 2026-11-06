@@ -491,6 +491,8 @@
     "sos.emergencyLocal": { zh: "紧急联系人（姓名和电话）", en: "Emergency contact (name and phone)", ko: "비상 연락처(이름·전화번호)", ja: "緊急連絡先（氏名・電話番号）" },
 
     "common.saved": { zh: "已保存", en: "Saved", ko: "저장했어요", ja: "保存しました" },
+    "common.retry": { zh: "重试", en: "Retry", ko: "다시 시도", ja: "再試行" },
+    "toast.dismiss": { zh: "关闭提示", en: "Dismiss", ko: "알림 닫기", ja: "通知を閉じる" },
     "common.close": { zh: "关闭", en: "Close", ko: "닫기", ja: "閉じる" },
     "common.copyFail": { zh: "复制失败，请手动选择文字", en: "Couldn't copy; select the text instead", ko: "복사하지 못했어요. 직접 선택해 주세요.", ja: "コピーできませんでした。手動で選択してください。" },
   };

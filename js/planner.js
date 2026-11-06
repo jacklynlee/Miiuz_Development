@@ -274,7 +274,7 @@
     $("#p-shuffle").addEventListener("click", () => { seed = (seed * 31 + 17) % 100000; generate(); });
     $("#p-undo").addEventListener("click", () => { render(rulePlan); $("#p-undo").hidden = true; });
     $("#p-copy").addEventListener("click", () => {
-      MBB.copy(planText()).then(ok => MBB.toast(ok ? t("plan.copied") : t("common.copyFail")));
+      MBB.copy(planText()).then(ok => MBB.copied(ok, t("plan.copied")));
     });
     $("#p-ask").addEventListener("click", e => { e.preventDefault(); MBB.chat.prefill(""); });
     MBB.on("lang", () => { buildForm(); if (current) render(current); });

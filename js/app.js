@@ -83,7 +83,7 @@
     return `<div class="city-pick"><span>${esc(t("from.label"))}</span><label class="chip-link pick">${icon("globe")}${esc(c ? MBB.countryName(c) : t("from.none"))}${fromSelect("from-select", true)}</label></div>`;
   }
   function bindFrom() {
-    const saved = code => MBB.toast(t("from.saved", { c: code ? MBB.countryName(code) : t("from.none") }));
+    const saved = code => MBB.toast(t("from.saved", { c: code ? MBB.countryName(code) : t("from.none") }), { type: "success" });
     $$("#from-card-select, #from-select").forEach(s => s.addEventListener("change", e => {
       const v = e.target.value;
       if (!v) return;
@@ -262,7 +262,7 @@
 
     $("#sos-close").addEventListener("click", closeSOS);
     $$("[data-copy]", $("#sos-sheet")).forEach(b => b.addEventListener("click", () => {
-      MBB.copy(b.dataset.copy).then(ok => MBB.toast(ok ? t("sos.copied", { x: b.dataset.copy }) : t("common.copyFail")));
+      MBB.copy(b.dataset.copy).then(ok => MBB.copied(ok, t("sos.copied", { x: b.dataset.copy })));
     }));
     $("#sos-locate").addEventListener("click", locate);
     $("#sos-hotel").addEventListener("input", e => { MBB.store.set("hotel", e.target.value); MBB.emit("hotel"); });
@@ -287,7 +287,7 @@
             <a class="btn btn-ghost btn-sm" href="${url}" target="_blank" rel="noopener">${icon("external")}${esc(t("sos.locOpen"))}</a>
             <button type="button" class="btn btn-ghost btn-sm" id="sos-loc-copy">${icon("copy")}${esc(t("sos.copy"))}</button>
           </div>`;
-        $("#sos-loc-copy").addEventListener("click", () => MBB.copy(`${ll}\n${url}`).then(ok => MBB.toast(ok ? t("sos.copied", { x: ll }) : t("common.copyFail"))));
+        $("#sos-loc-copy").addEventListener("click", () => MBB.copy(`${ll}\n${url}`).then(ok => MBB.copied(ok, t("sos.copied", { x: ll }))));
       }, fail, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
     } catch { fail(); }
   }
@@ -332,7 +332,7 @@
     $("#member-btn").addEventListener("click", () => MBB.go("member"));
     $("#nudge").addEventListener("click", e => { if (e.target.id === "nudge") MBB.member.hideNudge(); });
     $("#sos").addEventListener("click", e => { if (e.target.id === "sos") closeSOS(); });
-    document.addEventListener("keydown", e => { if (e.key === "Escape") { MBB.closePresent(); closeSOS(); MBB.member.hideNudge(); } });
+    document.addEventListener("keydown", e => { if (e.key === "Escape") { MBB.toast.hide(); MBB.closePresent(); closeSOS(); MBB.member.hideNudge(); } });
     document.addEventListener("click", e => {
       if (e.target.closest("#present-close")) { MBB.closePresent(); return; }
       if (e.target.closest("[data-sos]")) { openSOS(); return; }
