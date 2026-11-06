@@ -148,7 +148,7 @@
     S.remote = { q, state: "loading", results: [] };
     results();
     try {
-      const r = await fetch(`api/places?q=${encodeURIComponent(q.toLowerCase().replace(/\s+/g, " "))}`);
+      const r = await MBB.api(`api/places?q=${encodeURIComponent(q.toLowerCase().replace(/\s+/g, " "))}`);
       if (!r.ok) throw new Error(String(r.status));
       const j = await r.json();
       (j.results || []).forEach(MBB.place.remember);
@@ -162,6 +162,7 @@
   function render() {
     const v = $("#view-search");
     v.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head">
         <p class="eyebrow" lang="ms">Cuti-cuti Malaysia!</p>
         <h1>${esc(t("search.title"))}</h1>

@@ -6,7 +6,7 @@
  * app only searches when the traveller presses Search, calls here are spaced out, and
  * answers are cached by Vercel's CDN. For heavier use, point MIIUZ_GEOCODER_URL at a
  * Nominatim-compatible service (e.g. LocationIQ) and set MIIUZ_GEOCODER_KEY. */
-import { sendJson, rateLimiter, LANGS } from "./_shared.mjs";
+import { sendJson, rateLimiter, LANGS, tooOld } from "./_shared.mjs";
 import { getJson, summaryFor, summary, wikidata, wikiFor, commonsPhotos, pageImages } from "./_wiki.mjs";
 
 const BASE = (process.env.MIIUZ_GEOCODER_URL || "https://nominatim.openstreetmap.org").replace(/\/+$/, "");
@@ -85,6 +85,7 @@ async function detail(id, lang) {
 }
 
 export default async function handler(req, res) {
+  if (tooOld(req)) return sendJson(res, 426, { code: "update" }); // the app shows "Please update" (#30)
   if (req.method !== "GET") return sendJson(res, 405, { error: "GET only" });
   const u = new URL(req.url, "http://x");
   const q = (u.searchParams.get("q") || "").replace(/\s+/g, " ").trim().slice(0, 120);

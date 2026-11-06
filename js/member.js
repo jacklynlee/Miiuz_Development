@@ -8,7 +8,7 @@
 (function () {
   const MBB = window.MBB;
   const { $, esc, t, L, icon } = MBB;
-  const SDK = "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js";
+  const SDK = "vendor/supabase-js@2.117.3/supabase.js"; // our own copy (npm run vendor): jsDelivr is unreliable in China
   const TIERS = ["basic", "silver", "gold", "platinum"];
   const NUDGE_FIRST = 5 * 60e3, NUDGE_GAP = 10 * 60e3, NUDGE_MAX_GAP = 60 * 60e3;
   const RESEND_SECONDS = 60;
@@ -113,7 +113,7 @@
     setStatus("member");
     if (fresh) {
       const isNew = M.profile?.created_at && Date.now() - new Date(M.profile.created_at) < 15 * 60e3;
-      MBB.toast(t(isNew ? "member.welcome" : "member.welcomeBack"));
+      MBB.toast(t(isNew ? "member.welcome" : "member.welcomeBack"), { type: "success" });
       if (location.hash !== "#member") MBB.go("member");
     } else if (fromLink) {
       MBB.go("member");
@@ -154,7 +154,7 @@
     if (!tier) return;
     const key = `tier.${M.user.id}`, seen = MBB.store.get(key, null);
     MBB.store.set(key, tier);
-    if (seen && TIERS.indexOf(tier) > TIERS.indexOf(seen)) setTimeout(() => MBB.toast(t("member.tierUp", { t: tierName(tier) })), 600);
+    if (seen && TIERS.indexOf(tier) > TIERS.indexOf(seen)) setTimeout(() => MBB.toast(t("member.tierUp", { t: tierName(tier) }), { type: "success" }), 600);
   }
 
   /* ---------- sign-in with an emailed code ---------- */
@@ -237,7 +237,7 @@
     if (error) return fail(authError(error));
     Object.assign(M, { busy: false, error: "", resendAt: Date.now() + RESEND_SECONDS * 1000 });
     render();
-    MBB.toast(t("member.resent"));
+    MBB.toast(t("member.resent"), { type: "success" });
   }
 
   /* ---------- rendering ---------- */
@@ -337,6 +337,7 @@
       </div>`;
 
     view.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head">
         <p class="eyebrow">Miiuz BB</p>
         <h1>${esc(t("member.title"))}</h1>
@@ -420,6 +421,7 @@
         <div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="m-edit">${esc(t("member.edit"))}</button></div>`;
 
     view.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       ${M.setupError ? `<p class="m-error">${esc(t("member.setupMissing"))}</p>` : ""}
       ${M.profile && !p.nationality && !M.editing ? `<button type="button" class="card m-complete" id="m-complete">${icon("user")}<span>${esc(t("member.complete"))}</span>${icon("next", "next")}</button>` : ""}
       <section class="mcard tier-${s.tier}">
@@ -474,19 +476,19 @@
         </section>
       </div>`;
 
-    $("#m-copy").addEventListener("click", () => MBB.copy(inviteUrl()).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail"))));
+    $("#m-copy").addEventListener("click", () => MBB.copy(inviteUrl()).then(ok => MBB.copied(ok, t("member.linkCopied"))));
     $("#m-share").addEventListener("click", async () => {
       const data = { title: "Miiuz BB", text: t("member.shareText"), url: inviteUrl() };
-      try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
-      MBB.copy(`${data.text} ${data.url}`).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail")));
+      try { if (navigator.share && !MBB.install.wechat) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
+      MBB.copy(`${data.text} ${data.url}`).then(ok => MBB.copied(ok, t("member.linkCopied")));
     });
-    view.querySelectorAll("[data-copy-code]").forEach(b => b.addEventListener("click", () => MBB.copy(b.dataset.copyCode).then(ok => MBB.toast(ok ? t("sos.copied", { x: b.dataset.copyCode }) : t("common.copyFail")))));
+    view.querySelectorAll("[data-copy-code]").forEach(b => b.addEventListener("click", () => MBB.copy(b.dataset.copyCode).then(ok => MBB.copied(ok, t("sos.copied", { x: b.dataset.copyCode })))));
     $("#m-optin").addEventListener("change", async e => {
       const on = e.target.checked;
       const { error } = await M.sb.from("profiles").update({ marketing_opt_in: on }).eq("id", M.user.id);
-      if (error) { e.target.checked = !on; MBB.toast(t("member.failed")); return; }
+      if (error) { e.target.checked = !on; MBB.toast(t("member.failed"), { type: "error" }); return; }
       if (M.profile) M.profile.marketing_opt_in = on;
-      MBB.toast(t("common.saved"));
+      MBB.toast(t("common.saved"), { type: "success" });
     });
     $("#m-signout").addEventListener("click", async () => { await M.sb.auth.signOut(); MBB.go("home"); });
     const edit = () => { M.editing = true; render(); $("#m-details-card").scrollIntoView({ block: "start" }); };
@@ -506,7 +508,7 @@
       Object.assign(M.profile, d);
       M.editing = false;
       refresh();
-      MBB.toast(t("common.saved"));
+      MBB.toast(t("common.saved"), { type: "success" });
     });
   }
 
@@ -578,11 +580,13 @@
     $("#nudge-join").focus();
     $("#nudge-join").addEventListener("click", () => hideNudge(false));
     $("#nudge-later").addEventListener("click", () => hideNudge(true));
+    MBB.overlay.opened(() => hideNudge(true));
   }
   function hideNudge(restoreFocus = true) {
     const el = $("#nudge");
     if (el.hidden) return;
     el.hidden = true;
+    MBB.overlay.closed();
     if (restoreFocus) nudgeReturn?.focus?.();
   }
 

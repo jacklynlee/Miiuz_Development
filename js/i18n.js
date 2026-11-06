@@ -109,6 +109,10 @@
     "plan.car": { zh: "打车 Grab", en: "Grab", ko: "Grab 이동", ja: "Grab で移動" },
     "plan.legMin": { zh: "约 {m} 分钟", en: "about {m} min", ko: "약 {m}분", ja: "約{m}分" },
     "plan.maps": { zh: "Google 地图", en: "Google Maps", ko: "구글 지도", ja: "Google マップ" },
+    "place.baidu": { zh: "百度地图", en: "Baidu Maps", ko: "바이두 지도", ja: "百度地図" },
+    "wx.title": { zh: "在微信里打开的？", en: "Opened in WeChat?", ko: "위챗에서 여셨나요?", ja: "WeChatで開いていますか？" },
+    "wx.lead": { zh: "点右上角「···」，选择「在浏览器打开」（iPhone 上是「在 Safari 中打开」）。在浏览器里可以把 Miiuz BB 添加到主屏幕，离线也能用。", en: "Tap ··· at the top right and choose Open in Browser (Open in Safari on iPhone). In your browser you can add Miiuz BB to your home screen and use it offline.", ko: "오른쪽 위 ···를 누르고 '브라우저에서 열기'(iPhone은 'Safari에서 열기')를 고르세요. 브라우저에서 Miiuz BB를 홈 화면에 추가하면 오프라인에서도 쓸 수 있어요.", ja: "右上の「···」をタップし、「ブラウザで開く」（iPhoneは「Safariで開く」）を選んでください。ブラウザならMiiuz BBをホーム画面に追加して、オフラインでも使えます。" },
+    "wx.ok": { zh: "知道了", en: "Got it", ko: "알겠어요", ja: "OK" },
     "plan.amap": { zh: "高德地图", en: "Amap", ko: "Amap", ja: "Amap" },
     "plan.book": { zh: "门票 / 点评", en: "Tickets / reviews", ko: "티켓 / 리뷰", ja: "チケット / 口コミ" },
     "plan.toAirport": { zh: "前往机场", en: "Head to the airport", ko: "공항으로 이동", ja: "空港へ" },
@@ -314,6 +318,8 @@
     "install.title": { zh: "把 Miiuz BB 装到手机上", en: "Install Miiuz BB", ko: "Miiuz BB 앱 설치", ja: "Miiuz BB をホーム画面に追加" },
     "install.lead": { zh: "像 App 一样打开，离线也能用，不用去应用商店。", en: "Opens like an app and works offline. No app store needed.", ko: "앱처럼 열리고 오프라인에서도 돼요. 앱스토어는 필요 없어요.", ja: "アプリのように開けてオフラインでも使えます。ストアは不要です。" },
     "install.ios": { zh: "在 Safari 里点“分享”按钮，再点“添加到主屏幕”。", en: "In Safari, tap the Share button, then 'Add to Home Screen'.", ko: "Safari에서 공유 버튼 → '홈 화면에 추가'를 누르세요.", ja: "Safariで共有ボタン →「ホーム画面に追加」をタップしてください。" },
+    "install.iosOther": { zh: "点地址栏或菜单里的“分享”按钮，再点“添加到主屏幕”。也可以用 Safari 打开。", en: "Tap the Share button in the address bar or menu, then 'Add to Home Screen'. Or open this page in Safari.", ko: "주소창이나 메뉴의 공유 버튼 → '홈 화면에 추가'를 누르세요. Safari에서 열어도 돼요.", ja: "アドレスバーかメニューの共有ボタン →「ホーム画面に追加」をタップしてください。Safariで開いても追加できます。" },
+    "install.inApp": { zh: "这个应用内的浏览器不能安装。请点 ⋯ 或 ⋮，选“在浏览器中打开”，再安装。", en: "You can't install from this app's browser. Tap ⋯ or ⋮, choose 'Open in browser', then install.", ko: "이 앱 안의 브라우저에서는 설치할 수 없어요. ⋯ 또는 ⋮ → '브라우저에서 열기'를 누른 뒤 설치하세요.", ja: "このアプリ内のブラウザでは追加できません。⋯ か ⋮ から「ブラウザで開く」を選んでから追加してください。" },
     "install.button": { zh: "安装", en: "Install", ko: "설치", ja: "インストール" },
     "install.hide": { zh: "隐藏", en: "Hide", ko: "숨기기", ja: "閉じる" },
 
@@ -453,6 +459,14 @@
     "place.inMalaysia": { zh: "在马来西亚的位置", en: "Where it is in Malaysia", ko: "말레이시아 내 위치", ja: "マレーシアのどこ？" },
     "place.notFound": { zh: "找不到这个地点。", en: "We couldn't find that place.", ko: "장소를 찾을 수 없어요.", ja: "この場所は見つかりません。" },
 
+    "credits.version": { zh: "版本 {v}", en: "Version {v}", ko: "버전 {v}", ja: "バージョン {v}" },
+    "update.check": { zh: "检查更新", en: "Check for updates", ko: "업데이트 확인", ja: "アップデートを確認" },
+    "update.latest": { zh: "已是最新版本。", en: "You have the latest version.", ko: "최신 버전이에요.", ja: "最新バージョンです。" },
+    "update.offline": { zh: "没有网络，无法检查更新。", en: "Can't check for updates without a connection.", ko: "인터넷에 연결되어 있지 않아 확인할 수 없어요.", ja: "オフラインのため確認できません。" },
+    "update.ready": { zh: "Miiuz BB 有新版本了", en: "A new version of Miiuz BB is ready", ko: "Miiuz BB 새 버전이 준비됐어요", ja: "Miiuz BB の新しいバージョンがあります" },
+    "update.go": { zh: "更新", en: "Update", ko: "업데이트", ja: "更新" },
+    "update.must": { zh: "请更新后继续使用 Miiuz BB", en: "Please update to keep using Miiuz BB", ko: "Miiuz BB를 계속 쓰려면 업데이트해 주세요", ja: "Miiuz BB を引き続き使うには更新してください" },
+    "update.mustLead": { zh: "这个版本已经过时。更新只需几秒，语言、行程和会员登录都会保留。", en: "This version is out of date. Updating takes a few seconds, and your language, plans and sign-in stay.", ko: "이 버전은 오래됐어요. 몇 초면 업데이트되고, 언어·일정·로그인은 그대로 유지돼요.", ja: "このバージョンは古くなっています。更新は数秒で終わり、言語・プラン・ログインはそのまま残ります。" },
     "credits.title": { zh: "图片与地图来源", en: "Photo & map credits", ko: "사진·지도 출처", ja: "写真・地図のクレジット" },
     "credits.lead": { zh: "图片来自 Wikimedia Commons，均为自由授权，作者和授权如下。", en: "Photos come from Wikimedia Commons under free licences; their authors and licences are listed below.", ko: "사진은 자유 이용이 허락된 Wikimedia Commons 이미지예요. 작가와 라이선스는 아래와 같아요.", ja: "写真はWikimedia Commonsの自由ライセンス画像です。作者とライセンスは以下の通りです。" },
     "credits.none": { zh: "联网加载图片后会显示来源。", en: "Credits appear once photos have loaded.", ko: "사진을 불러오면 출처가 표시돼요.", ja: "写真の読み込み後に表示されます。" },
@@ -491,6 +505,8 @@
     "sos.emergencyLocal": { zh: "紧急联系人（姓名和电话）", en: "Emergency contact (name and phone)", ko: "비상 연락처(이름·전화번호)", ja: "緊急連絡先（氏名・電話番号）" },
 
     "common.saved": { zh: "已保存", en: "Saved", ko: "저장했어요", ja: "保存しました" },
+    "common.retry": { zh: "重试", en: "Retry", ko: "다시 시도", ja: "再試行" },
+    "toast.dismiss": { zh: "关闭提示", en: "Dismiss", ko: "알림 닫기", ja: "通知を閉じる" },
     "common.close": { zh: "关闭", en: "Close", ko: "닫기", ja: "閉じる" },
     "common.copyFail": { zh: "复制失败，请手动选择文字", en: "Couldn't copy; select the text instead", ko: "복사하지 못했어요. 직접 선택해 주세요.", ja: "コピーできませんでした。手動で選択してください。" },
   };

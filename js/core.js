@@ -13,6 +13,25 @@
   };
   MBB.store = store;
 
+  /* ---------- this copy's version (#30) ----------
+   * Same as package.json's "version" (npm run check makes sure). Shown on Credits and sent to the
+   * APIs as X-Miiuz-Version. The build (commit) comes from the service worker: js/update.js. */
+  MBB.VERSION = "0.9.0";
+
+  /* ---------- saved data format (#30) ----------
+   * Settings and plans are saved as "mbb.*" in localStorage. When a release changes how something
+   * is saved, raise DATA_VERSION and add a step that converts the old format, so nothing is lost:
+   *   2: () => { const p = store.get("plan.prefs", null); if (p) store.set("plan.prefs", { ...p, … }); },
+   * Steps run once, in order, before anything reads the data. */
+  const DATA_VERSION = 1;
+  const MIGRATE = {};
+  {
+    let v = store.get("dataVersion", 0);
+    if (v === 0) v = 1; // everything saved before #30 is format 1
+    for (; v < DATA_VERSION; v++) { try { MIGRATE[v + 1]?.(); } catch { /* keep going with what's there */ } }
+    if (store.get("dataVersion", 0) !== DATA_VERSION) store.set("dataVersion", DATA_VERSION);
+  }
+
   /* ---------- languages and home country ---------- */
   // The language list lives in js/locales.js, the home-country rules in js/country.js.
   const O = MBB.origin;
@@ -149,9 +168,23 @@
   // Is the phone on Malaysian time? Then the traveller has most likely arrived.
   MBB.onTrip = () => O.LOCAL_TZ.includes(phoneTz);
 
-  // Public settings from the server (Supabase keys, the request's country). Fetched once per visit.
+  // Calls to our own /api/…, with this copy's version. A 426 means this copy is too old for the
+  // API (MIIUZ_MIN_VERSION): js/update.js shows "Please update".
+  MBB.api = (path, opts = {}) => fetch(path, { ...opts, headers: { ...opts.headers, "X-Miiuz-Version": MBB.VERSION } }).then(r => {
+    if (r.status === 426) MBB.emit("outdated");
+    return r;
+  });
+
+  // Public settings from the server (Supabase keys, the request's country, the live version and
+  // build). Fetched once per visit; fresh = ask again (the update check, js/update.js).
   let cfg = null;
-  MBB.config = () => (cfg ||= fetch("api/config", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null));
+  const getConfig = () => MBB.api("api/config", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  MBB.config = (fresh = false) => {
+    if (!fresh) return (cfg ||= getConfig());
+    const p = getConfig();
+    p.then(j => { if (j) cfg = Promise.resolve(j); });
+    return p;
+  };
 
   /* ---------- text ---------- */
   MBB.L = v => {
@@ -251,12 +284,64 @@
   MBB.rm = n => `RM ${n.toFixed(2)}`;
 
   /* ---------- feedback ---------- */
-  MBB.toast = msg => {
-    const t = MBB.$("#toast");
-    t.textContent = msg; t.hidden = false;
-    clearTimeout(MBB.toast.h);
-    MBB.toast.h = setTimeout(() => (t.hidden = true), 2400);
+  /* ---------- toasts (#29) ----------
+   * MBB.toast(msg) or MBB.toast(msg, { type: "success" | "error" | "info", action: { label, run } }).
+   * A card at the top of the screen, below the notch, above everything else (sheets, the
+   * full-screen card). Success and info stay about 3 s, errors about 5.5 s; it stays while
+   * touched or hovered, and a tap, a swipe up or × dismisses it. A new toast replaces the current
+   * one. Screen readers hear it through a polite or (errors) assertive live region; focus never
+   * moves, so typing isn't interrupted. */
+  const TOAST_MS = { success: 3000, info: 3000, error: 5500 };
+  const TOAST_IC = { success: "check", info: "info", error: "alert" };
+  let toastTimer = 0, toastLeft = 0, toastUntil = 0;
+  const announce = (msg, type) => {
+    const el = MBB.$(type === "error" ? "#toast-alert" : "#toast-polite");
+    if (!el) return;
+    el.textContent = "";
+    setTimeout(() => { el.textContent = msg; }, 60); // a change, so it's read even when repeated
   };
+  MBB.toast = (msg, { type = "info", action = null } = {}) => {
+    const el = MBB.$("#toast");
+    if (!TOAST_MS[type]) type = "info";
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `${MBB.icon(TOAST_IC[type], "toast-ic")}<span class="toast-msg">${MBB.esc(msg)}</span>
+      ${action ? `<button type="button" class="toast-act">${MBB.esc(action.label)}</button>` : ""}
+      <button type="button" class="toast-x" aria-label="${MBB.esc(MBB.t("toast.dismiss"))}">${MBB.icon("close")}</button>`;
+    if (action) el.querySelector(".toast-act").addEventListener("click", ev => { ev.stopPropagation(); MBB.toast.hide(); action.run(); });
+    el.querySelector(".toast-x").addEventListener("click", MBB.toast.hide); // keyboard; taps are handled below
+    el.hidden = false;
+    void el.offsetWidth; // start the slide-in from above
+    el.classList.add("show");
+    announce(msg, type);
+    if (type === "error") { try { navigator.vibrate?.(40); } catch { /* not supported */ } }
+    toastLeft = action ? Math.max(TOAST_MS[type], 6000) : TOAST_MS[type];
+    MBB.toast.resume();
+  };
+  MBB.toast.pause = () => { clearTimeout(toastTimer); toastLeft = Math.max(1200, toastUntil - Date.now()); };
+  MBB.toast.resume = () => { clearTimeout(toastTimer); toastUntil = Date.now() + toastLeft; toastTimer = setTimeout(MBB.toast.hide, toastLeft); };
+  MBB.toast.hide = () => {
+    const el = MBB.$("#toast");
+    clearTimeout(toastTimer);
+    if (el.hidden) return;
+    el.classList.remove("show");
+    setTimeout(() => { if (!el.classList.contains("show")) el.hidden = true; }, 220);
+  };
+  // Copy results: "Copied" (success) or "Couldn't copy" (error).
+  MBB.copied = (ok, msg) => MBB.toast(ok ? msg : MBB.t("common.copyFail"), { type: ok ? "success" : "error" });
+  // Touch: stays while held; a tap or a swipe up dismisses it. Mouse: stays while hovered.
+  {
+    let y0 = null;
+    const el = () => MBB.$("#toast");
+    document.addEventListener("pointerdown", e => { if (e.target.closest?.("#toast") && !e.target.closest(".toast-act")) { y0 = e.clientY; MBB.toast.pause(); } });
+    document.addEventListener("pointerup", e => {
+      if (y0 == null) return;
+      const moved = y0 - e.clientY; y0 = null;
+      if (moved > 24 || (Math.abs(moved) < 8 && e.target.closest?.("#toast"))) MBB.toast.hide(); else MBB.toast.resume();
+    });
+    document.addEventListener("pointercancel", () => { if (y0 != null) { y0 = null; MBB.toast.resume(); } });
+    document.addEventListener("pointerover", e => { if (e.pointerType === "mouse" && e.target.closest?.("#toast") && !el().hidden && !e.relatedTarget?.closest?.("#toast")) MBB.toast.pause(); });
+    document.addEventListener("pointerout", e => { if (e.pointerType === "mouse" && e.target.closest?.("#toast") && !el().hidden && !e.relatedTarget?.closest?.("#toast")) MBB.toast.resume(); });
+  }
   // Call from inside a click handler: writeText must start before any await.
   MBB.copy = text => {
     const fallback = () => {
@@ -275,6 +360,31 @@
     }
   };
 
+  /* ---------- back gesture closes sheets and the full-screen card (#31) ----------
+   * The installed app has no browser back button, and Android's back gesture would leave the
+   * screen (or the app) with a sheet still open. Opening one adds a history entry at the same
+   * address, so "back" closes it. Closing it another way removes that entry again. */
+  let closeTop = null;
+  MBB.overlay = {
+    opened(close) {
+      if (!closeTop && !history.state?.mbbOverlay) { try { history.pushState({ mbbOverlay: 1 }, ""); } catch { /* sandboxed preview */ } }
+      closeTop = close;
+    },
+    closed() {
+      if (!closeTop) return;
+      closeTop = null;
+      // Later, so a sheet that opens another (SOS → driver card) keeps the same entry.
+      setTimeout(() => { if (!closeTop && history.state?.mbbOverlay) history.back(); }, 0);
+    },
+  };
+  window.addEventListener("popstate", () => {
+    const close = closeTop;
+    closeTop = null;
+    if (close) close();
+    // An entry left behind when a sheet closed by following a link: skip it.
+    else if (history.state?.mbbOverlay) history.back();
+  });
+
   /* ---------- full-screen "show this" card ---------- */
   let lastFocus = null, wakeLock = null;
   MBB.present = ({ kicker = "", big, sub = "" }) => {
@@ -288,12 +398,14 @@
     lastFocus = document.activeElement;
     el.hidden = false;
     MBB.$("#present-close").focus();
+    MBB.overlay.opened(MBB.closePresent);
     try { navigator.wakeLock?.request("screen").then(l => (wakeLock = l), () => {}); } catch { /* optional */ }
   };
   MBB.closePresent = () => {
     const el = MBB.$("#present");
     if (el.hidden) return;
     el.hidden = true;
+    MBB.overlay.closed();
     try { wakeLock?.release(); } catch { /* ignore */ }
     wakeLock = null;
     lastFocus?.focus?.();
@@ -381,6 +493,9 @@
     locate: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
     route: '<path d="M12 2l10 10-10 10L2 12z"/><path d="M9 14v-2.5a1.5 1.5 0 0 1 1.5-1.5H15M13 8l2 2-2 2"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    alert: '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5v.01"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
   };
   MBB.icon = (name, cls = "") =>
     `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${P[name] || ""}</svg>`;

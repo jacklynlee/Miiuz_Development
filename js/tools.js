@@ -135,12 +135,14 @@
     $("#fx-home").addEventListener("input", () => syncFx("home"));
     $("#fx-cur").addEventListener("change", e => MBB.setHome(e.target.value));
     $$(".fx-quick button").forEach(b => b.addEventListener("click", () => { $("#fx-myr").value = b.dataset.rm; syncFx("myr"); }));
-    $("#fx-refresh").addEventListener("click", async e => {
-      const btn = e.currentTarget; btn.disabled = true;
+    const refresh = async () => {
+      const btn = $("#fx-refresh");
+      if (btn) btn.disabled = true;
       const ok = await MBB.refreshFx(true);
-      btn.disabled = false;
-      if (!ok) MBB.toast(t("tools.fxFailed"));
-    });
+      if (btn) btn.disabled = false;
+      if (!ok) MBB.toast(t("tools.fxFailed"), { type: "error", action: { label: t("common.retry"), run: refresh } });
+    };
+    $("#fx-refresh").addEventListener("click", refresh);
 
     const billUpdate = () => {
       S.subtotal = $("#b-sub").value; S.people = $("#b-people").value;
@@ -161,7 +163,7 @@
     $$(".phr-tabs button").forEach(b => b.addEventListener("click", () => { S.cat = b.dataset.cat; MBB.store.set("phr.cat", S.cat); render(); $("#tool-phrases").scrollIntoView({ block: "nearest" }); }));
     $$("[data-speak]").forEach(b => b.addEventListener("click", () => {
       const p = cat.items[Number(b.dataset.speak)];
-      if (!MBB.speak(p.ms)) MBB.toast(t("tools.noVoice"));
+      if (!MBB.speak(p.ms)) MBB.toast(t("tools.noVoice"), { type: "error" });
     }));
     $$("[data-show]").forEach(b => b.addEventListener("click", () => {
       const p = cat.items[Number(b.dataset.show)];
@@ -182,7 +184,7 @@
 
   function showDriver() {
     const hotel = (S.hotel || "").trim();
-    if (!hotel) { MBB.toast(t("tools.driverEmpty")); MBB.go("tools", "tool-driver"); return; }
+    if (!hotel) { MBB.toast(t("tools.driverEmpty"), { type: "error" }); MBB.go("tools", "tool-driver"); return; }
     const d = MBB.C.driverCard;
     MBB.present({ kicker: d.ms, big: hotel, sub: L(d) === d.en ? d.en : `${L(d)} · ${d.en}` });
   }
