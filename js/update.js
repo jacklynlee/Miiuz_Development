@@ -48,10 +48,12 @@
   function waiting() {
     const w = reg?.waiting;
     if (!w || reloading) return;
-    const ctrl = sw.controller, mine = ctrl && buildOf(ctrl);
-    // This page's files came from the network (old copies, local dev) or are already this build:
-    // let the new worker take over quietly, nothing on screen changes.
-    if (!mine || mine === "dev" || buildOf(w) === running) { w.postMessage("skipWaiting"); return; }
+    const next = buildOf(w);
+    // Plain "sw.js" (copies from before #30) and local dev take over by themselves.
+    if (!next || next === "dev") return;
+    // This page already runs that build (its files came from the network or from that build's
+    // cache): let the new worker take over quietly, nothing on screen changes.
+    if (!running || running === "dev" || next === running) { w.postMessage("skipWaiting"); return; }
     offer();
   }
 
