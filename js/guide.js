@@ -73,9 +73,9 @@
       <div class="g-sections">${secs}</div>
       ${links}
       <p class="checked-note">${esc(t("guide.checked", { d: checkedLabel() }))}</p>
-      <div class="actions"><button type="button" class="btn btn-ai" id="g-ask">${icon("spark")}${esc(t("guide.ask"))}</button></div>`;
+      ${MBB.features.ask ? `<div class="actions"><button type="button" class="btn btn-ai" id="g-ask">${icon("spark")}${esc(t("guide.ask"))}</button></div>` : ""}`;
 
-    $("#g-ask").addEventListener("click", () => MBB.chat.prefill(t("guide.askPrompt", { t: L(g.title) })));
+    $("#g-ask")?.addEventListener("click", () => MBB.chat.prefill(t("guide.askPrompt", { t: L(g.title) })));
   }
 
   MBB.guide = {

@@ -147,6 +147,9 @@ h1, h2, h3 { text-wrap: balance; }
 .tabbar a[aria-current="page"] { color: var(--teal); }
 .tabbar a[aria-current="page"] .tab-ic { background: var(--teal-soft); }
 .tab-ic { display: grid; place-items: center; width: 44px; height: 28px; border-radius: 999px; transition: background .15s; }
+.tabbar a { position: relative; }
+/* "Soon" on a tab whose feature isn't released yet (Ask Miiuz in v1.0.0) */
+.tab-soon { position: absolute; top: 2px; inset-inline-start: calc(50% + 3px); font-size: 9px; font-weight: 700; line-height: 1; padding: 2px 5px; border-radius: 999px; background: var(--turmeric-soft); color: var(--fg); white-space: nowrap; pointer-events: none; }
 main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 24px); }
 @media (min-width: 900px) {
   .tabbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 59px); bottom: auto; border-top: 0; border-bottom: 1px solid var(--line); padding-bottom: 0; }
@@ -155,6 +158,7 @@ main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) +
   .tabbar a[aria-current="page"] { border-bottom-color: var(--teal); }
   .tabbar a[aria-current="page"] .tab-ic { background: transparent; }
   .tab-ic { width: auto; height: auto; }
+  .tab-soon { position: static; order: 1; font-size: 11px; padding: 3px 7px; }
   main { padding-bottom: 48px; }
 }
 
@@ -364,6 +368,10 @@ textarea { min-height: 64px; resize: vertical; }
 .chat-controls label { font-size: 12.5px; display: flex; gap: 6px; align-items: center; }
 .chat-controls select { width: auto; font-size: 13px; padding: 4px 6px; border: 0; background: var(--surface); }
 .chat-head .btn-ghost { color: var(--on-accent); border-color: currentColor; }
+.ask-soon { display: grid; justify-items: start; gap: 10px; padding: 22px 18px; }
+.ask-soon h1 { margin: 0; font-family: var(--display); font-weight: 900; font-size: clamp(22px, 4.5vw, 30px); line-height: 1.25; }
+.ask-soon p { margin: 0; color: var(--muted); max-width: 60ch; }
+.ask-soon .chat-avatar { background: var(--teal); color: var(--on-accent); }
 .chat-head .btn-ghost:hover { background: transparent; opacity: .85; }
 .msgs { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; overflow-y: auto; min-height: 200px; max-height: 60vh; }
 @media (min-width: 900px) { .msgs { max-height: 56vh; } }

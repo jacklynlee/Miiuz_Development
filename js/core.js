@@ -61,6 +61,11 @@
     home: store.get("home", O.currencyOf(first.code) || MBB.LANGS[lang].currency),
   };
   MBB.C = MBB.countries[MBB.state.country];
+
+  // Features that are built but not released yet. Ask Miiuz (the AI chat) ships after v1.0.0 (#13, #33):
+  // while it's off, the Ask tab shows "Coming soon" and every other way into the chat is hidden.
+  // AI translation is separate and stays on. Set ask to true to switch the chat back on.
+  MBB.features = { ask: false };
   if (!MBB.C.cities[MBB.state.city]) MBB.state.city = "kl";
 
   /* ---------- translation overlays (js/data/<country>.<lang>.js) ---------- */

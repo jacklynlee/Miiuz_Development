@@ -93,7 +93,7 @@
 
   function remoteBlock(q) {
     const R = S.remote;
-    const askBtn = `<button type="button" class="s-row s-ask" id="s-ask"><span class="badge-ic">${icon("spark")}</span><span><b>${esc(t("search.ask", { q }))}</b><small>${esc(t("search.askD"))}</small></span>${icon("next", "next")}</button>`;
+    const askBtn = !MBB.features.ask ? "" : `<button type="button" class="s-row s-ask" id="s-ask"><span class="badge-ic">${icon("spark")}</span><span><b>${esc(t("search.ask", { q }))}</b><small>${esc(t("search.askD"))}</small></span>${icon("next", "next")}</button>`;
     if (R.q !== q || R.state === "idle") {
       return `<button type="button" class="s-row s-more" id="s-remote"><span class="badge-ic hot">${icon("globe")}</span><span><b>${esc(t("search.all", { q }))}</b><small>${esc(t("search.allD"))}</small></span>${icon("next", "next")}</button>${askBtn}`;
     }
