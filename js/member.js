@@ -64,7 +64,7 @@
   async function init() {
     captureRef();
     startUsage();
-    MBB.on("lang", () => { renderHeader(); if (location.hash === "#member") render(); });
+    MBB.on("lang", () => { renderHeader(); if (location.hash === "#member") render(); syncLang(); });
     renderHeader();
 
     const cfg = await loadConfig();
@@ -98,6 +98,13 @@
     MBB.emit("member");
   }
 
+  // The sign-in email is in the language saved in the member's account (`lang`, #28): keep it
+  // the app's language. Only when it changed, so it's one write per change.
+  function syncLang() {
+    if (!M.sb || !M.user || M.user.user_metadata?.lang === MBB.state.lang) return;
+    M.sb.auth.updateUser({ data: { lang: MBB.state.lang } }).then(({ data }) => { if (data?.user) M.user = data.user; }, () => {});
+  }
+
   async function onSession(session, fresh) {
     const user = session?.user || null;
     const same = (user?.id || null) === (M.user?.id || null);
@@ -111,6 +118,7 @@
     await loadMember();
     M.stage = "form"; M.error = "";
     setStatus("member");
+    syncLang();
     if (fresh) {
       const isNew = M.profile?.created_at && Date.now() - new Date(M.profile.created_at) < 15 * 60e3;
       MBB.toast(t(isNew ? "member.welcome" : "member.welcomeBack"));

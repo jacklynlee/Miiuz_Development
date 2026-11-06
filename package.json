@@ -10,6 +10,7 @@
     "dev:env": "node --env-file=.env server.mjs",
     "check": "node scripts/check.mjs",
     "build:preview": "node scripts/build-preview.mjs",
+    "emails": "node scripts/build-emails.mjs",
     "translate": "node scripts/translate.mjs"
   },
   "engines": {
