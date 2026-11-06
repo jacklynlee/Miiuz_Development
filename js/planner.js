@@ -193,7 +193,7 @@
         ${tags ? `<div class="tags">${tags}</div>` : ""}
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
         ${tip ? `<p class="tip">${esc(tip)}</p>` : ""}
-        <div class="maps"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">${esc(t("plan.maps"))}</a>${MBB.state.from === "CN" ? `<a href="https://uri.amap.com/search?keyword=${encodeURIComponent(n.en || n.main)}" target="_blank" rel="noopener">${esc(t("plan.amap"))}</a>` : ""}</div>
+        <div class="maps"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">${esc(t("plan.maps"))}</a>${MBB.state.from === "CN" ? `<a href="${esc(p?.lat ? MBB.maps.amap(p.lat, p.lng, n.main) : `https://uri.amap.com/search?keyword=${encodeURIComponent(n.en || n.main)}`)}" target="_blank" rel="noopener">${esc(t("plan.amap"))}</a>` : ""}</div>
         <div class="book"><span>${esc(t("plan.book"))}</span>${SITES.map(([label, url]) => `<a href="${url(encodeURIComponent(n.en || n.main))}" target="_blank" rel="noopener">${label}</a>`).join("")}</div>
         </div></li>`);
     });

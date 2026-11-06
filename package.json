@@ -10,7 +10,8 @@
     "dev:env": "node --env-file=.env server.mjs",
     "check": "node scripts/check.mjs",
     "build:preview": "node scripts/build-preview.mjs",
-    "translate": "node scripts/translate.mjs"
+    "translate": "node scripts/translate.mjs",
+    "vendor": "node scripts/vendor.mjs"
   },
   "engines": {
     "node": ">=20"

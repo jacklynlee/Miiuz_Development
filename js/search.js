@@ -162,6 +162,7 @@
   function render() {
     const v = $("#view-search");
     v.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head">
         <p class="eyebrow" lang="ms">Cuti-cuti Malaysia!</p>
         <h1>${esc(t("search.title"))}</h1>
