@@ -5,6 +5,8 @@ country. It starts with **Malaysia**: hand-written day plans for Kuala Lumpur, P
 20 more destinations from Langkawi to Kuching, and search for any place in the country. It is
 built so more countries can be added.
 
+Live at **https://www.miiuz-bb.com**.
+
 It grew out of the original *Miiuz Beyond Borders* half-day planner artifact: the planner is
 still here, now alongside everything else a visitor needs.
 
@@ -84,6 +86,21 @@ npm run check          # syntax + data + translation sanity checks
    enabled, `/_vercel/insights/script.js` returns 404, which does no harm. Mention it in the
    privacy notice.
 
+### Domain and email
+
+- **Live address:** https://www.miiuz-bb.com (Vercel production, branch `main`). `miiuz-bb.com`
+  and the old `miiuz-bb.vercel.app` redirect there (308), so old links and the QR code in
+  `marketing/` keep working.
+- **DNS** is at GoDaddy. Vercel → Settings → Domains shows the records each address needs.
+- **Staging** gets its own fixed address (for example `staging.miiuz-bb.com`): add it in Vercel →
+  Settings → Domains, assign it to the Git branch `staging`, and add the CNAME record Vercel shows.
+- **Email:** sign-in codes are sent by Supabase through Resend, from `hello@miiuz-bb.com` (see
+  Membership → Set up, step 5). Resend's records (`resend._domainkey`, plus MX and TXT on `send`)
+  are in the same GoDaddy DNS.
+- If you set `MIIUZ_ALLOWED_ORIGINS`, list every address the app is opened from, e.g.
+  `https://www.miiuz-bb.com,https://staging.miiuz-bb.com`. Addresses that only redirect don't
+  need to be listed.
+
 Without the key, everything except the AI assistant and AI translation works. Travellers see
 "Ask Miiuz isn't available right now", and the browser console says why.
 
@@ -113,13 +130,16 @@ address is verified, once per person; members can read but never change their ow
 1. Create a project at [supabase.com](https://supabase.com) (region: Southeast Asia / Singapore).
 2. **SQL Editor** → paste all of `supabase/schema.sql` → Run. Safe to run again: after any
    update to the file (such as the member-details columns), run it again to upgrade.
-3. **Authentication → URL Configuration**: Site URL `https://miiuz-bb.vercel.app`; add redirect
-   URLs `https://miiuz-bb.vercel.app/**` and `http://localhost:3000/**`.
+3. **Authentication → URL Configuration**: Site URL `https://www.miiuz-bb.com`; add redirect
+   URLs `https://www.miiuz-bb.com/**`, the staging address (e.g. `https://staging.miiuz-bb.com/**`)
+   and `http://localhost:3000/**`.
 4. **Authentication → Emails → Templates**: in both **Confirm signup** and **Magic Link**, add
    the code, e.g. `<h2>Your Miiuz BB code: {{ .Token }}</h2>`, above the existing link.
 5. **Authentication → Emails → SMTP Settings**: connect a real email sender (e.g. Resend, Brevo,
    Amazon SES). Supabase's built-in sender only delivers to your own team's addresses and a few
-   emails per hour, so real members won't receive codes without this.
+   emails per hour, so real members won't receive codes without this. Miiuz uses Resend: host
+   `smtp.resend.com`, port 465, username `resend`, password a Resend API key with sending access
+   for `miiuz-bb.com` only, sender `hello@miiuz-bb.com`, sender name `Miiuz Beyond Borders`.
 6. **Project Settings → API**: copy the **Project URL** and the **publishable** key (or legacy
    `anon` key). In Vercel → Environment Variables add `SUPABASE_URL` and
    `SUPABASE_PUBLISHABLE_KEY` (or `SUPABASE_ANON_KEY`), then redeploy. These two are meant to be
@@ -234,7 +254,7 @@ supabase/schema.sql     membership database: tables, points triggers, tiers, acc
 sw.js · manifest.webmanifest · icons/   PWA
 scripts/                check, translate, build-preview
 locales/                bundled AI translations
-marketing/              QR code (SVG/PNG) and A5 poster (PNG/PDF) for https://miiuz-bb.vercel.app/
+marketing/              QR code (SVG/PNG) and A5 poster (PNG/PDF) for https://miiuz-bb.vercel.app/ (redirects to www.miiuz-bb.com)
 ```
 
 Rebuild the single-file claude.ai preview with `npm run build:preview`.
