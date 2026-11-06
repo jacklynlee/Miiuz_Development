@@ -104,9 +104,10 @@ for (const l of ["ko", "ja"]) {
 
 // Home country (js/country.js): codes, currencies and detection.
 const O = require(path.join(root, "js/country.js"));
-for (const x of [...C.emergency, ...C.guide.flatMap(g => g.links || [])]) {
+for (const x of [...C.emergency, ...C.guide.flatMap(g => [...(g.links || []), ...(g.facts || []), ...g.sections.flatMap(s => s.items)])]) {
   if (x.only) fail(`"only" (by language) was replaced by "for" (by home country): ${x.id || x.url}`);
-  for (const c of x.for || []) if (!O.valid(c)) fail(`unknown country code "${c}" in for: ${x.id || x.url}`);
+  for (const c of x.for || []) if (!O.valid(c)) fail(`unknown country code "${c}" in for: ${x.id || x.url || x.en || x.k?.en}`);
+  for (const c of Object.keys(x.like || {})) if (!O.valid(c)) fail(`unknown country code "${c}" in like: ${x.id}`);
 }
 for (const c of O.COMMON) if (!O.valid(c)) fail(`country.js COMMON: unknown code ${c}`);
 for (const [c, cur] of Object.entries(O.CURRENCY)) if (!O.valid(c) || !/^[A-Z]{3}$/.test(cur)) fail(`country.js CURRENCY: ${c} → ${cur}`);

@@ -1,12 +1,15 @@
 /* Miiuz Beyond Borders — country pack: Malaysia.
  * Plain script: in the browser it registers on window.MBB.countries.my;
  * in Node (the /api/chat function) it is require()-able.
- * Facts last checked: October 2026. Fields with { zh, en } are bilingual. */
+ * Facts last checked: November 2026. Fields with { zh, en } are bilingual.
+ * `for: ["US"]` on an emergency number, guide fact, guide line or link = shown only to travellers
+ * from those home countries (and members of that nationality). The ko/ja packs translate every
+ * line, including other countries' ones, because language and home country are separate. */
 (function (root) {
   const MY = {
     id: "my",
     name: { zh: "马来西亚", en: "Malaysia" },
-    checked: "2026-10",
+    checked: "2026-11",
     timezone: "Asia/Kuala_Lumpur",
     currency: { code: "MYR", symbol: "RM", name: { zh: "马币（令吉）", en: "Malaysian ringgit" } },
     // Offline fallback, 1 MYR = x. The app refreshes these from a live source when online.
@@ -192,13 +195,16 @@
 
     // `for` = shown only to travellers from those home countries (ISO codes, see js/country.js), and to members of that nationality.
     emergency: [
-      { id: "999", num: "999", tel: "999", label: { zh: "警察 · 救护车", en: "Police · Ambulance" }, note: { zh: "全国通用，免费拨打", en: "Nationwide and free" } },
+      // like = the same service's number at home, shown as "Malaysia's 911" to travellers from there.
+      { id: "999", num: "999", tel: "999", like: { US: "911", CN: "110 · 120", KR: "112 · 119", JP: "110 · 119" }, label: { zh: "警察 · 救护车", en: "Police · Ambulance" }, note: { zh: "全国通用，免费拨打", en: "Nationwide and free" } },
       { id: "112", num: "112", tel: "112", label: { zh: "手机紧急号码", en: "Emergency from a mobile" }, note: { zh: "用手机拨打，会转接紧急服务", en: "From any mobile; connects to emergency services" } },
       { id: "994", num: "994", tel: "994", label: { zh: "消防与救援", en: "Fire & rescue" }, note: { zh: "火灾、受困、水灾", en: "Fire, entrapment, floods" } },
       { id: "tourist", num: "03-2149 6590", tel: "+60321496590", label: { zh: "吉隆坡旅游警察", en: "Tourist Police (KL)" }, note: { zh: "Jalan Ampang 的马来西亚旅游中心（MaTiC），柜台 8:00–17:00；其他时间打 999", en: "At MaTiC on Jalan Ampang, counter 8am–5pm; otherwise call 999" } },
       { id: "cn", for: ["CN"], num: "+86 10 12308", tel: "+861012308", label: { zh: "外交部全球领事保护热线", en: "China consular hotline (12308)" }, note: { zh: "中国公民 24 小时求助，可转接驻马来西亚使馆", en: "24h, for Chinese citizens; can connect you to the embassy" } },
       { id: "kr", for: ["KR"], num: "+82 2 3210 0404", tel: "+82232100404", label: { zh: "韩国外交部领事呼叫中心", en: "Korea consular call center" }, note: { zh: "韩国公民 24 小时求助", en: "24h, for Korean citizens" } },
       { id: "jp", for: ["JP"], num: "+60 3 2177 2600", tel: "+60321772600", label: { zh: "日本驻马来西亚大使馆", en: "Embassy of Japan in Malaysia" }, note: { zh: "日本公民求助（吉隆坡）", en: "For Japanese citizens (Kuala Lumpur)" } },
+      // my.usembassy.gov/contact (checked 2026-11): 376 Jalan Tun Razak, KL; the same number after hours.
+      { id: "us", for: ["US"], num: "+60 3 2168 5000", tel: "+60321685000", label: { zh: "美国驻马来西亚大使馆", en: "US Embassy Kuala Lumpur" }, note: { zh: "美国公民求助，24 小时接听", en: "For US citizens; answered 24 hours" } },
     ],
 
     climate: [
@@ -222,15 +228,22 @@
         title: { zh: "入境与签证", en: "Entry & visa" },
         lead: { zh: "落地前要准备的三件事：护照、MDAC 入境卡、回程机票。", en: "Three things to sort before you land: passport, MDAC arrival card, onward ticket." },
         facts: [
-          { k: { zh: "中国护照", en: "Chinese passport" }, v: { zh: "免签 30 天", en: "Visa-free 30 days" } },
+          { for: ["CN"], k: { zh: "中国护照", en: "Chinese passport" }, v: { zh: "免签 30 天", en: "Visa-free 30 days" } },
+          { for: ["US"], k: { zh: "美国护照", en: "US passport" }, v: { zh: "免签 90 天", en: "Visa-free 90 days" } },
+          { for: ["KR"], k: { zh: "韩国护照", en: "Korean passport" }, v: { zh: "免签 90 天", en: "Visa-free 90 days" } },
+          { for: ["JP"], k: { zh: "日本护照", en: "Japanese passport" }, v: { zh: "免签 90 天", en: "Visa-free 90 days" } },
           { k: { zh: "MDAC", en: "MDAC" }, v: { zh: "抵达前 3 天内填", en: "Within 3 days before arrival" } },
           { k: { zh: "护照有效期", en: "Passport validity" }, v: { zh: "6 个月以上", en: "6+ months" } },
         ],
         sections: [
           { h: { zh: "签证", en: "Visa" }, items: [
-            { zh: "中国普通护照：中马互免签证协定 2025 年 7 月 17 日起生效，每次停留不超过 30 天，任意 180 天内累计不超过 90 天。适用于旅游、探亲、商务。", en: "Chinese ordinary passports: under the China–Malaysia mutual visa exemption (in force since 17 July 2025) you can stay up to 30 days per entry and 90 days in any 180-day period, for tourism, family visits or business." },
-            { zh: "打工、留学或停留超过 30 天，要提前办对应签证。", en: "Work, study or stays longer than 30 days need the proper visa in advance." },
-            { zh: "其他国家的护照：很多国家可免签 30–90 天，出发前在马来西亚移民局网站确认。", en: "Other passports: many nationalities get 30–90 days visa-free. Confirm on the Immigration Department site before you fly." },
+            { for: ["CN"], zh: "中国普通护照：中马互免签证协定 2025 年 7 月 17 日起生效，每次停留不超过 30 天，任意 180 天内累计不超过 90 天。适用于旅游、探亲、商务。", en: "Chinese ordinary passports: under the China–Malaysia mutual visa exemption (in force since 17 July 2025) you can stay up to 30 days per entry and 90 days in any 180-day period, for tourism, family visits or business." },
+            // travel.state.gov, Malaysia country information (checked 2026-11).
+            { for: ["US"], zh: "美国护照：旅游或商务访问 90 天以内免签。护照有效期要在入境日之后还有 6 个月以上，并留一页空白页盖入境章。", en: "US passports: no visa is needed for tourism or business visits of up to 90 days. Your passport needs 6 months' validity beyond your arrival date and one blank page for the entry stamp." },
+            { for: ["KR"], zh: "韩国普通护照：旅游或商务停留最长 90 天免签。", en: "Korean passports: visa-free for tourism or business stays of up to 90 days." },
+            { for: ["JP"], zh: "日本普通护照：旅游或商务停留最长 90 天免签。", en: "Japanese passports: visa-free for tourism or business stays of up to 90 days." },
+            { zh: "很多国家的护照可免签 30–90 天，出发前在马来西亚移民局网站确认你的护照。", en: "Many nationalities can visit visa-free for 30–90 days. Check your passport on the Immigration Department site before you fly." },
+            { zh: "打工、留学，或停留超过免签天数，要提前办对应签证。", en: "Work, study or stays beyond the visa-free period need the proper visa in advance." },
           ] },
           { h: { zh: "MDAC 马来西亚数字入境卡", en: "MDAC digital arrival card" }, items: [
             { zh: "所有外国旅客（新加坡公民等少数情况除外）都要在抵达前 3 天内在官网免费填写。", en: "Every foreign visitor (apart from a few groups such as Singapore citizens) must file it free on the official site within 3 days before arrival." },
@@ -238,7 +251,7 @@
             { zh: "提交后会收到确认邮件，截图保存，入境时可能要出示。", en: "You'll get a confirmation email; screenshot it in case it's asked for." },
           ] },
           { h: { zh: "过关", en: "At immigration" }, items: [
-            { zh: "符合条件的外国护照（包括中国护照）可以走自助通道 autogate，按现场指示排队。", en: "Eligible foreign passports, including Chinese ones, can use the autogates; follow the signs." },
+            { zh: "符合条件的外国护照（包括美国、中国、韩国、日本护照）可以走自助通道 autogate，按现场指示排队。", en: "Eligible foreign passports, including those of the US, China, Korea and Japan, can use the autogates; follow the signs." },
             { zh: "准备好回程或离境机票、酒店地址的截图，被问到时直接给看。", en: "Keep screenshots of your onward ticket and hotel address ready." },
             { zh: "马来西亚对毒品犯罪处罚极重，绝对不要替陌生人带东西。", en: "Drug penalties are extremely severe. Never carry anything for a stranger." },
           ] },
@@ -246,6 +259,7 @@
         links: [
           { label: { zh: "MDAC 官方填写入口", en: "Official MDAC site" }, url: "https://imigresen-online.imi.gov.my/mdac/main" },
           { label: { zh: "马来西亚移民局", en: "Immigration Department of Malaysia" }, url: "https://www.imi.gov.my" },
+          { for: ["US"], label: { zh: "美国国务院：马来西亚旅行信息", en: "US State Department: Malaysia travel information" }, url: "https://travel.state.gov/content/travel/en/international-travel/International-Travel-Country-Information-Pages/Malaysia.html" },
         ],
       },
       {
@@ -290,7 +304,10 @@
         ],
         sections: [
           { h: { zh: "怎么付钱", en: "How to pay" }, items: [
-            { zh: "支付宝、微信支付可以直接扫马来西亚的 DuitNow 二维码付款，覆盖 250 万家以上商户。", en: "Alipay and WeChat Pay can scan Malaysia's DuitNow QR codes, accepted at over 2.5 million merchants." },
+            { for: ["CN"], zh: "支付宝、微信支付可以直接扫马来西亚的 DuitNow 二维码付款，覆盖 250 万家以上商户。", en: "Alipay and WeChat Pay can scan Malaysia's DuitNow QR codes, accepted at over 2.5 million merchants." },
+            { for: ["US"], zh: "Visa、Mastercard 普遍能用，美国运通（Amex）少很多。能感应刷卡的地方（城市里大多数商店）都能用 Apple Pay、Google Pay。出发前告诉银行你要出国；有免境外交易手续费的卡就带上。", en: "Visa and Mastercard are widely accepted; American Express much less so. Apple Pay and Google Pay work wherever you can tap a card, which is most shops in the cities. Tell your bank you're travelling, and bring a card with no foreign transaction fees if you have one." },
+            { for: ["KR"], zh: "KakaoPay、Naver Pay、Toss Pay 等通过 Alipay+，可以在很多商户扫马来西亚的 DuitNow 二维码付款，出发前在 App 里确认境外支付设置。", en: "KakaoPay, Naver Pay and Toss Pay work at many DuitNow QR merchants through Alipay+; check the app's overseas payment settings before you go." },
+            { for: ["JP"], zh: "能用日本手机支付的商户不多，带一张信用卡（以 Visa、Mastercard 为主）和少量现金就够了。", en: "Few shops take Japanese phone payment apps; a credit card (mainly Visa or Mastercard) and some cash will cover you." },
             { zh: "商场、酒店、连锁店普遍能刷 Visa / Mastercard，部分能刷银联。", en: "Malls, hotels and chains take Visa and Mastercard; some take UnionPay." },
             { zh: "大排档、夜市、小庙宇的香油钱，准备一些 RM1–RM10 的小额现金。", en: "Keep small notes (RM1–RM10) for hawker stalls, night markets and temple donations." },
           ] },
@@ -301,6 +318,7 @@
           { h: { zh: "账单上的那些钱", en: "What's on the bill" }, items: [
             { zh: "很多餐厅会加 10% 服务费（Service Charge）和 6% 服务税（SST），看到账单比菜单贵是正常的。", en: "Many restaurants add a 10% service charge and 6% service tax (SST), so the bill runs higher than menu prices." },
             { zh: "不需要另外给小费，服务特别好可以留点零钱。", en: "No tipping needed; leave small change for great service if you like." },
+            { for: ["US"], zh: "从美国来的话：不用另加 15–20% 的小费。很多账单已经含 10% 服务费，工具里的「账单计算」会自动算进去。", en: "Coming from the US: there's no need to add 15–20%. Many bills already include a 10% service charge, and the bill splitter in Tools adds it for you." },
             { zh: "住酒店时，外国游客要付旅游税：每间房每晚 RM10，退房时收。", en: "Foreign hotel guests pay a tourism tax of RM10 per room per night, collected at check-out." },
             { zh: "马来西亚目前没有统一的游客购物退税（2018 年取消消费税后就停了），别被“退税”广告误导。兰卡威和纳闽是免税岛。", en: "There is no general tourist tax refund in Malaysia (it ended with GST in 2018), so ignore \"tax refund\" claims. Langkawi and Labuan are duty-free islands." },
           ] },
@@ -346,7 +364,7 @@
       {
         id: "connect", icon: "signal",
         title: { zh: "电话与上网", en: "SIM & internet" },
-        lead: { zh: "在马来西亚上网不用翻墙，谷歌、WhatsApp 都能直接用。", en: "No firewall here: Google, WhatsApp and Instagram all work without a VPN." },
+        lead: { zh: "用马来西亚的 SIM 卡或 Wi-Fi 上网不用翻墙，谷歌、WhatsApp 都能直接用。", en: "On a Malaysian SIM or Wi-Fi, Google, WhatsApp, Instagram and most other apps work freely." },
         facts: [
           { k: { zh: "本地聊天", en: "Locals chat on" }, v: { zh: "WhatsApp", en: "WhatsApp" } },
           { k: { zh: "买卡要带", en: "SIM needs" }, v: { zh: "护照", en: "Passport" } },
@@ -358,7 +376,9 @@
           ] },
           { h: { zh: "常用 App", en: "Useful apps" }, items: [
             { zh: "Grab（打车、外卖）、Google 地图或 Waze（导航）、WhatsApp（订餐厅、联系民宿）。", en: "Grab (rides and food), Google Maps or Waze (navigation), WhatsApp (bookings and hosts)." },
-            { zh: "微信、支付宝在马来西亚都能正常使用。", en: "WeChat and Alipay work normally in Malaysia." },
+            { for: ["CN"], zh: "微信、支付宝照常能用。注意：用中国手机卡漫游时，流量还是走国内，谷歌、WhatsApp 仍然打不开；换马来西亚的 SIM 卡或 eSIM 就可以。", en: "WeChat and Alipay work as usual. On a Chinese SIM roaming, your data still goes through China, so Google and WhatsApp stay blocked; a Malaysian SIM or eSIM fixes that." },
+            { for: ["KR"], zh: "KakaoTalk 等韩国 App 照常能用；导航用谷歌地图最准。", en: "KakaoTalk and other Korean apps work as usual; for directions, Google Maps is the most accurate." },
+            { for: ["JP"], zh: "LINE 等日本 App 照常能用；导航用谷歌地图最方便。", en: "LINE and other Japanese apps work as usual; Google Maps is the handiest for directions." },
             { zh: "商场、咖啡馆、酒店大多有免费 Wi-Fi。", en: "Most malls, cafés and hotels have free Wi-Fi." },
           ] },
         ],
@@ -446,13 +466,18 @@
           ] },
           { h: { zh: "证件丢了怎么办", en: "If you lose your passport" }, items: [
             { zh: "先去最近的警察局报案拿报告（Police Report），再联系本国大使馆补办旅行证件。", en: "Get a police report at the nearest station first, then contact your embassy for travel documents." },
-            { zh: "中国公民可拨打外交部全球领事保护热线 +86-10-12308 求助。", en: "Chinese citizens can call the consular protection hotline, +86-10-12308." },
+            { for: ["CN"], zh: "中国公民可拨打外交部全球领事保护热线 +86-10-12308 求助。", en: "Chinese citizens can call the consular protection hotline, +86-10-12308." },
+            { for: ["US"], zh: "美国公民：联系美国驻吉隆坡大使馆 +60 3-2168-5000（24 小时接听）。出发前在 STEP 登记行程，紧急时大使馆能联系到你。", en: "US citizens: call the US Embassy in Kuala Lumpur on +60 3-2168-5000 (answered 24 hours). Before the trip, register it with STEP so the embassy can reach you in an emergency." },
+            { for: ["KR"], zh: "韩国公民可拨打外交部领事呼叫中心 +82-2-3210-0404（24 小时）。", en: "Korean citizens can call the consular call center, +82-2-3210-0404 (24 hours)." },
+            { for: ["JP"], zh: "日本公民可联系日本驻马来西亚大使馆 +60-3-2177-2600。", en: "Japanese citizens can contact the Embassy of Japan in Kuala Lumpur, +60-3-2177-2600." },
           ] },
         ],
         links: [
           { for: ["CN"], label: { zh: "中国驻马来西亚大使馆", en: "Chinese Embassy in Malaysia" }, url: "http://my.china-embassy.gov.cn" },
           { for: ["KR"], label: { zh: "韩国驻马来西亚大使馆", en: "Korean Embassy in Malaysia" }, url: "https://overseas.mofa.go.kr/my-ko/index.do" },
           { for: ["JP"], label: { zh: "日本驻马来西亚大使馆", en: "Embassy of Japan in Malaysia" }, url: "https://www.my.emb-japan.go.jp" },
+          { for: ["US"], label: { zh: "美国驻马来西亚大使馆", en: "US Embassy in Malaysia" }, url: "https://my.usembassy.gov" },
+          { for: ["US"], label: { zh: "STEP 行程登记（美国国务院）", en: "STEP: register your trip (US State Department)" }, url: "https://step.state.gov" },
         ],
       },
       {
@@ -473,7 +498,12 @@
             { zh: "透气的薄衣服、拖鞋或凉鞋、雨伞、防晒霜、驱蚊液（有登革热）。", en: "Light breathable clothes, sandals, an umbrella, sunscreen and mosquito repellent (dengue is present)." },
             { zh: "一件薄外套：商场、地铁、长途巴士的冷气很强。", en: "A light layer: malls, trains and long-distance buses are strongly air-conditioned." },
             { zh: "去宗教场所准备长裤或长裙、能遮肩膀的衣服。", en: "Long trousers or a long skirt and covered shoulders for religious sites." },
-            { zh: "英标三孔转换插头（G 型），中国的两脚、三脚插头都插不进。", en: "A Type G (UK three-pin) adapter; most other plugs won't fit." },
+            { zh: "英标三孔转换插头（G 型），大部分其他国家的插头都插不进。", en: "A Type G (UK three-pin) adapter; most other plugs won't fit." },
+            // IEC World Plugs: Malaysia 240 V, 50 Hz, Type G (checked 2026-11).
+            { for: ["US"], zh: "从美国来：美国插头插不进，而且电压是 240V（美国是 120V）。标着 100–240V 的充电器（大部分手机、电脑充电器）只要转换插头；只支持 120V 的电器（比如有些吹风机、直发夹）要带变压器。", en: "From the US: US plugs don't fit, and power is 240V, twice the US 120V. Chargers marked 100–240V (most phone and laptop chargers) only need the adapter; 120V-only devices, such as some hair dryers and straighteners, need a voltage converter." },
+            { for: ["CN"], zh: "从中国来：国内的两脚、三脚插头都插不进，但 220V 的电器在 240V 下能直接用，只需要转换插头。", en: "From China: Chinese plugs don't fit, but 220V devices work on 240V, so you only need the adapter." },
+            { for: ["KR"], zh: "从韩国来：韩国 220V 的电器在 240V 下基本都能用，只需要转换插头。", en: "From Korea: Korean 220V devices work on Malaysia's 240V; you only need the adapter." },
+            { for: ["JP"], zh: "从日本来：电压是 240V，只支持 100V 的日本电器要带变压器；大部分手机、电脑充电器都兼容。", en: "From Japan: power is 240V, so 100V-only appliances need a transformer; most phone and laptop chargers handle it." },
           ] },
         ],
         links: [
@@ -521,7 +551,12 @@
             { zh: "肉骨茶香料包、榴莲制品（冻干榴莲、榴莲饼）。", en: "Bak kut teh spice packs and durian treats (freeze-dried durian, durian cakes)." },
           ] },
           { h: { zh: "带回国前看一眼", en: "Before you pack" }, items: [
-            { zh: "中国海关禁止携带新鲜水果、蔬菜和肉类入境，新鲜榴莲、肉干、含肉的熟食都不能带。", en: "China (like many countries) bans travellers from bringing in fresh fruit, vegetables and meat, so no fresh durian or meat snacks." },
+            { for: ["CN"], zh: "中国海关禁止携带新鲜水果、蔬菜和肉类入境，新鲜榴莲、肉干、含肉的熟食都不能带。", en: "China bans travellers from bringing in fresh fruit, vegetables and meat, so no fresh durian, jerky or cooked food with meat." },
+            // cbp.gov, prohibited and restricted items (checked 2026-11).
+            { for: ["US"], zh: "美国不允许旅客带入大部分外国肉制品（包括肉干），新鲜水果、蔬菜也最好别带。入境时食品都要申报，不申报农产品可能被罚款。", en: "The US doesn't allow most meat products from abroad, jerky included, and fresh fruit and vegetables are best left behind. Declare any food at US customs; undeclared farm products can bring a fine." },
+            { for: ["KR"], zh: "韩国原则上禁止携带新鲜水果、蔬菜和肉类入境（检疫），新鲜榴莲、肉干都不能带。", en: "Korea generally bans bringing in fresh fruit, vegetables and meat (quarantine), so no fresh durian or jerky." },
+            { for: ["JP"], zh: "日本原则上禁止携带新鲜水果、蔬菜和肉制品入境（检疫），新鲜榴莲、肉干都不能带。", en: "Japan generally bans bringing in fresh fruit, vegetables and meat products (quarantine), so no fresh durian or jerky." },
+            { zh: "大部分国家都限制携带新鲜水果、蔬菜和肉类入境，买吃的带回去之前，先查一下本国的海关规定。", en: "Most countries restrict fresh fruit, vegetables and meat in your luggage; check your home country's customs rules before buying food to take back." },
             { zh: "燕窝等动物制品入境限制严格，买之前确认能不能带回。", en: "Animal products such as bird's nest face strict import limits; check before buying." },
             { zh: "液体手信（酱料、酒）放托运行李。", en: "Pack liquid gifts (sauces, alcohol) in checked luggage." },
           ] },
@@ -605,7 +640,7 @@
         { id: "insurance", zh: "买好含医疗的旅行保险", en: "Travel insurance with medical cover" },
         { id: "apps", zh: "下载 Grab 和 Google 地图", en: "Install Grab and Google Maps" },
         { id: "adapter", zh: "英标三孔转换插头（G 型）", en: "Type G (UK) plug adapter" },
-        { id: "pay", zh: "支付宝 / 微信开通境外支付，或带一张 Visa / 银联卡", en: "Alipay/WeChat Pay set up abroad, or a Visa/Mastercard" },
+        { id: "pay", zh: "支付宝 / 微信开通境外支付，或带一张 Visa / 银联卡", en: "A Visa or Mastercard (and your bank told about the trip), or Alipay/WeChat Pay set up for abroad" },
         { id: "esim", zh: "买好 eSIM，或计划在机场买 SIM 卡", en: "eSIM bought, or plan to buy a SIM at the airport" },
         { id: "hotel", zh: "把酒店地址存进 Miiuz BB（工具 → 给司机看）", en: "Hotel address saved in Miiuz BB (Tools → Show the driver)" },
       ] },
