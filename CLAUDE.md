@@ -22,6 +22,9 @@ README.md is the full product and setup guide. Read it before larger changes.
 - **AI:** Claude via `@anthropic-ai/sdk` in `api/chat.mjs` and `api/translate.mjs`. The default
   model is `claude-opus-5-5`, which `MIIUZ_MODEL` overrides. Prompts and the `update_plan` tool
   live in `js/prompt.js`.
+- **Analytics:** Vercel Web Analytics through the script tag at the end of `index.html` (plain HTML
+  needs no `@vercel/analytics` package). Its `beforeSend` strips sign-in tokens and invite codes from
+  the address. Never send personal data (emails, names, member ids) to it.
 - **PWA:** `sw.js` + `manifest.webmanifest`. When you add or rename a front-end file, update the
   `<script>` list in `index.html` and the service worker's cached file list.
 

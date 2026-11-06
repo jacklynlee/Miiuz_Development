@@ -12,9 +12,8 @@
   const TIERS = ["basic", "silver", "gold", "platinum"];
   const NUDGE_FIRST = 5 * 60e3, NUDGE_GAP = 10 * 60e3, NUDGE_MAX_GAP = 60 * 60e3;
   const RESEND_SECONDS = 60;
-  // Nationality list (ISO 3166-1, plus Kosovo); names come from the browser in the reader's language.
-  const COUNTRIES = ("AD AE AF AG AI AL AM AO AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GT GU GW GY HK HN HR HT HU ID IE IL IM IN IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG US UY UZ VA VC VE VG VI VN VU WF WS XK YE YT ZA ZM ZW").split(" ");
-  const COMMON = ["MY", "SG", "ID", "CN", "TH", "IN", "BN", "PH", "KR", "VN", "JP", "TW", "HK", "AU", "GB", "US", "SA"];
+  // Nationality list and the countries shown first: shared with the home-country picker (js/country.js).
+  const { COUNTRIES, COMMON } = MBB.origin;
   const DETAILS = "nationality, phone, sms_opt_in, emergency_name, emergency_relation, emergency_phone";
   const fromLink = /access_token=|error_description=/.test(location.hash); // came back from an email link
 
@@ -53,11 +52,8 @@
     } catch { /* not allowed here */ }
   }
   async function loadConfig() {
-    try {
-      const r = await fetch("api/config", { cache: "no-store" });
-      const j = r.ok ? await r.json() : null;
-      return j?.supabaseUrl && j?.supabaseKey ? j : null;
-    } catch { return null; }
+    const j = await MBB.config();
+    return j?.supabaseUrl && j?.supabaseKey ? j : null;
   }
   const loadScript = src => new Promise((resolve, reject) => {
     const s = document.createElement("script");
