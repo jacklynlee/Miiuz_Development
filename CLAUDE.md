@@ -68,7 +68,8 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
 - Facts (visas, MDAC, fares, SST, emergency numbers) must be accurate. When you re-verify them,
   update `checked` in `js/data/malaysia.js`.
 - Photos must be freely licensed (Wikimedia Commons) with credits shown. Never hot-link
-  unlicensed images.
+  unlicensed images. Each item's photo is a reviewed Commons file in `photos.pin`
+  (`js/data/malaysia.explore.js`): check the file's Commons page before pinning it.
 - Never commit `.env` or any API key. Secrets belong in Vercel → Environment Variables.
 - Personal data: national ID and passport numbers are deliberately not collected. Keep it that
   way (Malaysia PDPA).
@@ -137,6 +138,7 @@ Versions follow semantic versioning, **MAJOR.MINOR.PATCH**, judged by what trave
    - [ ] Offline: reload with the network off and the app still opens
    - [ ] An installed app that was open before the release shows the update bar, and Update works
    - [ ] Facts changed in this release are checked against official sources
+   - [ ] `npm run photos` says "Nothing to fix"
 3. Merge it (merge commit, not squash), then tag `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 4. Create a GitHub Release from the tag, with generated release notes.
 5. Close the milestone, and create the next one if it doesn't exist.

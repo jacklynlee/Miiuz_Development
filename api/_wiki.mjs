@@ -38,7 +38,9 @@ export async function pageImages(wiki, titles) {
   return out;
 }
 
-const FREE = /^(cc[ -]?by(-sa)?([ -][\d.]+)?|cc0|public domain|pd\b)/i;
+// Free licences. "Attribution" and "Copyrighted free use" are Commons' own free-with-credit
+// licences (#32). GFDL-only files aren't: they'd have to carry the whole licence text.
+const FREE = /^(cc[ -]?by(-sa)?([ -][\d.]+)?|cc0|public domain|pd\b|attribution$|copyrighted free use$)/i;
 const NOT_A_PHOTO = /\b(map|locator|location|logo|flag|coat[ _]of[ _]arms|seal|montage|collage|diagram|emblem|icon)\b/i;
 const strip = html => String(html || "")
   .replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#0?39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
@@ -79,15 +81,47 @@ function photo(file, page) {
   };
 }
 
-// The first candidate title whose lead photo is usable, for each item: { key: photo | null }.
+// Wikidata's image (P18) for article titles on one Wikipedia: { title: "File name.jpg" | null }
+export async function wikidataImages(wiki, titles) {
+  const qids = {};
+  for (const part of chunks([...new Set(titles)], 50)) {
+    const j = await getJson(api(`${wiki}.wikipedia.org`, { action: "query", redirects: "1", prop: "pageprops", ppprop: "wikibase_item", titles: part.join("|") }));
+    const final = resolver(j.query);
+    const byTitle = new Map((j.query?.pages || []).map(p => [p.title, p.pageprops?.wikibase_item || null]));
+    for (const t of part) qids[t] = byTitle.get(final(t)) ?? null;
+  }
+  const images = {};
+  for (const part of chunks([...new Set(Object.values(qids).filter(Boolean))], 50)) {
+    const j = await getJson("https://www.wikidata.org/w/api.php?" + new URLSearchParams({ action: "wbgetentities", format: "json", ids: part.join("|"), props: "claims" }));
+    for (const id of part) images[id] = j.entities?.[id]?.claims?.P18?.[0]?.mainsnak?.datavalue?.value || null;
+  }
+  return Object.fromEntries(Object.entries(qids).map(([t, q]) => [t, q ? images[q] : null]));
+}
+
+// A photo for each item: { key: photo | null }. In order (#32):
+//  1. `pin`: the reviewed Commons file for that key, while it's still freely licensed
+//  2. the lead photo of the first candidate title that has a usable one
+//  3. the Wikidata image (P18) of a candidate title
 // `avoid`: file names already reviewed and rejected.
-export async function bestPhotos(items, { wiki = "en", avoid = [] } = {}) {
+export async function bestPhotos(items, { wiki = "en", avoid = [], pin = {} } = {}) {
   const skip = new Set(avoid.map(f => f.replace(/ /g, "_")));
-  const files = await pageImages(wiki, items.flatMap(x => x.titles));
-  for (const t of Object.keys(files)) if (files[t] && skip.has(files[t].replace(/ /g, "_"))) files[t] = null;
-  const photos = await commonsPhotos(Object.values(files));
+  const usable = f => f && !skip.has(f.replace(/ /g, "_"));
   const out = {};
-  for (const { key, titles } of items) out[key] = titles.map(t => photos[files[t]]).find(Boolean) || null;
+  const pinned = await commonsPhotos(items.map(x => pin[x.key]).filter(Boolean));
+  for (const { key } of items) out[key] = (pin[key] && pinned[pin[key]]) || null;
+
+  let rest = items.filter(x => !out[x.key]);
+  if (rest.length) {
+    const files = await pageImages(wiki, rest.flatMap(x => x.titles));
+    const photos = await commonsPhotos(Object.values(files).filter(usable));
+    for (const { key, titles } of rest) out[key] = titles.map(t => usable(files[t]) && photos[files[t]]).find(Boolean) || null;
+  }
+  rest = rest.filter(x => !out[x.key]);
+  if (rest.length) {
+    const files = await wikidataImages(wiki, rest.flatMap(x => x.titles));
+    const photos = await commonsPhotos(Object.values(files).filter(usable));
+    for (const { key, titles } of rest) out[key] = titles.map(t => usable(files[t]) && photos[files[t]]).find(Boolean) || null;
+  }
   return out;
 }
 
