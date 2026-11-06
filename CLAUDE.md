@@ -26,7 +26,13 @@ README.md is the full product and setup guide. Read it before larger changes.
   needs no `@vercel/analytics` package). Its `beforeSend` strips sign-in tokens and invite codes from
   the address. Never send personal data (emails, names, member ids) to it.
 - **PWA:** `sw.js` + `manifest.webmanifest`. When you add or rename a front-end file, update the
-  `<script>` list in `index.html` and the service worker's cached file list.
+  `<script>` list in `index.html` and the service worker's cached file list (`npm run check`
+  fails if a script is missing). Each deployment gets its own cache automatically
+  (`sw.js?v=<build>`, `js/update.js`): there's no cache version to bump.
+- **Old copies keep running** until travellers tap Update, so the previous release must keep
+  working: keep accepting its API requests, and when a saved `mbb.*` format changes, raise
+  `DATA_VERSION` in `js/core.js` with a step that converts old data. `MIIUZ_MIN_VERSION` forces an
+  update; use it only for breaking API changes or wrong safety facts.
 - **No CDNs:** MapLibre, the Supabase client and the Latin fonts are copied into `vendor/` and
   `fonts/` by `npm run vendor` (pinned versions in `scripts/vendor.mjs`). Never load scripts or
   fonts from a CDN or Google Fonts: they're blocked or unreliable in mainland China (#18). Chinese,
@@ -119,7 +125,8 @@ Versions follow semantic versioning, **MAJOR.MINOR.PATCH**, judged by what trave
 
 ### Cutting a release (when every issue in its milestone is closed)
 
-1. In a PR to `staging`, set `package.json` `version` to the milestone's version.
+1. In a PR to `staging`, set `package.json` `version` and `MBB.VERSION` in `js/core.js` to the
+   milestone's version (`npm run check` fails if they differ).
 2. Open the **release PR** `staging` → `main`, titled `Release vX.Y.Z`, in the milestone. Its body
    is this checklist, tested on the staging web address:
    - [ ] Every issue in the milestone is closed
@@ -128,6 +135,7 @@ Versions follow semantic versioning, **MAJOR.MINOR.PATCH**, judged by what trave
    - [ ] EN, 简体中文, 한국어, 日本語 read correctly on changed screens
    - [ ] Ask Miiuz answers, Members sign-in works, SOS numbers and the share-location link work
    - [ ] Offline: reload with the network off and the app still opens
+   - [ ] An installed app that was open before the release shows the update bar, and Update works
    - [ ] Facts changed in this release are checked against official sources
 3. Merge it (merge commit, not squash), then tag `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 4. Create a GitHub Release from the tag, with generated release notes.

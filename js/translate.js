@@ -42,7 +42,7 @@
   async function viaAI(lang, strings) {
     const info = MBB.LANGS[lang];
     if (MBB.ai.mode === "server") {
-      const r = await fetch("api/translate", {
+      const r = await MBB.api("api/translate", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ lang, items: strings }),
       });

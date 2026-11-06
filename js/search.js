@@ -148,7 +148,7 @@
     S.remote = { q, state: "loading", results: [] };
     results();
     try {
-      const r = await fetch(`api/places?q=${encodeURIComponent(q.toLowerCase().replace(/\s+/g, " "))}`);
+      const r = await MBB.api(`api/places?q=${encodeURIComponent(q.toLowerCase().replace(/\s+/g, " "))}`);
       if (!r.ok) throw new Error(String(r.status));
       const j = await r.json();
       (j.results || []).forEach(MBB.place.remember);

@@ -377,10 +377,8 @@
     MBB.media.load();
     MBB.translator.ensure(MBB.state.lang);
 
-    // Offline support when served as a web app (not available inside a Claude artifact).
-    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol) && !window.claude) {
-      try { navigator.serviceWorker.register("sw.js").catch(() => {}); } catch { /* ignore */ }
-    }
+    // Offline support and updates when served as a web app (not inside a Claude artifact): js/update.js.
+    MBB.update.init();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

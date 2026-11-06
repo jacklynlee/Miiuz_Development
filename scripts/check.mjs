@@ -128,6 +128,16 @@ for (const f of shipped) {
 }
 for (const m of readFileSync(path.join(root, "sw.js"), "utf8").matchAll(/"((?:fonts|vendor|css)\/[^"]+)"/g)) if (!existsSync(path.join(root, m[1]))) fail(`sw.js caches ${m[1]}, which doesn't exist`);
 
+// Updates (#30): the service worker stores every app file when a build installs, and the app
+// reports its version. Every script in index.html must be in sw.js, and MBB.VERSION must match.
+{
+  const sw = readFileSync(path.join(root, "sw.js"), "utf8"), html = readFileSync(path.join(root, "index.html"), "utf8");
+  for (const [, src] of html.matchAll(/<script src="((?:js|vendor)\/[^"]+)"/g)) if (!sw.includes(`"${src}"`)) fail(`index.html loads ${src}, but sw.js doesn't store it`);
+  for (const [, f] of sw.matchAll(/"((?:js|icons)\/[^"]+)"/g)) if (!existsSync(path.join(root, f))) fail(`sw.js caches ${f}, which doesn't exist`);
+  const pkg = require("../package.json").version, app = readFileSync(path.join(root, "js/core.js"), "utf8").match(/MBB\.VERSION = "([^"]+)"/)?.[1];
+  if (app !== pkg) fail(`MBB.VERSION in js/core.js is "${app}" but package.json says "${pkg}": set both to the release's version`);
+}
+
 // AI-translation inventory and prompts.
 const entries = E.collect(STR, C);
 if (new Set(entries.map(e => e.key)).size !== entries.length) fail("duplicate translation keys");
