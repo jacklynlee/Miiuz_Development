@@ -10,8 +10,8 @@
   --turmeric: #d99a1e; --turmeric-soft: #f8ecd2;
   --on-accent: #ffffff;
   --shadow: 0 1px 2px rgba(22, 33, 30, .06), 0 6px 20px rgba(22, 33, 30, .06);
-  --display: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
-  --body: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  --display: "Noto Serif", "Songti SC", "Noto Serif CJK SC", "Source Han Serif SC", "Noto Serif SC", "PingFang SC", "Microsoft YaHei", serif;
+  --body: "Noto Sans", "PingFang SC", "Hiragino Sans GB", "Noto Sans CJK SC", "Source Han Sans SC", "Noto Sans SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
   --r: 12px;
   --tabbar-h: 64px;
@@ -47,20 +47,23 @@
   color-scheme: dark;
 }
 
-/* Type per script: CJK languages get their own Noto families; everything else uses Noto
-   Sans/Serif (Latin, Cyrillic, Greek, Vietnamese) and falls back to the system font for
-   other scripts (Thai, Arabic, Devanagari…). Fonts download only for the language in use. */
+/* Type per script. Noto Sans/Serif and IBM Plex Mono are served from this site (css/fonts.css,
+   Latin, Cyrillic, Greek and Vietnamese only). Chinese, Japanese and Korean use the phone's own
+   fonts, which every phone has, so nothing large downloads and nothing depends on Google Fonts
+   (blocked in mainland China, #18). Serif headings fall back to the platform's sans (YaHei,
+   Meiryo, Malgun) on Windows rather than its thin serif. Other scripts (Thai, Arabic,
+   Devanagari…) use the system font. */
 :root:lang(zh-Hant), :root:lang(yue) {
-  --display: "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
-  --body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --display: "Noto Serif", "Songti TC", "Noto Serif CJK TC", "Source Han Serif TC", "Noto Serif TC", "PingFang TC", "Microsoft JhengHei", serif;
+  --body: "Noto Sans", "PingFang TC", "Noto Sans CJK TC", "Source Han Sans TC", "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
 }
 :root:lang(ja) {
-  --display: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif;
-  --body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", "Meiryo", system-ui, sans-serif;
+  --display: "Noto Serif", "Hiragino Mincho ProN", "Noto Serif CJK JP", "Source Han Serif JP", "Noto Serif JP", "Yu Mincho", serif;
+  --body: "Noto Sans", "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans CJK JP", "Source Han Sans JP", "Noto Sans JP", "Yu Gothic", "Meiryo", system-ui, sans-serif;
 }
 :root:lang(ko) {
-  --display: "Noto Serif KR", "AppleMyungjo", "Batang", serif;
-  --body: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --display: "Noto Serif", "AppleMyungjo", "Noto Serif CJK KR", "Source Han Serif K", "Noto Serif KR", "Apple SD Gothic Neo", "Malgun Gothic", serif;
+  --body: "Noto Sans", "Apple SD Gothic Neo", "Noto Sans CJK KR", "Source Han Sans K", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
   word-break: keep-all; /* Korean wraps between words, not syllables */
   overflow-wrap: break-word;
 }
@@ -128,6 +131,8 @@ h1, h2, h3 { text-wrap: balance; }
 .tier-platinum.member-btn, .mcard.tier-platinum { background: var(--tier-platinum); }
 .trbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 59px); z-index: 19; background: var(--teal-soft); color: var(--teal); font-size: 13px; border-bottom: 1px solid var(--line); }
 .trbar.warn { background: var(--turmeric-soft); color: var(--fg); }
+.wxbar { position: static; }
+.wxbar .trbar-in > span { flex: 1 1 220px; }
 .trbar-in { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding-block: 8px; }
 .spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; flex: none; }
 @keyframes spin { to { transform: rotate(360deg); } }

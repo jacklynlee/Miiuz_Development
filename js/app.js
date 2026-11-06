@@ -349,7 +349,8 @@
       if (a) { e.preventDefault(); MBB.go(a.getAttribute("href").slice(1), a.dataset.scroll); }
     });
 
-    MBB.on("lang", () => { buildLangSelect(); show(); if (!$("#sos").hidden) renderSOS(); });
+    MBB.on("lang", () => { buildLangSelect(); show(); MBB.install.wxBar(); if (!$("#sos").hidden) renderSOS(); });
+    MBB.install.wxBar();
     MBB.on("from", () => { show(); if (!$("#sos").hidden) renderSOS(); });
     // Home-country hints that arrive after start-up. Malaysia is ignored (see js/country.js).
     MBB.config().then(cfg => MBB.hintFrom("ip", cfg?.country));

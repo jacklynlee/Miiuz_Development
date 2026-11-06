@@ -27,6 +27,10 @@ README.md is the full product and setup guide. Read it before larger changes.
   the address. Never send personal data (emails, names, member ids) to it.
 - **PWA:** `sw.js` + `manifest.webmanifest`. When you add or rename a front-end file, update the
   `<script>` list in `index.html` and the service worker's cached file list.
+- **No CDNs:** MapLibre, the Supabase client and the Latin fonts are copied into `vendor/` and
+  `fonts/` by `npm run vendor` (pinned versions in `scripts/vendor.mjs`). Never load scripts or
+  fonts from a CDN or Google Fonts: they're blocked or unreliable in mainland China (#18). Chinese,
+  Japanese and Korean text uses the phone's own fonts.
 
 ## Commands
 
@@ -37,6 +41,7 @@ npm run dev:env        # uses .env (ANTHROPIC_API_KEY) for AI chat + translation
 npm run check          # syntax, data and translation checks: run before every commit
 npm run build:preview  # single-file claude.ai preview
 npm run translate -- ms zh-Hant   # bundle AI translations into locales/<code>.json
+npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
 ```
 
 ## Where things live
