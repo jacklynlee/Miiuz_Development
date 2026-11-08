@@ -45,6 +45,7 @@ npm install
 npm run dev            # http://localhost:3000, AI features off
 npm run dev:env        # uses .env (ANTHROPIC_API_KEY) for AI chat + translation
 npm run check          # syntax, data and translation checks: run before every commit
+npm run emails         # rebuild the sign-in emails in supabase/email/ (then paste them into Supabase)
 npm run build:preview  # single-file claude.ai preview
 npm run translate -- ms zh-Hant   # bundle AI translations into locales/<code>.json
 npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
@@ -62,7 +63,8 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
 ## Rules for changes
 
 - Hand-translated languages are English, 简体中文, 한국어 and 日本語. A user-facing text change
-  must update all four. Other languages are AI-translated from English automatically.
+  must update all four. Other languages are AI-translated from English automatically. The
+  sign-in emails (`scripts/build-emails.mjs`) have the same four, and English for the rest.
 - Keep RTL (Arabic, Persian, Hebrew, Urdu), light/dark mode, offline use and phone layouts
   working.
 - Facts (visas, MDAC, fares, SST, emergency numbers) must be accurate. When you re-verify them,
