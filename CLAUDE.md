@@ -65,7 +65,8 @@ npm run translate -- ms zh-Hant   # bundle AI translations into locales/<code>.j
 ## Git and tickets
 
 - **Branches:**
-  - `main` = **live**: Vercel production, https://miiuz-bb.vercel.app.
+  - `main` = **live**: Vercel production, https://www.miiuz-bb.com (`miiuz-bb.com` and the old
+    `miiuz-bb.vercel.app` redirect there).
   - `staging` = **pre-production**: the fixed staging web address, where releases are tested.
   - Both are long-lived and protected. Never push to them directly.
 - **Everyday work:** branch from `staging` (`feature/…`, `fix/…`, `claude/…`) and open the PR **to
@@ -127,7 +128,7 @@ Versions follow semantic versioning, **MAJOR.MINOR.PATCH**, judged by what trave
 3. Merge it (merge commit, not squash), then tag `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 4. Create a GitHub Release from the tag, with generated release notes.
 5. Close the milestone, and create the next one if it doesn't exist.
-6. Check https://miiuz-bb.vercel.app is updated and works.
+6. Check https://www.miiuz-bb.com is updated and works.
 
 - History before this repo: the app was first built in the `mybb-app/` folder of
   `jacklynlee/Github` and moved here with its history on 2026-11-03.

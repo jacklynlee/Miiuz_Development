@@ -1,7 +1,7 @@
 /* Wikipedia, Wikimedia Commons and Wikidata helpers for api/media.mjs and api/places.mjs.
  * Only freely licensed Commons photos are used, always with author and licence, and never
  * logos, maps or photos flagged for personality rights or trademarks. */
-const UA = "MiiuzBB/1.0 (+https://miiuz-bb.vercel.app)";
+const UA = "MiiuzBB/1.0 (+https://www.miiuz-bb.com)";
 
 export async function getJson(url, { timeout = 8000, headers = {} } = {}) {
   const ctl = new AbortController();
