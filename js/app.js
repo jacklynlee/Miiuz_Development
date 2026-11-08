@@ -107,13 +107,13 @@
         quick("#guide-connect", "signal", "home.q.connect", "home.q.connectD") +
         quick("#guide-money", "coins", "home.q.money", "home.q.moneyD") +
         quick("#plan", "plan", "home.q.plan", "home.q.planD") +
-        quick("#ask", "spark", "home.q.ask", "home.q.askD")
+        (MBB.features.ask ? quick("#ask", "spark", "home.q.ask", "home.q.askD") : quick("#guide-weather", "cloud", "home.q.weather", "home.q.weatherD"))
       : quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
         quick("#guide-airport", "plane", "home.q.airport", "home.q.airportD") +
         quick("#guide-money", "coins", "home.q.money", "home.q.moneyD", "warm") +
         quick("#tools", "pin", "tools.driver", "tools.driverLead", "", "tool-driver") +
         quick("#plan", "plan", "home.q.plan", "home.q.planD") +
-        quick("#ask", "spark", "home.q.ask", "home.q.askD");
+        (MBB.features.ask ? quick("#ask", "spark", "home.q.ask", "home.q.askD") : quick("#guide-food", "bowl", "home.q.food", "home.q.foodD"));
   }
 
   function renderHome() {

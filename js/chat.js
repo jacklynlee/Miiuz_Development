@@ -267,6 +267,12 @@
 
   MBB.chat = {
     init() {
+      // Not released yet (MBB.features.ask): show "Coming soon" and send nothing.
+      const on = MBB.features.ask;
+      $("#chat").hidden = !on;
+      $("#ask-soon").hidden = on;
+      $("#tab-soon").hidden = on;
+      if (!on) return;
       $("#c-form").addEventListener("submit", e => { e.preventDefault(); const v = $("#c-input").value; $("#c-input").value = ""; ask(v); });
       $("#c-input").addEventListener("keydown", e => {
         if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#c-form").requestSubmit(); }
@@ -287,12 +293,14 @@
     // right now, leave it in the box instead.
     async askAbout(text) {
       MBB.go("ask");
+      if (!MBB.features.ask) return;
       await MBB.ai.ready;
       if ((mode === "server" || mode === "artifact") && !busy) ask(text);
       else MBB.chat.prefill(text);
     },
     prefill(text) {
       MBB.go("ask");
+      if (!MBB.features.ask) return;
       const box = $("#c-input");
       box.value = text;
       requestAnimationFrame(() => { box.focus(); box.setSelectionRange(box.value.length, box.value.length); });
