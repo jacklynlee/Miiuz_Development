@@ -131,6 +131,7 @@
     "plan.copyHead": { zh: "【Miiuz BB · {c}行程】{a}–{b}", en: "[Miiuz BB · {c}] {a}–{b}", ko: "[Miiuz BB · {c} 일정] {a}–{b}", ja: "【Miiuz BB・{c}プラン】{a}–{b}" },
     "plan.copyFoot": { zh: "—— Miiuz Beyond Borders 为你规划", en: "— Planned with Miiuz Beyond Borders", ko: "— Miiuz Beyond Borders로 만든 일정", ja: "— Miiuz Beyond Borders で作成" },
     "plan.copyLeave": { zh: "出发去{a}", en: "Leave for {a}", ko: "{a}(으)로 출발", ja: "{a}へ出発" },
+    "fx.approx": { zh: "（约 {v}）", en: "(≈ {v})", ko: "(약 {v})", ja: "（約{v}）" },
     "plan.cost": { zh: ["免费", "约 RM30 以内", "约 RM30–100", "RM100 以上"], en: ["Free", "Under ~RM30", "~RM30–100", "RM100+"], ko: ["무료", "약 RM30 이하", "약 RM30–100", "RM100 이상"], ja: ["無料", "約RM30以下", "約RM30–100", "RM100以上"] },
 
     "theme.food": { zh: "美食", en: "Food", ko: "맛집", ja: "グルメ" },

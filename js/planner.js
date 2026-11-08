@@ -185,7 +185,7 @@
       if (s.leg) li.push(`<li class="leg"><div></div><div>${esc(t(s.leg.mode === "walk" ? "plan.walk" : "plan.car"))} ${esc(t("plan.legMin", { m: s.leg.min }))}${s.leg.km ? ` · ${esc(MBB.dist(s.leg.km))}` : ""}</div></li>`);
       else if (s.legText) li.push(`<li class="leg"><div></div><div>${esc(s.legText)}</div></li>`);
       const q = encodeURIComponent(`${n.en || n.main}, ${c.en}, Malaysia`);
-      const tags = p ? p.t.map(k => `<span class="tag${k === "food" ? " food" : ""}">${esc(t(`theme.${k}`))}</span>`).join("") + `<span class="tag">${esc(t("plan.cost")[p.k])}</span>` : "";
+      const tags = p ? p.t.map(k => `<span class="tag${k === "food" ? " food" : ""}">${esc(t(`theme.${k}`))}</span>`).join("") + `<span class="tag">${MBB.priceHtml(t("plan.cost")[p.k])}</span>` : "";
       const why = s.why || (p ? L(p.why) : "");
       const tip = s.tip || (p ? L(p.tip) : "");
       li.push(`<li class="stop"><div class="time">${clock(s.start)}<span>${clock(s.end)}</span></div>

@@ -188,7 +188,7 @@
     const { pois, dests } = nearby(P);
     const city = MBB.C.cities[MBB.state.city];
     const fromCity = P.kind === "city" && P.id === MBB.state.city ? 0 : MBB.maps.km(city, P);
-    const facts = (P.facts || []).map(([ic, k, v]) => `<div class="fact">${icon(ic)}<span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+    const facts = (P.facts || []).map(([ic, k, v]) => `<div class="fact">${icon(ic)}<span>${esc(k)}</span><b>${MBB.priceHtml(v)}</b></div>`).join("");
     const cityPicks = P.kind === "city" ? MBB.C.pois.filter(p => p.city === P.id).slice(0, 12)
       .map(p => ({ href: `#place-poi-${p.id}`, name: MBB.placeName(p), sub: p.t.map(k => t(`theme.${k}`)).join(" · "), photo: `poi:${p.id}`, ic: "pin", d: MBB.maps.km(P, p), lat: p.lat, lng: p.lng })) : [];
     // Google Maps searches near the place; English terms work best in Malaysia.
