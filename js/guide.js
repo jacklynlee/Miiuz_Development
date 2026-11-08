@@ -36,7 +36,8 @@
     // City-specific sections: the traveller's own city first and marked.
     const sections = [...g.sections].sort((a, b) => (b.city === city) - (a.city === city));
     const price = MBB.priceHtml; // escapes, and adds the home-currency amount to RM prices (#19)
-    const facts = (g.facts || []).map(f => `<div class="fact"><span>${esc(L(f.k))}</span><b>${price(L(f.v))}</b></div>`).join("");
+    // Country-specific facts and lines (`for: ["US"]`) show only to travellers from there (MBB.forMe).
+    const facts = (g.facts || []).filter(MBB.forMe).map(f => `<div class="fact"><span>${esc(L(f.k))}</span><b>${price(L(f.v))}</b></div>`).join("");
     const item = (id, photo, ic, title, text) => `<article class="g-item" id="${id}">
         ${MBB.media.html(photo, { alt: title, ic, link: true })}
         <div><h3>${esc(title)}</h3><p>${esc(text)}</p></div>
@@ -53,7 +54,7 @@
       const mine = s.city && s.city === city;
       return `<section class="card g-sec${mine ? " mine" : ""}">
         <h2>${esc(L(s.h))}${mine ? ` <span class="pill teal">${esc(t("guide.yourCity"))}</span>` : ""}</h2>
-        <ul>${s.items.map(it => `<li>${price(L(it))}</li>`).join("")}</ul>
+        <ul>${s.items.filter(MBB.forMe).map(it => `<li>${price(L(it))}</li>`).join("")}</ul>
       </section>`;
     }).join("");
     const shown = (g.links || []).filter(MBB.forMe);

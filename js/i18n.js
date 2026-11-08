@@ -191,6 +191,7 @@
 
     "sos.title": { zh: "紧急求助", en: "Emergency help", ko: "긴급 도움", ja: "緊急時のサポート" },
     "sos.lead": { zh: "遇到危险先打 999。号码可以复制，也可以直接拨打。", en: "In danger, call 999 first. Numbers can be copied or dialled.", ko: "위험할 땐 먼저 999. 번호는 복사하거나 바로 걸 수 있어요.", ja: "危険なときはまず999へ。番号はコピーも発信もできます。" },
+    "sos.like": { zh: "马来西亚的 {n}", en: "Malaysia's {n}", ko: "말레이시아의 {n}", ja: "マレーシアの{n}" },
     "sos.call": { zh: "拨打", en: "Call", ko: "전화", ja: "発信" },
     "sos.copy": { zh: "复制", en: "Copy", ko: "복사", ja: "コピー" },
     "sos.copied": { zh: "已复制 {x}", en: "Copied {x}", ko: "{x} 복사됨", ja: "{x} をコピーしました" },

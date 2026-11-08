@@ -42,7 +42,7 @@
     }
     for (const g of C.guide) {
       add({ kind: "topic", href: `#guide-${g.id}`, title: L(g.title), sub: L(g.lead), ic: g.icon, boost: 3 },
-        [L(g.title), g.title.en], [L(g.lead), g.lead.en, ...g.sections.flatMap(s => [L(s.h), ...s.items.map(L)])]);
+        [L(g.title), g.title.en], [L(g.lead), g.lead.en, ...g.sections.flatMap(s => [L(s.h), ...s.items.filter(MBB.forMe).map(L)])]);
     }
     const food = C.guide.find(g => g.id === "food");
     (food?.dishes || []).forEach((d, i) => {

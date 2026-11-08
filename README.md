@@ -36,8 +36,8 @@ layout to right-to-left. The phone's language is detected on first open.
 **Home country is separate from language** (`js/country.js`). Language follows the phone; the
 home country decides the currency, date and time formats (English + US → `en-US`, 12-hour
 time), units (miles and °F for the US, metric in brackets) and country facts (content marked
-`for: ["CN"]`: consular hotline, embassy links, Amap links). It's guessed without permission
-prompts, strongest first: a member's nationality, the phone's time zone (if not Malaysia's), the
+`for: ["US"]`: visa, embassy and STEP, payments and tipping, plugs, customs at home, "Malaysia's
+911" in SOS). It's guessed without permission prompts, strongest first: a member's nationality, the phone's time zone (if not Malaysia's), the
 request's country from Vercel (`/api/config`, if not Malaysia), the region in the phone's
 language settings, then the language's usual country. Home asks once ("Home country: United
 States? Yes · Change"); the choice is saved on the phone and can be changed from Home.
@@ -49,8 +49,10 @@ the saved one offline, rounds it (≈), adds nothing for travellers whose home c
 ringgit, and updates in place when the rate or home country changes. In code, render any text that
 may contain a price with `MBB.priceHtml(text)` instead of `esc(text)` (`js/core.js`).
 
-- **Hand-translated:** English, 简体中文, 한국어, 日本語 — interface and all content, with
-  facts adapted per audience (visa rules, payment apps, consular hotline, plug/voltage).
+- **Hand-translated:** English, 简体中文, 한국어, 日本語 — interface and all content. Country facts
+  (visa rules, payment apps, consular help, plugs and voltage, customs back home) follow the home
+  country, not the language: each line is marked `for: ["US"]` and written in all four languages,
+  so an American reading Korean gets the US lines in Korean.
 - **39 more languages** (繁體中文, 粵語, Bahasa Melayu, Indonesia, ไทย, Tiếng Việt, Filipino, हिन्दी,
   தமிழ், العربية, Français, Deutsch, Español, Русский …): picked from the language menu and
   translated by Miiuz AI the first time, then saved on that phone. English shows while it loads.

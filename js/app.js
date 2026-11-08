@@ -118,6 +118,7 @@
 
   function renderHome() {
     const C = MBB.C;
+    const like999 = C.emergency.find(e => e.id === "999")?.like?.[MBB.state.from]; // "Malaysia's 911"
     const now = MBB.localNow();
     const st = stage();
     const stageChips = ["before", "landed"].map(k =>
@@ -163,7 +164,7 @@
         <button type="button" class="tile sos" data-sos>
           <span class="k">${icon("phone")}${esc(t("home.sos"))}</span>
           <span class="v">999</span>
-          <span class="n">${esc(t("home.sosNote"))}</span>
+          <span class="n">${like999 ? `${esc(t("sos.like", { n: like999 }))} · ` : ""}${esc(t("home.sosNote"))}</span>
         </button>
       </div>
 
@@ -236,7 +237,7 @@
             <a class="icon-btn" href="tel:${esc(e.tel)}">${icon("phone")}${esc(t("sos.call"))}</a>
             <button type="button" class="icon-btn" data-copy="${esc(e.num)}" aria-label="${esc(t("sos.copy"))} ${esc(e.num)}">${icon("copy")}</button>
           </div>
-          <span class="note">${esc(L(e.note))}</span>
+          <span class="note">${e.like?.[MBB.state.from] ? `${esc(t("sos.like", { n: e.like[MBB.state.from] }))} · ` : ""}${esc(L(e.note))}</span>
         </li>`).join("")}
       </ul>
       <div class="sos-block">
