@@ -368,7 +368,11 @@
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
     MBB.on("member", () => { if (route.view === "home") renderHome(); });
     MBB.on("install", () => { if (route.view === "home") renderHome(); });
-    MBB.on("media", () => { if (route.view === "home") renderHome(); if (route.view === "guide" && route.sub) MBB.guide.render(route.sub); });
+    MBB.on("media", () => {
+      if (route.view === "home") renderHome();
+      if (route.view === "guide" && route.sub) MBB.guide.render(route.sub);
+      if (route.view === "credits") MBB.media.renderCredits($("#view-credits")); // opened before the photo list arrived
+    });
 
     window.addEventListener("hashchange", () => { moves++; show(); });
     show();

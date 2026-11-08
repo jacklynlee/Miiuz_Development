@@ -139,6 +139,18 @@ for (const m of readFileSync(path.join(root, "sw.js"), "utf8").matchAll(/"((?:fo
   if (app !== pkg) fail(`MBB.VERSION in js/core.js is "${app}" but package.json says "${pkg}": set both to the release's version`);
 }
 
+// Photos (#32): every pin is for a real item and names a Commons file (npm run photos checks them online).
+{
+  const { mediaItems } = await import("../api/media.mjs");
+  const keys = new Set(mediaItems().map(x => x.key)), X = require("../js/data/malaysia.explore.js");
+  for (const [k, f] of Object.entries(X.photos.pin || {})) {
+    if (!keys.has(k)) fail(`photos.pin has "${k}", which isn't an item`);
+    if (!/\.(jpe?g|png|webp|tiff?)$/i.test(f) || /[/:]/.test(f)) fail(`photos.pin["${k}"] isn't a Commons file name: ${f}`);
+  }
+  const unpinned = [...keys].filter(k => !X.photos.pin?.[k]);
+  if (unpinned.length) fail(`items without a reviewed photo in photos.pin: ${unpinned.join(", ")} (npm run photos)`);
+}
+
 // AI-translation inventory and prompts.
 // Sign-in emails (#28): supabase/email/ must match scripts/build-emails.mjs.
 {

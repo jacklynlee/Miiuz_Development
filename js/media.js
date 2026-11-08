@@ -9,19 +9,21 @@
   let items = {}, pending = null;
   const viewed = new Map(); // photos from place searches, for the credits page
 
+  // The saved list is kept for 3 days, or until the app updates (a release can change the photos, #32).
   function load() {
     if (pending) return pending;
     const cached = MBB.store.get(KEY, null);
     if (cached?.items) items = cached.items;
+    const build = MBB.update?.build() || null;
     pending = (async () => {
-      if (window.claude || (cached && Date.now() - cached.at < FRESH)) return;
+      if (window.claude || (cached && Date.now() - cached.at < FRESH && (!build || !cached.build || cached.build === build))) return;
       try {
         const r = await MBB.api("api/media");
         if (!r.ok) return;
         const j = await r.json();
         if (!j?.items) return;
         items = j.items;
-        MBB.store.set(KEY, { at: Date.now(), items });
+        MBB.store.set(KEY, { at: Date.now(), build, items });
         MBB.emit("media");
       } catch { /* offline: keep what we have */ }
     })();
@@ -40,7 +42,7 @@
     const src = size === "l" ? p.srcL : p.src;
     return `<figure class="ph ${cls}">
       ${icon(ic)}
-      <img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" referrerpolicy="strict-origin-when-cross-origin"${p.w && p.h ? ` width="${p.w}" height="${p.h}"` : ""}>
+      <img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" crossorigin="anonymous" referrerpolicy="strict-origin-when-cross-origin"${p.w && p.h ? ` width="${p.w}" height="${p.h}"` : ""}>
       <figcaption>${link
         ? `<a href="${esc(p.page)}" target="_blank" rel="noopener" title="${esc(`${p.file} — ${credit(p)}`)}">${icon("camera")}<span>${esc(credit(p))}</span></a>`
         : `<span title="${esc(`${p.file} — ${credit(p)}`)}">${icon("camera")}<span>${esc(credit(p))}</span></span>`}</figcaption>
@@ -75,7 +77,7 @@
       <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head"><h1>${esc(t("credits.title"))}</h1><p>${esc(t("credits.lead"))}</p></div>
       ${rows.length ? `<ul class="credits">${rows.map(({ label: l, p }) => `<li>
-        <img src="${esc(p.src)}" alt="" loading="lazy" width="64" height="48">
+        <img src="${esc(p.src)}" alt="" loading="lazy" crossorigin="anonymous" width="64" height="48">
         <div><b>${esc(l)}</b><small><a href="${esc(p.page)}" target="_blank" rel="noopener">${esc(p.file)}</a> · ${esc(p.by)} · ${p.licUrl ? `<a href="${esc(p.licUrl)}" target="_blank" rel="noopener">${esc(p.lic)}</a>` : esc(p.lic)}</small></div>
       </li>`).join("")}</ul>` : `<p class="hint">${esc(t("credits.none"))}</p>`}
       <div class="card credits-more">

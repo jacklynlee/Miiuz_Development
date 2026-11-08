@@ -152,5 +152,6 @@
     init,
     checkNow,
     label: () => `${MBB.VERSION}${running ? ` (${running})` : ""}`,
+    build: () => running, // the build this page runs, or null until /api/config answers
   };
 })();

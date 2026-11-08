@@ -254,11 +254,24 @@ and to you (the Supabase project owner).
   `MIIUZ_GEOCODER_KEY`.
 - **Summaries** come from Wikipedia in the traveller's language when that edition has the
   article (CC BY-SA, credited on the page).
-- **Photos** are the Wikipedia lead photos of each destination, place, dish and souvenir, used
-  only when freely licensed on Wikimedia Commons; logos, maps and photos flagged for
-  personality rights are skipped. Author and licence show on every photo and on the
-  **Photo & map credits** page (footer). To change a photo, edit the article titles (`wp`) in
-  `js/data/malaysia.explore.js`; the first title with a usable photo wins.
+- **Photos** come from Wikimedia Commons, with the author and licence on every photo and on the
+  **Photo & map credits** page (footer). Every destination, place, dish and souvenir has a
+  **reviewed photo pinned** in `photos.pin` (`js/data/malaysia.explore.js`, #32):
+  - **Requirements:** a free licence, no personality-rights or trademark flag, the actual subject,
+    and taken in Malaysia.
+  - **Licences:** CC BY, CC BY-SA, CC0, public domain, and Commons' "Attribution" and
+    "Copyrighted free use". Not GFDL-only, NC or ND.
+  - **Pin first:** `/api/media` uses the pin first and reads its author and licence from Commons, so
+    a Wikipedia edit can't swap in a wrong photo.
+  - **Fallbacks:** without a usable pin, it uses the lead photo of the article titles (`wp`), then
+    their Wikidata image (P18). Logos, maps and files in `photos.avoid` are skipped.
+  - **Changing one:** pin a new file after checking its Commons page. The first title gives the
+    place page its Wikipedia summary.
+  - **Before each release, run `npm run photos`** (it needs the network). It lists items with no
+    photo, items not pinned, pins that stopped working (deleted or relicensed), and titles that
+    are missing or disambiguation pages. `npm run check` makes sure every item is pinned.
+  - **Offline:** photos the traveller has seen are kept (at most 200, about 12 MB).
+  - **Updates:** the app asks for the photo list again after it updates, otherwise every 3 days.
 - **Maps**: the Malaysia overview is drawn offline from Natural Earth (public domain;
   rebuild with `scripts/build-map.mjs`). Street maps use MapLibre GL (our own copy in `vendor/`)
   with OpenFreeMap tiles (free, no key, © OpenStreetMap contributors) and fall back to the
@@ -301,7 +314,7 @@ js/translate.js         on-demand AI translation    js/i18n-entries.js  translat
 js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
 js/guide.js · planner.js · tools.js · chat.js · app.js   the screens
-js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo article titles
+js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo titles and pins
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps
 js/media.js             photos with credits, credits page
