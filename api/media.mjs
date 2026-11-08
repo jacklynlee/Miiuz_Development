@@ -3,7 +3,7 @@
  * article when it is freely licensed on Wikimedia Commons (with author and licence).
  * One response covers everything and is cached by Vercel's CDN for a week. */
 import { createRequire } from "node:module";
-import { sendJson } from "./_shared.mjs";
+import { sendJson, tooOld } from "./_shared.mjs";
 import { bestPhotos } from "./_wiki.mjs";
 
 const require = createRequire(import.meta.url);
@@ -22,6 +22,7 @@ export function mediaItems() {
 let memo = null; // per warm instance
 
 export default async function handler(req, res) {
+  if (tooOld(req)) return sendJson(res, 426, { code: "update" }); // the app shows "Please update" (#30)
   if (req.method !== "GET") return sendJson(res, 405, { error: "GET only" });
   try {
     if (!memo || Date.now() - memo.at > 6 * 3600e3) memo = { at: Date.now(), items: await bestPhotos(mediaItems(), { avoid: C.photos.avoid }) };

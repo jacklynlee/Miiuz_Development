@@ -16,7 +16,7 @@
     pending = (async () => {
       if (window.claude || (cached && Date.now() - cached.at < FRESH)) return;
       try {
-        const r = await fetch("api/media");
+        const r = await MBB.api("api/media");
         if (!r.ok) return;
         const j = await r.json();
         if (!j?.items) return;
@@ -81,7 +81,12 @@
       <div class="card credits-more">
         <p>${esc(t("credits.maps"))} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a></p>
         <p>${esc(t("credits.text"))} <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener">CC BY-SA 4.0</a></p>
+      </div>
+      <div class="card credits-more credits-version">
+        <p><b id="cr-version">${esc(t("credits.version", { v: MBB.update.label() }))}</b></p>
+        <button type="button" class="btn btn-ghost btn-sm" id="cr-update">${icon("download")}${esc(t("update.check"))}</button>
       </div>`;
+    MBB.$("#cr-update").addEventListener("click", () => MBB.update.checkNow());
   }
 
   MBB.media = { load, get, html, label, renderCredits };

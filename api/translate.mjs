@@ -1,11 +1,12 @@
 /* Miiuz Beyond Borders — POST /api/translate: translate a batch of the app's English strings
  * into one of the languages in js/locales.js. Body: { lang: "fr", items: ["…", …] }. */
-import { LANGS, configured, originAllowed, rateLimiter, readJson, sendJson, errorCode } from "./_shared.mjs";
+import { LANGS, configured, originAllowed, rateLimiter, readJson, sendJson, errorCode, tooOld } from "./_shared.mjs";
 import { translateStrings } from "./_translate-core.mjs";
 
 const limited = rateLimiter(Number(process.env.MIIUZ_TRANSLATE_LIMIT || 80));
 
 export default async function handler(req, res) {
+  if (tooOld(req)) return sendJson(res, 426, { code: "update" }); // the app shows "Please update" (#30)
   if (req.method !== "POST") { res.setHeader("Allow", "POST"); return sendJson(res, 405, { code: "method_not_allowed" }); }
   if (!configured()) return sendJson(res, 503, { code: "not_configured" });
   if (!originAllowed(req)) return sendJson(res, 403, { code: "forbidden" });

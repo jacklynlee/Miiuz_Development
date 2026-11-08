@@ -27,6 +27,34 @@ still here, now alongside everything else a visitor needs.
 Works offline after the first visit (installable PWA, with an "install the app" card on Home), in
 light and dark mode, on phones and desktops. Everything is free for guests.
 
+### Updates
+
+Travellers get each deployment without reinstalling (`sw.js`, `js/update.js`, #30):
+
+- **Which version:** `/api/config` returns `version` (from `package.json`) and `build` (the
+  deployment's commit, `dev` locally). Credits shows the version the phone is running, e.g.
+  "Version 1.0.0 (abc1234)", with a **Check for updates** button. That tells staging from live,
+  and answers "which version do you have?".
+- **One version at a time:** the service worker is registered as `sw.js?v=<build>`. Each build
+  stores all its app files in its own cache when it installs, and serves them from there, so a page
+  never mixes files from two versions. There's no cache version to bump by hand. Locally
+  (`v=dev`), files are fetched from the network first, so edits show on reload.
+- **Noticing a new version:** when the app comes back to the foreground, and every 3 hours, it asks
+  `/api/config` again. A new build installs in the background, then a bar says "A new version of
+  Miiuz BB is ready · Update". It waits while the traveller is typing or the SOS sheet is open.
+  Update reloads, and saved data (language, home country, plans, sign-in) stays. A traveller who
+  ignores it gets the new version the next time the app starts.
+- **Forcing an update:** set `MIIUZ_MIN_VERSION` (e.g. `1.0.1`) in Vercel and redeploy. Older
+  copies then show a full-screen "Please update", still with a 999 button, and the APIs answer
+  them `426`. Use it only for breaking API changes or wrong safety facts (SOS numbers, entry
+  rules), never for normal releases, and remove it afterwards.
+- **Old copies and the API:** the app sends its version as `X-Miiuz-Version`. Change request
+  formats so the previous release keeps working.
+- **Saved data:** settings and plans are `mbb.*` in localStorage, with `mbb.dataVersion`. A
+  release that changes a saved format raises `DATA_VERSION` in `js/core.js` and adds a step
+  that converts old data.
+- Offline, nothing is checked: the app opens on the last version it had.
+
 ## Languages (i18n)
 
 Languages use BCP 47 tags (`js/locales.js`); numbers, dates and currencies are formatted with
@@ -85,6 +113,7 @@ npm run check          # syntax + data + translation sanity checks
    - `MIIUZ_MODEL` (default `claude-opus-5-5`)
    - `MIIUZ_ALLOWED_ORIGINS` to only accept AI requests from your own domain (recommended)
    - `MIIUZ_RATE_LIMIT` / `MIIUZ_TRANSLATE_LIMIT` per-IP request limits
+   - `MIIUZ_MIN_VERSION` to force older copies to update (rarely; see Updates)
 4. Check that AI is on: open `https://your-app/api/chat`. It must say `"configured":true`. If it
    says `false`, the key is missing from that environment, or you haven't redeployed since adding
    it (a new variable only reaches new deployments).
@@ -267,11 +296,12 @@ js/search.js · place.js      search and place pages      js/maps.js  overview +
 js/media.js             photos with credits, credits page
 js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
 js/install.js           "install the app" card (Android prompt / iPhone instructions), WeChat bar
+js/update.js            version, update bar and "Please update" (with sw.js)
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
 api/config.mjs          hands the public Supabase URL + key and the visitor's country to the app
 api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)
 supabase/schema.sql     membership database: tables, points triggers, tiers, access rules
-sw.js · manifest.webmanifest · icons/   PWA
+sw.js · manifest.webmanifest · icons/   PWA (offline, one cache per build)
 scripts/                check, translate, build-preview, vendor
 locales/                bundled AI translations
 marketing/              QR code (SVG/PNG) and A5 poster (PNG/PDF) for https://miiuz-bb.vercel.app/ (redirects to www.miiuz-bb.com)

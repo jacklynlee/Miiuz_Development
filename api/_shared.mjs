@@ -8,6 +8,25 @@ export const { LANGS } = require("../js/locales.js");
 export const PROMPT = require("../js/prompt.js");
 
 export const MODEL = process.env.MIIUZ_MODEL || "claude-opus-5-5";
+
+/* ---------- app versions (#30) ----------
+ * The app sends its version (package.json, MBB.VERSION in js/core.js) as X-Miiuz-Version.
+ * Change request formats so the previous release keeps working. When that's impossible, or a
+ * release fixes a wrong safety fact (SOS numbers, entry rules), set MIIUZ_MIN_VERSION (e.g. 1.0.2)
+ * in Vercel: /api/config then tells older copies to update, and the APIs answer them 426. */
+export const APP_VERSION = require("../package.json").version;
+const SEMVER = /^\d+\.\d+\.\d+$/;
+export const minVersion = () => (SEMVER.test(process.env.MIIUZ_MIN_VERSION || "") ? process.env.MIIUZ_MIN_VERSION : "");
+export function olderThan(a, b) {
+  const x = a.split(".").map(Number), y = b.split(".").map(Number);
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] < y[i];
+  return false;
+}
+// Copies from before #30 send no version, so they count as older than any minimum.
+export function tooOld(req) {
+  const min = minVersion(), v = String(req.headers?.["x-miiuz-version"] || "");
+  return Boolean(min) && olderThan(SEMVER.test(v) ? v : "0.0.0", min);
+}
 export const MAX_BODY_BYTES = 1_500_000;
 
 let client = null;

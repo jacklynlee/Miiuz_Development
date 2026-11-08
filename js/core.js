@@ -13,6 +13,25 @@
   };
   MBB.store = store;
 
+  /* ---------- this copy's version (#30) ----------
+   * Same as package.json's "version" (npm run check makes sure). Shown on Credits and sent to the
+   * APIs as X-Miiuz-Version. The build (commit) comes from the service worker: js/update.js. */
+  MBB.VERSION = "0.9.0";
+
+  /* ---------- saved data format (#30) ----------
+   * Settings and plans are saved as "mbb.*" in localStorage. When a release changes how something
+   * is saved, raise DATA_VERSION and add a step that converts the old format, so nothing is lost:
+   *   2: () => { const p = store.get("plan.prefs", null); if (p) store.set("plan.prefs", { ...p, … }); },
+   * Steps run once, in order, before anything reads the data. */
+  const DATA_VERSION = 1;
+  const MIGRATE = {};
+  {
+    let v = store.get("dataVersion", 0);
+    if (v === 0) v = 1; // everything saved before #30 is format 1
+    for (; v < DATA_VERSION; v++) { try { MIGRATE[v + 1]?.(); } catch { /* keep going with what's there */ } }
+    if (store.get("dataVersion", 0) !== DATA_VERSION) store.set("dataVersion", DATA_VERSION);
+  }
+
   /* ---------- languages and home country ---------- */
   // The language list lives in js/locales.js, the home-country rules in js/country.js.
   const O = MBB.origin;
@@ -154,9 +173,23 @@
   // Is the phone on Malaysian time? Then the traveller has most likely arrived.
   MBB.onTrip = () => O.LOCAL_TZ.includes(phoneTz);
 
-  // Public settings from the server (Supabase keys, the request's country). Fetched once per visit.
+  // Calls to our own /api/…, with this copy's version. A 426 means this copy is too old for the
+  // API (MIIUZ_MIN_VERSION): js/update.js shows "Please update".
+  MBB.api = (path, opts = {}) => fetch(path, { ...opts, headers: { ...opts.headers, "X-Miiuz-Version": MBB.VERSION } }).then(r => {
+    if (r.status === 426) MBB.emit("outdated");
+    return r;
+  });
+
+  // Public settings from the server (Supabase keys, the request's country, the live version and
+  // build). Fetched once per visit; fresh = ask again (the update check, js/update.js).
   let cfg = null;
-  MBB.config = () => (cfg ||= fetch("api/config", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null));
+  const getConfig = () => MBB.api("api/config", { cache: "no-store" }).then(r => (r.ok ? r.json() : null)).catch(() => null);
+  MBB.config = (fresh = false) => {
+    if (!fresh) return (cfg ||= getConfig());
+    const p = getConfig();
+    p.then(j => { if (j) cfg = Promise.resolve(j); });
+    return p;
+  };
 
   /* ---------- text ---------- */
   MBB.L = v => {

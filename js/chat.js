@@ -115,7 +115,7 @@
 
   /* ---------- server transport ---------- */
   async function streamTurn(messages, h) {
-    const res = await fetch("api/chat", {
+    const res = await MBB.api("api/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages }), signal: ctl.signal,
     });

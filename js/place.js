@@ -164,7 +164,7 @@
     const key = `${P.wp}|${MBB.state.lang}`;
     if (!wikis.has(key)) {
       try {
-        const r = await fetch(`api/places?wp=${encodeURIComponent(P.wp)}&lang=${encodeURIComponent(MBB.state.lang)}`);
+        const r = await MBB.api(`api/places?wp=${encodeURIComponent(P.wp)}&lang=${encodeURIComponent(MBB.state.lang)}`);
         wikis.set(key, r.ok ? (await r.json()).wiki || null : null);
       } catch { return; }
     }
@@ -289,7 +289,7 @@
     else view.innerHTML = `<a class="back" href="#search" data-back>${icon("back")}${esc(t("search.title"))}</a><p class="hint">${esc(t("search.searching"))}</p>`;
     if (have?.full || window.claude) { if (!have) notFound(view); return; }
     try {
-      const r = await fetch(`api/places?id=${encodeURIComponent(id)}&lang=${encodeURIComponent(MBB.state.lang)}`);
+      const r = await MBB.api(`api/places?id=${encodeURIComponent(id)}&lang=${encodeURIComponent(MBB.state.lang)}`);
       if (!r.ok) throw new Error(String(r.status));
       const { place } = await r.json();
       remember({ ...place, full: true });
