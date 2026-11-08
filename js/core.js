@@ -305,6 +305,31 @@
     }
   };
 
+  /* ---------- back gesture closes sheets and the full-screen card (#31) ----------
+   * The installed app has no browser back button, and Android's back gesture would leave the
+   * screen (or the app) with a sheet still open. Opening one adds a history entry at the same
+   * address, so "back" closes it. Closing it another way removes that entry again. */
+  let closeTop = null;
+  MBB.overlay = {
+    opened(close) {
+      if (!closeTop && !history.state?.mbbOverlay) { try { history.pushState({ mbbOverlay: 1 }, ""); } catch { /* sandboxed preview */ } }
+      closeTop = close;
+    },
+    closed() {
+      if (!closeTop) return;
+      closeTop = null;
+      // Later, so a sheet that opens another (SOS → driver card) keeps the same entry.
+      setTimeout(() => { if (!closeTop && history.state?.mbbOverlay) history.back(); }, 0);
+    },
+  };
+  window.addEventListener("popstate", () => {
+    const close = closeTop;
+    closeTop = null;
+    if (close) close();
+    // An entry left behind when a sheet closed by following a link: skip it.
+    else if (history.state?.mbbOverlay) history.back();
+  });
+
   /* ---------- full-screen "show this" card ---------- */
   let lastFocus = null, wakeLock = null;
   MBB.present = ({ kicker = "", big, sub = "" }) => {
@@ -318,12 +343,14 @@
     lastFocus = document.activeElement;
     el.hidden = false;
     MBB.$("#present-close").focus();
+    MBB.overlay.opened(MBB.closePresent);
     try { navigator.wakeLock?.request("screen").then(l => (wakeLock = l), () => {}); } catch { /* optional */ }
   };
   MBB.closePresent = () => {
     const el = MBB.$("#present");
     if (el.hidden) return;
     el.hidden = true;
+    MBB.overlay.closed();
     try { wakeLock?.release(); } catch { /* ignore */ }
     wakeLock = null;
     lastFocus?.focus?.();

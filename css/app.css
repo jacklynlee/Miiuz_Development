@@ -280,7 +280,7 @@ main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) +
 
 /* ---------- planner (ported) ---------- */
 .plan-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
-@media (min-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 370px) minmax(0, 1fr); } .panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 120px); max-height: calc(100vh - 140px); overflow-y: auto; } }
+@media (min-width: 900px) { .plan-grid { grid-template-columns: minmax(0, 370px) minmax(0, 1fr); } .panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 120px); max-height: calc(100vh - 140px); max-height: calc(100dvh - 140px); overflow-y: auto; } }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 18px; }
 fieldset { border: 0; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 legend { font-weight: 700; font-size: 13px; letter-spacing: .06em; padding: 0; margin-bottom: 8px; }
@@ -363,7 +363,7 @@ textarea { min-height: 64px; resize: vertical; }
 .checklist input:checked + span { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line); }
 
 /* ---------- chat ---------- */
-.chat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); display: flex; flex-direction: column; overflow: hidden; min-height: calc(100vh - 240px); }
+.chat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); display: flex; flex-direction: column; overflow: hidden; min-height: calc(100vh - 240px); min-height: calc(100dvh - 240px); }
 .chat-head { background: var(--teal); color: var(--on-accent); padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; }
 .chat-title { display: flex; gap: 10px; align-items: center; min-width: 0; flex: 1 1 260px; }
 .chat-title h1 { margin: 0; font-family: var(--display); font-size: 19px; line-height: 1.3; }
@@ -378,8 +378,8 @@ textarea { min-height: 64px; resize: vertical; }
 .ask-soon p { margin: 0; color: var(--muted); max-width: 60ch; }
 .ask-soon .chat-avatar { background: var(--teal); color: var(--on-accent); }
 .chat-head .btn-ghost:hover { background: transparent; opacity: .85; }
-.msgs { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; overflow-y: auto; min-height: 200px; max-height: 60vh; }
-@media (min-width: 900px) { .msgs { max-height: 56vh; } }
+.msgs { display: flex; flex-direction: column; gap: 10px; padding: 16px; flex: 1; overflow-y: auto; min-height: 200px; max-height: 60vh; max-height: 60dvh; }
+@media (min-width: 900px) { .msgs { max-height: 56vh; max-height: 56dvh; } }
 .msg { max-width: 88%; padding: 9px 13px; border-radius: 14px; overflow-wrap: anywhere; font-size: 14.5px; min-width: 0; }
 .msg p { margin: 0 0 6px; } .msg p:last-child { margin-bottom: 0; }
 .msg ul { margin: 4px 0 6px; padding-inline-start: 18px; }
@@ -400,11 +400,11 @@ textarea { min-height: 64px; resize: vertical; }
 /* ---------- SOS sheet, full-screen card, toast ---------- */
 .sheet-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(10, 16, 14, .5); display: flex; align-items: flex-end; justify-content: center; }
 .sheet {
-  background: var(--surface); width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto;
+  background: var(--surface); width: 100%; max-width: 560px; max-height: 92vh; max-height: 92dvh; overflow-y: auto;
   border-radius: 18px 18px 0 0; padding: 18px max(18px, env(safe-area-inset-right, 0px)) calc(20px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
   display: flex; flex-direction: column; gap: 16px;
 }
-@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 18px; max-height: 86vh; } }
+@media (min-width: 640px) { .sheet-backdrop { align-items: center; } .sheet { border-radius: 18px; max-height: 86vh; max-height: 86dvh; } }
 .sheet-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .sheet-head h2 { margin: 0; font-family: var(--display); font-size: 22px; color: var(--hibiscus); }
 .sheet-head p { margin: 2px 0 0; color: var(--muted); font-size: 13.5px; }
@@ -698,3 +698,10 @@ textarea { min-height: 64px; resize: vertical; }
 [dir="rtl"] .back .ic, [dir="rtl"] .quick .next, [dir="rtl"] .s-row .next, [dir="rtl"] .ic-flip { transform: scaleX(-1); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* iPhone zooms in on any field under 16px when it gets focus, and stays zoomed (#31).
+   Last in the file, so it wins over smaller sizes set above. */
+@media (pointer: coarse) {
+  input[type=time], input[type=number], input[type=text], input[type=search], textarea, select, .chat-controls select { font-size: 16px; }
+  .fx-row input { font-size: 20px; }
+}

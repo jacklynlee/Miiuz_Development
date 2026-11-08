@@ -328,6 +328,8 @@
     "install.title": { zh: "把 Miiuz BB 装到手机上", en: "Install Miiuz BB", ko: "Miiuz BB 앱 설치", ja: "Miiuz BB をホーム画面に追加" },
     "install.lead": { zh: "像 App 一样打开，离线也能用，不用去应用商店。", en: "Opens like an app and works offline. No app store needed.", ko: "앱처럼 열리고 오프라인에서도 돼요. 앱스토어는 필요 없어요.", ja: "アプリのように開けてオフラインでも使えます。ストアは不要です。" },
     "install.ios": { zh: "在 Safari 里点“分享”按钮，再点“添加到主屏幕”。", en: "In Safari, tap the Share button, then 'Add to Home Screen'.", ko: "Safari에서 공유 버튼 → '홈 화면에 추가'를 누르세요.", ja: "Safariで共有ボタン →「ホーム画面に追加」をタップしてください。" },
+    "install.iosOther": { zh: "点地址栏或菜单里的“分享”按钮，再点“添加到主屏幕”。也可以用 Safari 打开。", en: "Tap the Share button in the address bar or menu, then 'Add to Home Screen'. Or open this page in Safari.", ko: "주소창이나 메뉴의 공유 버튼 → '홈 화면에 추가'를 누르세요. Safari에서 열어도 돼요.", ja: "アドレスバーかメニューの共有ボタン →「ホーム画面に追加」をタップしてください。Safariで開いても追加できます。" },
+    "install.inApp": { zh: "这个应用内的浏览器不能安装。请点 ⋯ 或 ⋮，选“在浏览器中打开”，再安装。", en: "You can't install from this app's browser. Tap ⋯ or ⋮, choose 'Open in browser', then install.", ko: "이 앱 안의 브라우저에서는 설치할 수 없어요. ⋯ 또는 ⋮ → '브라우저에서 열기'를 누른 뒤 설치하세요.", ja: "このアプリ内のブラウザでは追加できません。⋯ か ⋮ から「ブラウザで開く」を選んでから追加してください。" },
     "install.button": { zh: "安装", en: "Install", ko: "설치", ja: "インストール" },
     "install.hide": { zh: "隐藏", en: "Hide", ko: "숨기기", ja: "閉じる" },
 
