@@ -434,7 +434,33 @@ textarea { min-height: 64px; resize: vertical; }
 .present-sub { margin: 0; font-size: clamp(16px, 3vw, 22px); color: var(--muted); }
 .present-close { margin-top: 12px; }
 
-.toast { position: fixed; left: 50%; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 16px); transform: translateX(-50%); z-index: 60; background: var(--fg); color: var(--bg); padding: 8px 16px; border-radius: 999px; font-size: 14px; max-width: calc(100vw - 32px); text-align: center; }
+/* Toasts (#29): a card at the top, below the notch, where phone notifications appear. The keyboard,
+   tab bar and SOS sheet never cover it. */
+.toast {
+  position: fixed; z-index: 70; top: calc(env(safe-area-inset-top, 0px) + 8px);
+  left: max(16px, env(safe-area-inset-left, 0px)); right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 420px; margin-inline: auto; min-height: 48px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; padding: 10px 6px 10px 14px;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-inline-start: 5px solid var(--muted);
+  border-radius: 14px; box-shadow: 0 8px 28px rgba(10, 16, 14, .22); font-size: 16px; line-height: 1.35;
+  transform: translateY(calc(-100% - 24px)); opacity: 0; transition: transform .22s ease-out, opacity .22s ease-out;
+  touch-action: none; user-select: none; -webkit-user-select: none;
+}
+.toast.show { transform: none; opacity: 1; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .toast:not(.toast-error) { background: var(--surface-2); } }
+:root[data-theme="dark"] .toast:not(.toast-error) { background: var(--surface-2); }
+.toast .toast-ic { flex: none; width: 22px; height: 22px; }
+.toast-msg { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.toast-success { border-inline-start-color: var(--teal); }
+.toast-success .toast-ic { color: var(--teal); }
+.toast-error { border-inline-start-color: var(--hibiscus); background: var(--hibiscus-soft); }
+.toast-error .toast-ic { color: var(--hibiscus); }
+.toast-info .toast-ic { color: var(--muted); }
+.toast-act { font: inherit; font-size: 14px; font-weight: 700; flex: none; border: 0; border-radius: 999px; padding: 7px 12px; background: var(--teal); color: var(--on-accent); cursor: pointer; }
+.toast-error .toast-act { background: var(--hibiscus); }
+.toast-x { flex: none; display: inline-grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; }
+.toast-x .ic { width: 18px; height: 18px; }
+@media (prefers-reduced-motion: reduce) { .toast { transform: none; transition: opacity .2s !important; } } /* fade, don't slide */
 @media (min-width: 900px) { .toast { bottom: 24px; } }
 
 .foot { margin-top: 36px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between; font-size: 12px; color: var(--muted); }

@@ -314,12 +314,64 @@
   MBB.on("fx", () => MBB.$$("[data-fx]").forEach(el => { el.textContent = fxSuffix(...el.dataset.fx.split("|")); }));
 
   /* ---------- feedback ---------- */
-  MBB.toast = msg => {
-    const t = MBB.$("#toast");
-    t.textContent = msg; t.hidden = false;
-    clearTimeout(MBB.toast.h);
-    MBB.toast.h = setTimeout(() => (t.hidden = true), 2400);
+  /* ---------- toasts (#29) ----------
+   * MBB.toast(msg) or MBB.toast(msg, { type: "success" | "error" | "info", action: { label, run } }).
+   * A card at the top of the screen, below the notch, above everything else (sheets, the
+   * full-screen card). Success and info stay about 3 s, errors about 5.5 s; it stays while
+   * touched or hovered, and a tap, a swipe up or × dismisses it. A new toast replaces the current
+   * one. Screen readers hear it through a polite or (errors) assertive live region; focus never
+   * moves, so typing isn't interrupted. */
+  const TOAST_MS = { success: 3000, info: 3000, error: 5500 };
+  const TOAST_IC = { success: "check", info: "info", error: "alert" };
+  let toastTimer = 0, toastLeft = 0, toastUntil = 0;
+  const announce = (msg, type) => {
+    const el = MBB.$(type === "error" ? "#toast-alert" : "#toast-polite");
+    if (!el) return;
+    el.textContent = "";
+    setTimeout(() => { el.textContent = msg; }, 60); // a change, so it's read even when repeated
   };
+  MBB.toast = (msg, { type = "info", action = null } = {}) => {
+    const el = MBB.$("#toast");
+    if (!TOAST_MS[type]) type = "info";
+    el.className = `toast toast-${type}`;
+    el.innerHTML = `${MBB.icon(TOAST_IC[type], "toast-ic")}<span class="toast-msg">${MBB.esc(msg)}</span>
+      ${action ? `<button type="button" class="toast-act">${MBB.esc(action.label)}</button>` : ""}
+      <button type="button" class="toast-x" aria-label="${MBB.esc(MBB.t("toast.dismiss"))}">${MBB.icon("close")}</button>`;
+    if (action) el.querySelector(".toast-act").addEventListener("click", ev => { ev.stopPropagation(); MBB.toast.hide(); action.run(); });
+    el.querySelector(".toast-x").addEventListener("click", MBB.toast.hide); // keyboard; taps are handled below
+    el.hidden = false;
+    void el.offsetWidth; // start the slide-in from above
+    el.classList.add("show");
+    announce(msg, type);
+    if (type === "error") { try { navigator.vibrate?.(40); } catch { /* not supported */ } }
+    toastLeft = action ? Math.max(TOAST_MS[type], 6000) : TOAST_MS[type];
+    MBB.toast.resume();
+  };
+  MBB.toast.pause = () => { clearTimeout(toastTimer); toastLeft = Math.max(1200, toastUntil - Date.now()); };
+  MBB.toast.resume = () => { clearTimeout(toastTimer); toastUntil = Date.now() + toastLeft; toastTimer = setTimeout(MBB.toast.hide, toastLeft); };
+  MBB.toast.hide = () => {
+    const el = MBB.$("#toast");
+    clearTimeout(toastTimer);
+    if (el.hidden) return;
+    el.classList.remove("show");
+    setTimeout(() => { if (!el.classList.contains("show")) el.hidden = true; }, 220);
+  };
+  // Copy results: "Copied" (success) or "Couldn't copy" (error).
+  MBB.copied = (ok, msg) => MBB.toast(ok ? msg : MBB.t("common.copyFail"), { type: ok ? "success" : "error" });
+  // Touch: stays while held; a tap or a swipe up dismisses it. Mouse: stays while hovered.
+  {
+    let y0 = null;
+    const el = () => MBB.$("#toast");
+    document.addEventListener("pointerdown", e => { if (e.target.closest?.("#toast") && !e.target.closest(".toast-act")) { y0 = e.clientY; MBB.toast.pause(); } });
+    document.addEventListener("pointerup", e => {
+      if (y0 == null) return;
+      const moved = y0 - e.clientY; y0 = null;
+      if (moved > 24 || (Math.abs(moved) < 8 && e.target.closest?.("#toast"))) MBB.toast.hide(); else MBB.toast.resume();
+    });
+    document.addEventListener("pointercancel", () => { if (y0 != null) { y0 = null; MBB.toast.resume(); } });
+    document.addEventListener("pointerover", e => { if (e.pointerType === "mouse" && e.target.closest?.("#toast") && !el().hidden && !e.relatedTarget?.closest?.("#toast")) MBB.toast.pause(); });
+    document.addEventListener("pointerout", e => { if (e.pointerType === "mouse" && e.target.closest?.("#toast") && !el().hidden && !e.relatedTarget?.closest?.("#toast")) MBB.toast.resume(); });
+  }
   // Call from inside a click handler: writeText must start before any await.
   MBB.copy = text => {
     const fallback = () => {
@@ -471,6 +523,9 @@
     locate: '<circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>',
     route: '<path d="M12 2l10 10-10 10L2 12z"/><path d="M9 14v-2.5a1.5 1.5 0 0 1 1.5-1.5H15M13 8l2 2-2 2"/>',
     sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+    alert: '<path d="M12 3.5l9.5 16.5h-19z"/><path d="M12 10v4.5M12 17.5v.01"/>',
+    info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5M12 7.5v.01"/>',
+    close: '<path d="M6 6l12 12M18 6L6 18"/>',
   };
   MBB.icon = (name, cls = "") =>
     `<svg class="ic ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${P[name] || ""}</svg>`;

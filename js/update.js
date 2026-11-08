@@ -145,7 +145,7 @@
     await check(true);
     if (outdated) return;
     if (reg?.waiting || (live && running && live !== running)) return update();
-    MBB.toast(live ? t("update.latest") : t("update.offline"));
+    MBB.toast(live ? t("update.latest") : t("update.offline"), { type: live ? "success" : "info" });
   }
 
   MBB.update = {

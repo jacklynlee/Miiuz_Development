@@ -255,7 +255,7 @@
     $("#pl-share").addEventListener("click", async () => {
       const data = { title: P.name, text: `${P.name} · Miiuz BB`, url: location.href };
       try { if (navigator.share && !MBB.install.wechat) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
-      MBB.copy(location.href).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail")));
+      MBB.copy(location.href).then(ok => MBB.copied(ok, t("member.linkCopied")));
     });
     $("#pl-plan")?.addEventListener("click", () => { MBB.setCity(P.kind === "city" ? P.id : P.city); MBB.go("plan"); });
     $("#pl-locate").addEventListener("click", () => {
