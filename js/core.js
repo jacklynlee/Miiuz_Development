@@ -16,7 +16,7 @@
   /* ---------- this copy's version (#30) ----------
    * Same as package.json's "version" (npm run check makes sure). Shown on Credits and sent to the
    * APIs as X-Miiuz-Version. The build (commit) comes from the service worker: js/update.js. */
-  MBB.VERSION = "0.9.0";
+  MBB.VERSION = "1.0.0";
 
   /* ---------- saved data format (#30) ----------
    * Settings and plans are saved as "mbb.*" in localStorage. When a release changes how something
