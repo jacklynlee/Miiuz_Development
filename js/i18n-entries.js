@@ -31,7 +31,7 @@
       add(`city.${id}.transfer`, c.transferNote.en, into(c.transferNote));
     }
     C.climate.forEach((m, i) => add(`climate.${i}`, m.en, into(m)));
-    C.emergency.filter(e => !e.only).forEach(e => { add(`sos.${e.id}.label`, e.label.en, into(e.label)); add(`sos.${e.id}.note`, e.note.en, into(e.note)); });
+    C.emergency.filter(e => !e.for).forEach(e => { add(`sos.${e.id}.label`, e.label.en, into(e.label)); add(`sos.${e.id}.note`, e.note.en, into(e.note)); });
     C.guide.forEach(g => { add(`guide.${g.id}.title`, g.title.en, into(g.title)); add(`guide.${g.id}.lead`, g.lead.en, into(g.lead)); });
     C.checklist.forEach(g => { add(`check.${g.id}.title`, g.title.en, into(g.title)); g.items.forEach(it => add(`check.${g.id}.${it.id}`, it.en, into(it))); });
     add("driver", C.driverCard.en, into(C.driverCard));
@@ -44,7 +44,7 @@
     C.guide.forEach(g => {
       (g.facts || []).forEach((f, i) => { add(`guide.${g.id}.f${i}.k`, f.k.en, into(f.k)); add(`guide.${g.id}.f${i}.v`, f.v.en, into(f.v)); });
       g.sections.forEach((s, i) => { add(`guide.${g.id}.s${i}.h`, s.h.en, into(s.h)); s.items.forEach((it, j) => add(`guide.${g.id}.s${i}.${j}`, it.en, into(it))); });
-      (g.links || []).forEach((l, i) => { if (!l.only) add(`guide.${g.id}.l${i}`, l.label.en, into(l.label)); });
+      (g.links || []).forEach((l, i) => { if (!l.for) add(`guide.${g.id}.l${i}`, l.label.en, into(l.label)); });
       (g.dishes || []).forEach((d, i) => add(`guide.${g.id}.d${i}`, d.en, into(d)));
     });
 

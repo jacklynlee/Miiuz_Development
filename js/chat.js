@@ -89,6 +89,7 @@
   }
 
   /* ---------- context ---------- */
+  const englishName = c => { try { return new Intl.DisplayNames(["en"], { type: "region" }).of(c) || c; } catch { return c; } };
   function contextText() {
     const plan = MBB.planner.snapshot();
     const now = new Intl.DateTimeFormat("en-GB", { timeZone: MBB.C.timezone, weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date());
@@ -97,6 +98,7 @@
       localTime: `${now} (${MBB.C.name.en} time, UTC+8)`,
       appLang: MBB.LANGS[MBB.state.lang].name,
       replyLang: $("#c-lang").value,
+      from: MBB.state.from ? `${MBB.state.from} (${englishName(MBB.state.from)})${MBB.state.fromOk ? "" : ", guessed by the app"}` : null,
       home, rate: r ? (r >= 100 ? r.toFixed(0) : r.toFixed(3)) : null, rateLive: MBB.fx.live,
       cityName: MBB.C.cities[plan.city].en,
       plan,
@@ -113,7 +115,7 @@
 
   /* ---------- server transport ---------- */
   async function streamTurn(messages, h) {
-    const res = await fetch("api/chat", {
+    const res = await MBB.api("api/chat", {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages }), signal: ctl.signal,
     });
@@ -265,6 +267,12 @@
 
   MBB.chat = {
     init() {
+      // Not released yet (MBB.features.ask): show "Coming soon" and send nothing.
+      const on = MBB.features.ask;
+      $("#chat").hidden = !on;
+      $("#ask-soon").hidden = on;
+      $("#tab-soon").hidden = on;
+      if (!on) return;
       $("#c-form").addEventListener("submit", e => { e.preventDefault(); const v = $("#c-input").value; $("#c-input").value = ""; ask(v); });
       $("#c-input").addEventListener("keydown", e => {
         if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("#c-form").requestSubmit(); }
@@ -285,12 +293,14 @@
     // right now, leave it in the box instead.
     async askAbout(text) {
       MBB.go("ask");
+      if (!MBB.features.ask) return;
       await MBB.ai.ready;
       if ((mode === "server" || mode === "artifact") && !busy) ask(text);
       else MBB.chat.prefill(text);
     },
     prefill(text) {
       MBB.go("ask");
+      if (!MBB.features.ask) return;
       const box = $("#c-input");
       box.value = text;
       requestAnimationFrame(() => { box.focus(); box.setSelectionRange(box.value.length, box.value.length); });

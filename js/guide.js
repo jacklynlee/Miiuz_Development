@@ -35,7 +35,9 @@
     const city = MBB.state.city;
     // City-specific sections: the traveller's own city first and marked.
     const sections = [...g.sections].sort((a, b) => (b.city === city) - (a.city === city));
-    const facts = (g.facts || []).map(f => `<div class="fact"><span>${esc(L(f.k))}</span><b>${esc(L(f.v))}</b></div>`).join("");
+    const price = MBB.priceHtml; // escapes, and adds the home-currency amount to RM prices (#19)
+    // Country-specific facts and lines (`for: ["US"]`) show only to travellers from there (MBB.forMe).
+    const facts = (g.facts || []).filter(MBB.forMe).map(f => `<div class="fact"><span>${esc(L(f.k))}</span><b>${price(L(f.v))}</b></div>`).join("");
     const item = (id, photo, ic, title, text) => `<article class="g-item" id="${id}">
         ${MBB.media.html(photo, { alt: title, ic, link: true })}
         <div><h3>${esc(title)}</h3><p>${esc(text)}</p></div>
@@ -52,10 +54,10 @@
       const mine = s.city && s.city === city;
       return `<section class="card g-sec${mine ? " mine" : ""}">
         <h2>${esc(L(s.h))}${mine ? ` <span class="pill teal">${esc(t("guide.yourCity"))}</span>` : ""}</h2>
-        <ul>${s.items.map(it => `<li>${esc(L(it))}</li>`).join("")}</ul>
+        <ul>${s.items.filter(MBB.forMe).map(it => `<li>${price(L(it))}</li>`).join("")}</ul>
       </section>`;
     }).join("");
-    const shown = (g.links || []).filter(l => !l.only || l.only.includes(MBB.state.lang));
+    const shown = (g.links || []).filter(MBB.forMe);
     const links = shown.length ? `<div>
         <div class="section-title"><h2>${esc(t("guide.links"))}</h2></div>
         <div class="links">${shown.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(L(l.label))}${icon("external")}</a>`).join("")}</div>
@@ -65,7 +67,7 @@
       <a class="back" href="#guide">${icon("back")}${esc(t("guide.back"))}</a>
       <div class="topic-head">
         <span class="badge-ic">${icon(g.icon)}</span>
-        <div><h1>${esc(L(g.title))}</h1><p>${esc(L(g.lead))}</p></div>
+        <div><h1>${esc(L(g.title))}</h1><p>${price(L(g.lead))}</p></div>
       </div>
       ${facts ? `<div class="facts">${facts}</div>` : ""}
       ${dishes}
@@ -73,9 +75,9 @@
       <div class="g-sections">${secs}</div>
       ${links}
       <p class="checked-note">${esc(t("guide.checked", { d: checkedLabel() }))}</p>
-      <div class="actions"><button type="button" class="btn btn-ai" id="g-ask">${icon("spark")}${esc(t("guide.ask"))}</button></div>`;
+      ${MBB.features.ask ? `<div class="actions"><button type="button" class="btn btn-ai" id="g-ask">${icon("spark")}${esc(t("guide.ask"))}</button></div>` : ""}`;
 
-    $("#g-ask").addEventListener("click", () => MBB.chat.prefill(t("guide.askPrompt", { t: L(g.title) })));
+    $("#g-ask")?.addEventListener("click", () => MBB.chat.prefill(t("guide.askPrompt", { t: L(g.title) })));
   }
 
   MBB.guide = {

@@ -1,7 +1,7 @@
 /* Quick sanity checks: script syntax, data integrity, translations. Usage: npm run check */
 import { execFileSync } from "node:child_process";
 import { createRequire } from "node:module";
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -70,7 +70,6 @@ if (C.photos.dishes.length !== dishes.length || C.dishNames.length !== dishes.le
 if (!MAP.land || !MAP.near || !(MAP.k > 0)) fail("map data missing (run scripts/build-map.mjs)");
 
 // Every literal t("key") in the app must exist (dynamic keys like t(`ptype.${k}`) are checked by prefix).
-const { readFileSync } = await import("node:fs");
 for (const f of readdirSync(path.join(root, "js")).filter(f => f.endsWith(".js"))) {
   const src = readFileSync(path.join(root, "js", f), "utf8");
   for (const [, key] of src.matchAll(/\bt\(\s*"([a-zA-Z][\w.]*)"/g)) if (!STR[key]) fail(`${f}: unknown string "${key}"`);
@@ -87,7 +86,8 @@ for (const l of ["ko", "ja"]) {
   for (const p of C.pois) if (!o.pois[p.id] || o.pois[p.id].length !== 3) fail(w(`place ${p.id}`));
   for (const k of Object.keys(C.cities)) if (!o.cities[k]) fail(w(`city ${k}`));
   if (o.climate.length !== 12) fail(w("climate"));
-  for (const e of C.emergency) if ((!e.only || e.only.includes(l)) && !o.emergency[e.id]) fail(w(`emergency ${e.id}`));
+  const own = { ko: "KR", ja: "JP" }[l]; // a hand-translated language must cover its own country's lines
+  for (const e of C.emergency) if ((!e.for || e.for.includes(own)) && !o.emergency[e.id]) fail(w(`emergency ${e.id}`));
   for (const g of C.guide) {
     const v = o.guide[g.id];
     if (!v) { fail(w(`guide ${g.id}`)); continue; }
@@ -101,7 +101,67 @@ for (const l of ["ko", "ja"]) {
   for (const g of C.checklist) for (const it of g.items) if (!o.checklist[g.id]?.items[it.id]) fail(w(`checklist ${it.id}`));
 }
 
+// Home country (js/country.js): codes, currencies and detection.
+const O = require(path.join(root, "js/country.js"));
+for (const x of [...C.emergency, ...C.guide.flatMap(g => [...(g.links || []), ...(g.facts || []), ...g.sections.flatMap(s => s.items)])]) {
+  if (x.only) fail(`"only" (by language) was replaced by "for" (by home country): ${x.id || x.url}`);
+  for (const c of x.for || []) if (!O.valid(c)) fail(`unknown country code "${c}" in for: ${x.id || x.url || x.en || x.k?.en}`);
+  for (const c of Object.keys(x.like || {})) if (!O.valid(c)) fail(`unknown country code "${c}" in like: ${x.id}`);
+}
+for (const c of O.COMMON) if (!O.valid(c)) fail(`country.js COMMON: unknown code ${c}`);
+for (const [c, cur] of Object.entries(O.CURRENCY)) if (!O.valid(c) || !/^[A-Z]{3}$/.test(cur)) fail(`country.js CURRENCY: ${c} → ${cur}`);
+const guess = (o, want) => { const got = O.detect(o).code; if (got !== want) fail(`country.detect(${JSON.stringify(o)}) gave ${got}, expected ${want}`); };
+guess({ languages: ["en-US"], timeZone: "America/New_York" }, "US");
+guess({ languages: ["en-US"], timeZone: "Asia/Kuala_Lumpur" }, "US");
+guess({ languages: ["zh-CN"], timeZone: "Asia/Kuala_Lumpur" }, "CN");
+guess({ languages: ["zh-Hans-CN"], timeZone: "Asia/Shanghai" }, "CN");
+guess({ languages: ["en-GB"], timeZone: "Asia/Kuala_Lumpur", ip: "CN" }, "CN"); // roaming SIM
+guess({ languages: ["en-MY"], timeZone: "Asia/Kuala_Lumpur", ip: "MY", lang: "en" }, null); // Malaysia is never a guess
+guess({ languages: ["zh-Hans"], timeZone: "Asia/Kuala_Lumpur", lang: "zh" }, "CN");
+guess({ languages: ["en-US"], timeZone: "America/Chicago", member: "CN" }, "CN"); // nationality wins
+
+// No CDNs or Google Fonts in what the browser loads: blocked or unreliable in mainland China (#18).
+// Third-party files live in vendor/ and fonts/ (npm run vendor). The claude.ai preview is exempt.
+const shipped = ["index.html", "sw.js", "css/app.css", "css/fonts.css", ...readdirSync(path.join(root, "js")).filter(f => f.endsWith(".js")).map(f => `js/${f}`)];
+for (const f of shipped) {
+  const src = readFileSync(path.join(root, f), "utf8");
+  for (const host of ["cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com", "fonts.googleapis.com", "fonts.gstatic.com"]) if (src.includes(host)) fail(`${f} loads from ${host}; vendor it instead (npm run vendor)`);
+}
+for (const m of readFileSync(path.join(root, "sw.js"), "utf8").matchAll(/"((?:fonts|vendor|css)\/[^"]+)"/g)) if (!existsSync(path.join(root, m[1]))) fail(`sw.js caches ${m[1]}, which doesn't exist`);
+
+// Updates (#30): the service worker stores every app file when a build installs, and the app
+// reports its version. Every script in index.html must be in sw.js, and MBB.VERSION must match.
+{
+  const sw = readFileSync(path.join(root, "sw.js"), "utf8"), html = readFileSync(path.join(root, "index.html"), "utf8");
+  for (const [, src] of html.matchAll(/<script src="((?:js|vendor)\/[^"]+)"/g)) if (!sw.includes(`"${src}"`)) fail(`index.html loads ${src}, but sw.js doesn't store it`);
+  for (const [, f] of sw.matchAll(/"((?:js|icons)\/[^"]+)"/g)) if (!existsSync(path.join(root, f))) fail(`sw.js caches ${f}, which doesn't exist`);
+  const pkg = require("../package.json").version, app = readFileSync(path.join(root, "js/core.js"), "utf8").match(/MBB\.VERSION = "([^"]+)"/)?.[1];
+  if (app !== pkg) fail(`MBB.VERSION in js/core.js is "${app}" but package.json says "${pkg}": set both to the release's version`);
+}
+
+// Photos (#32): every pin is for a real item and names a Commons file (npm run photos checks them online).
+{
+  const { mediaItems } = await import("../api/media.mjs");
+  const keys = new Set(mediaItems().map(x => x.key)), X = require("../js/data/malaysia.explore.js");
+  for (const [k, f] of Object.entries(X.photos.pin || {})) {
+    if (!keys.has(k)) fail(`photos.pin has "${k}", which isn't an item`);
+    if (!/\.(jpe?g|png|webp|tiff?)$/i.test(f) || /[/:]/.test(f)) fail(`photos.pin["${k}"] isn't a Commons file name: ${f}`);
+  }
+  const unpinned = [...keys].filter(k => !X.photos.pin?.[k]);
+  if (unpinned.length) fail(`items without a reviewed photo in photos.pin: ${unpinned.join(", ")} (npm run photos)`);
+}
+
 // AI-translation inventory and prompts.
+// Sign-in emails (#28): supabase/email/ must match scripts/build-emails.mjs.
+{
+  const { FILES } = await import("./build-emails.mjs"), fs = await import("node:fs");
+  for (const [f, src] of Object.entries(FILES)) {
+    const p = path.join(root, f);
+    if (!fs.existsSync(p) || fs.readFileSync(p, "utf8") !== src) fail(`${f} is out of date: run npm run emails`);
+    if (!src.includes("{{ .Token }}") || !src.includes("{{ .ConfirmationURL }}")) fail(`${f} has no code or link`);
+  }
+}
+
 const entries = E.collect(STR, C);
 if (new Set(entries.map(e => e.key)).size !== entries.length) fail("duplicate translation keys");
 const sys = buildSystem(C, "server");

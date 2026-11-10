@@ -2,6 +2,7 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, fmt, toMin } = MBB;
+  const clock = m => MBB.clock(m);
 
   const THEMES = ["food", "culture", "photo", "shop", "nature", "night"];
   const PERSONAS = {
@@ -164,7 +165,7 @@
     const free = last ? win.end - last.end : win.end - win.start;
     const pills = [
       `<span class="pill">${esc(L(c))}</span>`,
-      `<span class="pill mono">${fmt(win.start)}–${fmt(win.end)}</span>`,
+      `<span class="pill mono">${clock(win.start)}–${clock(win.end)}</span>`,
       `<span class="pill">${esc(t(`persona.${prefs.persona}`))}</span>`,
       `<span class="pill">${esc(themes)}</span>`,
       prefs.rain ? `<span class="pill warn">${esc(t("plan.indoorPill"))}</span>` : "",
@@ -181,18 +182,18 @@
     const li = [];
     pl.stops.forEach(s => {
       const p = s.poi, n = stopNames(s);
-      if (s.leg) li.push(`<li class="leg"><div></div><div>${esc(t(s.leg.mode === "walk" ? "plan.walk" : "plan.car"))} ${esc(t("plan.legMin", { m: s.leg.min }))}${s.leg.km ? ` (${s.leg.km.toFixed(1)} km)` : ""}</div></li>`);
+      if (s.leg) li.push(`<li class="leg"><div></div><div>${esc(t(s.leg.mode === "walk" ? "plan.walk" : "plan.car"))} ${esc(t("plan.legMin", { m: s.leg.min }))}${s.leg.km ? ` · ${esc(MBB.dist(s.leg.km))}` : ""}</div></li>`);
       else if (s.legText) li.push(`<li class="leg"><div></div><div>${esc(s.legText)}</div></li>`);
       const q = encodeURIComponent(`${n.en || n.main}, ${c.en}, Malaysia`);
-      const tags = p ? p.t.map(k => `<span class="tag${k === "food" ? " food" : ""}">${esc(t(`theme.${k}`))}</span>`).join("") + `<span class="tag">${esc(t("plan.cost")[p.k])}</span>` : "";
+      const tags = p ? p.t.map(k => `<span class="tag${k === "food" ? " food" : ""}">${esc(t(`theme.${k}`))}</span>`).join("") + `<span class="tag">${MBB.priceHtml(t("plan.cost")[p.k])}</span>` : "";
       const why = s.why || (p ? L(p.why) : "");
       const tip = s.tip || (p ? L(p.tip) : "");
-      li.push(`<li class="stop"><div class="time">${fmt(s.start)}<span>${fmt(s.end)}</span></div>
+      li.push(`<li class="stop"><div class="time">${clock(s.start)}<span>${clock(s.end)}</span></div>
         <div class="card"><h3>${esc(n.main)}${n.sub ? `<small>${esc(n.sub)}</small>` : ""}</h3>
         ${tags ? `<div class="tags">${tags}</div>` : ""}
         ${why ? `<p class="why">${esc(why)}</p>` : ""}
         ${tip ? `<p class="tip">${esc(tip)}</p>` : ""}
-        <div class="maps"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">${esc(t("plan.maps"))}</a>${MBB.isChinese() ? `<a href="https://uri.amap.com/search?keyword=${encodeURIComponent(n.en || n.main)}" target="_blank" rel="noopener">${esc(t("plan.amap"))}</a>` : ""}</div>
+        <div class="maps"><a href="https://www.google.com/maps/search/?api=1&query=${q}" target="_blank" rel="noopener">${esc(t("plan.maps"))}</a>${MBB.state.from === "CN" ? `<a href="${esc(p?.lat ? MBB.maps.amap(p.lat, p.lng, n.main) : `https://uri.amap.com/search?keyword=${encodeURIComponent(n.en || n.main)}`)}" target="_blank" rel="noopener">${esc(t("plan.amap"))}</a>` : ""}</div>
         <div class="book"><span>${esc(t("plan.book"))}</span>${SITES.map(([label, url]) => `<a href="${url(encodeURIComponent(n.en || n.main))}" target="_blank" rel="noopener">${label}</a>`).join("")}</div>
         </div></li>`);
     });
@@ -200,8 +201,9 @@
       const endMsg = prefs.flightOn
         ? t("plan.endFlight", { a: L(c.airport), m: c.transfer })
         : (free >= 40 ? t("plan.endFree", { m: Math.round(free) }) : t("plan.endDone"));
-      li.push(`<li class="stop"><div class="time">${fmt(win.end)}</div><div class="card endcard"><h3>${esc(t(prefs.flightOn ? "plan.toAirport" : "plan.wrap"))}</h3><p class="why">${esc(endMsg)}</p></div></li>`);
+      li.push(`<li class="stop"><div class="time">${clock(win.end)}</div><div class="card endcard"><h3>${esc(t(prefs.flightOn ? "plan.toAirport" : "plan.wrap"))}</h3><p class="why">${esc(endMsg)}</p></div></li>`);
     }
+    $("#p-timeline").classList.toggle("h12", MBB.h12());
     $("#p-timeline").innerHTML = li.join("");
   }
 
@@ -209,16 +211,16 @@
 
   function planText() {
     const c = city();
-    const lines = [t("plan.copyHead", { c: L(c), a: fmt(win.start), b: fmt(win.end) })];
+    const lines = [t("plan.copyHead", { c: L(c), a: clock(win.start), b: clock(win.end) })];
     current.stops.forEach(s => {
       const n = stopNames(s);
       if (s.leg) lines.push(`   ↓ ${t(s.leg.mode === "walk" ? "plan.walk" : "plan.car")} ${t("plan.legMin", { m: s.leg.min })}`);
       else if (s.legText) lines.push(`   ↓ ${s.legText}`);
-      lines.push(`${fmt(s.start)}–${fmt(s.end)}  ${n.main}${n.sub ? `（${n.sub}）` : ""}`);
+      lines.push(`${clock(s.start)}–${clock(s.end)}  ${n.main}${n.sub ? `（${n.sub}）` : ""}`);
       const tip = s.tip || (s.poi ? L(s.poi.tip) : "");
       if (tip) lines.push(`   ${t("plan.tip")}${tip}`);
     });
-    if (prefs.flightOn) lines.push(`${fmt(win.end)}  ${t("plan.copyLeave", { a: L(c.airport) })}`);
+    if (prefs.flightOn) lines.push(`${clock(win.end)}  ${t("plan.copyLeave", { a: L(c.airport) })}`);
     lines.push(t("plan.copyFoot"));
     return lines.join("\n");
   }
@@ -272,10 +274,12 @@
     $("#p-shuffle").addEventListener("click", () => { seed = (seed * 31 + 17) % 100000; generate(); });
     $("#p-undo").addEventListener("click", () => { render(rulePlan); $("#p-undo").hidden = true; });
     $("#p-copy").addEventListener("click", () => {
-      MBB.copy(planText()).then(ok => MBB.toast(ok ? t("plan.copied") : t("common.copyFail")));
+      MBB.copy(planText()).then(ok => MBB.copied(ok, t("plan.copied")));
     });
+    $("#p-ask").hidden = !MBB.features.ask;
     $("#p-ask").addEventListener("click", e => { e.preventDefault(); MBB.chat.prefill(""); });
     MBB.on("lang", () => { buildForm(); if (current) render(current); });
+    MBB.on("from", () => { if (current) render(current); });
     MBB.on("city", () => { buildForm(); generate(); });
     generate();
   }

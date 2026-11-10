@@ -13,10 +13,11 @@ import media from "./api/media.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
-const PUBLIC = ["index.html", "manifest.webmanifest", "sw.js", "css/", "js/", "icons/", "locales/"];
+const PUBLIC = ["index.html", "manifest.webmanifest", "sw.js", "css/", "js/", "icons/", "locales/", "fonts/", "vendor/"];
 const TYPES = {
   ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
   ".json": "application/json", ".webmanifest": "application/manifest+json", ".svg": "image/svg+xml", ".png": "image/png",
+  ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8",
 };
 
 http.createServer(async (req, res) => {
@@ -26,6 +27,11 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/config") return config(req, res);
   if (url.pathname === "/api/places") return places(req, res);
   if (url.pathname === "/api/media") return media(req, res);
+  // Vercel Web Analytics only runs on Vercel. Locally its script is empty, so nothing is sent and there's no 404.
+  if (url.pathname.startsWith("/_vercel/insights/")) {
+    res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" }).end("/* Vercel Web Analytics is off locally */\n");
+    return;
+  }
 
   const rel = decodeURIComponent(url.pathname).replace(/^\/+/, "") || "index.html";
   const file = path.resolve(ROOT, rel);

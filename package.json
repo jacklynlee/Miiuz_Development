@@ -1,6 +1,6 @@
 {
   "name": "mybb-app",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Miiuz Beyond Borders (Miiuz BB): travel companion web app for tourists in a new country, starting with Malaysia.",
   "author": "Miiuz Beyond Borders Sdn. Bhd.",
@@ -8,9 +8,12 @@
   "scripts": {
     "dev": "node server.mjs",
     "dev:env": "node --env-file=.env server.mjs",
+    "emails": "node scripts/build-emails.mjs",
     "check": "node scripts/check.mjs",
+    "photos": "node scripts/photos.mjs",
     "build:preview": "node scripts/build-preview.mjs",
-    "translate": "node scripts/translate.mjs"
+    "translate": "node scripts/translate.mjs",
+    "vendor": "node scripts/vendor.mjs"
   },
   "engines": {
     "node": ">=20"

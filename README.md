@@ -5,6 +5,8 @@ country. It starts with **Malaysia**: hand-written day plans for Kuala Lumpur, P
 20 more destinations from Langkawi to Kuching, and search for any place in the country. It is
 built so more countries can be added.
 
+Live at **https://www.miiuz-bb.com**.
+
 It grew out of the original *Miiuz Beyond Borders* half-day planner artifact: the planner is
 still here, now alongside everything else a visitor needs.
 
@@ -25,14 +27,60 @@ still here, now alongside everything else a visitor needs.
 Works offline after the first visit (installable PWA, with an "install the app" card on Home), in
 light and dark mode, on phones and desktops. Everything is free for guests.
 
+### Updates
+
+Travellers get each deployment without reinstalling (`sw.js`, `js/update.js`, #30):
+
+- **Which version:** `/api/config` returns `version` (from `package.json`) and `build` (the
+  deployment's commit, `dev` locally). Credits shows the version the phone is running, e.g.
+  "Version 1.0.0 (abc1234)", with a **Check for updates** button. That tells staging from live,
+  and answers "which version do you have?".
+- **One version at a time:** the service worker is registered as `sw.js?v=<build>`. Each build
+  stores all its app files in its own cache when it installs, and serves them from there, so a page
+  never mixes files from two versions. There's no cache version to bump by hand. Locally
+  (`v=dev`), files are fetched from the network first, so edits show on reload.
+- **Noticing a new version:** when the app comes back to the foreground, and every 3 hours, it asks
+  `/api/config` again. A new build installs in the background, then a bar says "A new version of
+  Miiuz BB is ready · Update". It waits while the traveller is typing or the SOS sheet is open.
+  Update reloads, and saved data (language, home country, plans, sign-in) stays. A traveller who
+  ignores it gets the new version the next time the app starts.
+- **Forcing an update:** set `MIIUZ_MIN_VERSION` (e.g. `1.0.1`) in Vercel and redeploy. Older
+  copies then show a full-screen "Please update", still with a 999 button, and the APIs answer
+  them `426`. Use it only for breaking API changes or wrong safety facts (SOS numbers, entry
+  rules), never for normal releases, and remove it afterwards.
+- **Old copies and the API:** the app sends its version as `X-Miiuz-Version`. Change request
+  formats so the previous release keeps working.
+- **Saved data:** settings and plans are `mbb.*` in localStorage, with `mbb.dataVersion`. A
+  release that changes a saved format raises `DATA_VERSION` in `js/core.js` and adds a step
+  that converts old data.
+- Offline, nothing is checked: the app opens on the last version it had.
+
 ## Languages (i18n)
 
 Languages use BCP 47 tags (`js/locales.js`); numbers, dates and currencies are formatted with
 the browser's `Intl` APIs for the chosen locale, and Arabic, Persian, Hebrew and Urdu switch the
 layout to right-to-left. The phone's language is detected on first open.
 
-- **Hand-translated:** English, 简体中文, 한국어, 日本語 — interface and all content, with
-  facts adapted per audience (visa rules, payment apps, consular hotline, plug/voltage).
+**Home country is separate from language** (`js/country.js`). Language follows the phone; the
+home country decides the currency, date and time formats (English + US → `en-US`, 12-hour
+time), units (miles and °F for the US, metric in brackets) and country facts (content marked
+`for: ["US"]`: visa, embassy and STEP, payments and tipping, plugs, customs at home, "Malaysia's
+911" in SOS). It's guessed without permission prompts, strongest first: a member's nationality, the phone's time zone (if not Malaysia's), the
+request's country from Vercel (`/api/config`, if not Malaysia), the region in the phone's
+language settings, then the language's usual country. Home asks once ("Home country: United
+States? Yes · Change"); the choice is saved on the phone and can be changed from Home.
+
+**Prices follow the home currency.** Content and strings write prices as plain ringgit
+(`RM55`, `RM1–RM10`, `RM30–100`, `RM100+`) in every language, and the app adds the home-currency
+amount after each one: "RM55 (≈ US$14)", "RM55（约 ¥93）". It uses the live rate when online and
+the saved one offline, rounds it (≈), adds nothing for travellers whose home currency is the
+ringgit, and updates in place when the rate or home country changes. In code, render any text that
+may contain a price with `MBB.priceHtml(text)` instead of `esc(text)` (`js/core.js`).
+
+- **Hand-translated:** English, 简体中文, 한국어, 日本語 — interface and all content. Country facts
+  (visa rules, payment apps, consular help, plugs and voltage, customs back home) follow the home
+  country, not the language: each line is marked `for: ["US"]` and written in all four languages,
+  so an American reading Korean gets the US lines in Korean.
 - **39 more languages** (繁體中文, 粵語, Bahasa Melayu, Indonesia, ไทย, Tiếng Việt, Filipino, हिन्दी,
   தமிழ், العربية, Français, Deutsch, Español, Русский …): picked from the language menu and
   translated by Miiuz AI the first time, then saved on that phone. English shows while it loads.
@@ -65,8 +113,34 @@ npm run check          # syntax + data + translation sanity checks
    - `MIIUZ_MODEL` (default `claude-opus-5-5`)
    - `MIIUZ_ALLOWED_ORIGINS` to only accept AI requests from your own domain (recommended)
    - `MIIUZ_RATE_LIMIT` / `MIIUZ_TRANSLATE_LIMIT` per-IP request limits
+   - `MIIUZ_MIN_VERSION` to force older copies to update (rarely; see Updates)
+4. Check that AI is on: open `https://your-app/api/chat`. It must say `"configured":true`. If it
+   says `false`, the key is missing from that environment, or you haven't redeployed since adding
+   it (a new variable only reaches new deployments).
+5. Visitor numbers (optional): in Vercel → **Analytics**, press **Enable**, then redeploy. The
+   script tag is already at the end of `index.html`; no npm package is needed for a plain HTML
+   site. It's cookieless and anonymous (page, referrer, country, device and browser). The page
+   strips sign-in tokens and invite codes from the address before anything is sent. Until it's
+   enabled, `/_vercel/insights/script.js` returns 404, which does no harm. Mention it in the
+   privacy notice.
 
-Without the key, everything except the AI assistant and AI translation works.
+### Domain and email
+
+- **Live address:** https://www.miiuz-bb.com (Vercel production, branch `main`). `miiuz-bb.com`
+  and the old `miiuz-bb.vercel.app` redirect there (308), so old links and the QR code in
+  `marketing/` keep working.
+- **DNS** is at GoDaddy. Vercel → Settings → Domains shows the records each address needs.
+- **Staging** gets its own fixed address (for example `staging.miiuz-bb.com`): add it in Vercel →
+  Settings → Domains, assign it to the Git branch `staging`, and add the CNAME record Vercel shows.
+- **Email:** sign-in codes are sent by Supabase through Resend, from `hello@miiuz-bb.com` (see
+  Membership → Set up, step 5). Resend's records (`resend._domainkey`, plus MX and TXT on `send`)
+  are in the same GoDaddy DNS.
+- If you set `MIIUZ_ALLOWED_ORIGINS`, list every address the app is opened from, e.g.
+  `https://www.miiuz-bb.com,https://staging.miiuz-bb.com`. Addresses that only redirect don't
+  need to be listed.
+
+Without the key, everything except the AI assistant and AI translation works. Travellers see
+"Ask Miiuz isn't available right now", and the browser console says why.
 
 ## Membership (Supabase)
 
@@ -94,17 +168,33 @@ address is verified, once per person; members can read but never change their ow
 1. Create a project at [supabase.com](https://supabase.com) (region: Southeast Asia / Singapore).
 2. **SQL Editor** → paste all of `supabase/schema.sql` → Run. Safe to run again: after any
    update to the file (such as the member-details columns), run it again to upgrade.
-3. **Authentication → URL Configuration**: Site URL `https://miiuz-bb.vercel.app`; add redirect
-   URLs `https://miiuz-bb.vercel.app/**` and `http://localhost:3000/**`.
+3. **Authentication → URL Configuration**: Site URL `https://www.miiuz-bb.com`; add redirect
+   URLs `https://www.miiuz-bb.com/**`, the staging address (e.g. `https://staging.miiuz-bb.com/**`)
+   and `http://localhost:3000/**`.
 4. **Authentication → Emails → Templates**: in both **Confirm signup** and **Magic Link**, add
-   the code, e.g. `<h2>Your Miiuz BB code: {{ .Token }}</h2>`, above the existing link.
+   the Miiuz BB sign-in emails (#28):
+   - **Confirm signup**: paste all of `supabase/email/confirm-signup.html` into the body.
+   - **Magic Link**: paste all of `supabase/email/magic-link.html`.
+   - Subject for both: `{{ .Token }} · Miiuz BB`, so phones can offer the code without opening
+     the email. If it arrives with `{{ .Token }}` written out, use `Your Miiuz BB code` instead.
+   - The code comes first: it works everywhere, including the installed app on iPhone, where the
+     link opens Safari instead. Emails are in EN, 简体中文, 한국어 or 日本語 from the member's
+     language (`lang`, saved when they join and when they change language), English otherwise.
+   - The emails say the code works for 1 hour: keep **Email OTP Expiration** (Sign In / Providers
+     → Email) at 3600 seconds, or change the text.
+   - To change the wording, edit `scripts/build-emails.mjs`, run `npm run emails`, and paste
+     again. Keep click tracking off at the email sender: it rewrites the sign-in link.
 5. **Authentication → Emails → SMTP Settings**: connect a real email sender (e.g. Resend, Brevo,
    Amazon SES). Supabase's built-in sender only delivers to your own team's addresses and a few
-   emails per hour, so real members won't receive codes without this.
+   emails per hour, so real members won't receive codes without this. Miiuz uses Resend: host
+   `smtp.resend.com`, port 465, username `resend`, password a Resend API key with sending access
+   for `miiuz-bb.com` only, sender `hello@miiuz-bb.com`, sender name `Miiuz Beyond Borders`.
 6. **Project Settings → API**: copy the **Project URL** and the **publishable** key (or legacy
    `anon` key). In Vercel → Environment Variables add `SUPABASE_URL` and
    `SUPABASE_PUBLISHABLE_KEY` (or `SUPABASE_ANON_KEY`), then redeploy. These two are meant to be
-   public; never put the `service_role` / secret key in Vercel or the app.
+   public. If you connect Supabase through Vercel's integration it also adds secret keys
+   (service_role, JWT secret, Postgres password) to Vercel; the app never uses them. Never read
+   them in app code or put them in the browser.
 
 ### Everyday admin (Supabase → SQL Editor or Table Editor)
 
@@ -164,15 +254,37 @@ and to you (the Supabase project owner).
   `MIIUZ_GEOCODER_KEY`.
 - **Summaries** come from Wikipedia in the traveller's language when that edition has the
   article (CC BY-SA, credited on the page).
-- **Photos** are the Wikipedia lead photos of each destination, place, dish and souvenir, used
-  only when freely licensed on Wikimedia Commons; logos, maps and photos flagged for
-  personality rights are skipped. Author and licence show on every photo and on the
-  **Photo & map credits** page (footer). To change a photo, edit the article titles (`wp`) in
-  `js/data/malaysia.explore.js`; the first title with a usable photo wins.
+- **Photos** come from Wikimedia Commons, with the author and licence on every photo and on the
+  **Photo & map credits** page (footer). Every destination, place, dish and souvenir has a
+  **reviewed photo pinned** in `photos.pin` (`js/data/malaysia.explore.js`, #32):
+  - **Requirements:** a free licence, no personality-rights or trademark flag, the actual subject,
+    and taken in Malaysia.
+  - **Licences:** CC BY, CC BY-SA, CC0, public domain, and Commons' "Attribution" and
+    "Copyrighted free use". Not GFDL-only, NC or ND.
+  - **Pin first:** `/api/media` uses the pin first and reads its author and licence from Commons, so
+    a Wikipedia edit can't swap in a wrong photo.
+  - **Fallbacks:** without a usable pin, it uses the lead photo of the article titles (`wp`), then
+    their Wikidata image (P18). Logos, maps and files in `photos.avoid` are skipped.
+  - **Changing one:** pin a new file after checking its Commons page. The first title gives the
+    place page its Wikipedia summary.
+  - **Before each release, run `npm run photos`** (it needs the network). It lists items with no
+    photo, items not pinned, pins that stopped working (deleted or relicensed), and titles that
+    are missing or disambiguation pages. `npm run check` makes sure every item is pinned.
+  - **Offline:** photos the traveller has seen are kept (at most 200, about 12 MB).
+  - **Updates:** the app asks for the photo list again after it updates, otherwise every 3 days.
 - **Maps**: the Malaysia overview is drawn offline from Natural Earth (public domain;
-  rebuild with `scripts/build-map.mjs`). Street maps use MapLibre GL with OpenFreeMap tiles
-  (free, no key, © OpenStreetMap contributors) and fall back to the overview plus a Google Maps
-  link when offline.
+  rebuild with `scripts/build-map.mjs`). Street maps use MapLibre GL (our own copy in `vendor/`)
+  with OpenFreeMap tiles (free, no key, © OpenStreetMap contributors) and fall back to the
+  overview plus a Google Maps link when offline. Travellers from China also get Amap (高德) and
+  Baidu Maps links on place pages and in the day plan, since Google is blocked on Chinese SIMs.
+- **Fonts and third-party scripts**: nothing loads from Google Fonts or a CDN, so the app works
+  from mainland China (#18). Latin text uses Noto Sans, Noto Serif and IBM Plex Mono from `fonts/`
+  (SIL Open Font License); Chinese, Japanese and Korean use the phone's own fonts. MapLibre and
+  the Supabase client are in `vendor/`. `npm run vendor` refreshes both from npm at the versions
+  pinned in `scripts/vendor.mjs`.
+- **WeChat**: links and the poster's QR code often open in WeChat's in-app browser, which can't
+  install apps. There the app shows a bar explaining how to open it in the phone's browser, and
+  Share copies the link instead.
 
 ## How the AI parts work
 
@@ -191,28 +303,33 @@ and to you (the Supabase project owner).
 ```
 index.html              app shell
 css/app.css             styles (design tokens, light/dark, per-script fonts, RTL)
+css/fonts.css · fonts/  self-hosted Latin fonts (generated by npm run vendor)
+vendor/                 MapLibre GL and the Supabase client (npm run vendor)
 js/data/malaysia.js     country pack: cities, places, guide, phrases, emergency, checklist (zh + en)
 js/data/malaysia.ko.js  Korean pack      js/data/malaysia.ja.js  Japanese pack
 js/i18n.js              interface strings      js/locales.js   language list (BCP 47)
+js/country.js           home country: detection, currency, 12-hour countries, country list
 js/core.js              state, storage, helpers, icons
 js/translate.js         on-demand AI translation    js/i18n-entries.js  translatable string inventory
 js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
 js/guide.js · planner.js · tools.js · chat.js · app.js   the screens
-js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo article titles
+js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo titles and pins
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps
 js/media.js             photos with credits, credits page
 js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
-js/install.js           "install the app" card (Android prompt / iPhone instructions)
+js/install.js           "install the app" card (Android prompt / iPhone instructions), WeChat bar
+js/update.js            version, update bar and "Please update" (with sw.js)
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
-api/config.mjs          hands the public Supabase URL + key to the app
+api/config.mjs          hands the public Supabase URL + key and the visitor's country to the app
 api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)
+supabase/email/         sign-in emails for Supabase (generated by scripts/build-emails.mjs: npm run emails)
 supabase/schema.sql     membership database: tables, points triggers, tiers, access rules
-sw.js · manifest.webmanifest · icons/   PWA
-scripts/                check, translate, build-preview
+sw.js · manifest.webmanifest · icons/   PWA (offline, one cache per build)
+scripts/                check, translate, build-preview, vendor
 locales/                bundled AI translations
-marketing/              QR code (SVG/PNG) and A5 poster (PNG/PDF) for https://miiuz-bb.vercel.app/
+marketing/              QR code (SVG/PNG) and A5 poster (PNG/PDF) for https://miiuz-bb.vercel.app/ (redirects to www.miiuz-bb.com)
 ```
 
 Rebuild the single-file claude.ai preview with `npm run build:preview`.

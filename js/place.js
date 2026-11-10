@@ -125,7 +125,7 @@
       .map(({ d, x }) => ({ href: `#place-dest-${d.id}`, name: L(d.name), sub: stateName(d.state), photo: `dest:${d.id}`, ic: DEST_ICON[d.kind], d: x, lat: d.lat, lng: d.lng }));
     return { pois, dests };
   }
-  const distance = n => (n < 1 ? t("place.m", { n: Math.max(50, Math.round(n * 20) * 50) }) : t("place.km", { n: n < 10 ? n.toFixed(1) : Math.round(n) }));
+  const distance = km => MBB.dist(km); // miles first for travellers from the US
 
   const card = x => `<a class="near-card" href="${x.href}">${MBB.media.html(x.photo, { alt: "", ic: x.ic })}<span><b>${esc(x.name)}</b><small>${esc([distance(x.d), x.sub].filter(Boolean).join(" · "))}</small></span></a>`;
 
@@ -164,7 +164,7 @@
     const key = `${P.wp}|${MBB.state.lang}`;
     if (!wikis.has(key)) {
       try {
-        const r = await fetch(`api/places?wp=${encodeURIComponent(P.wp)}&lang=${encodeURIComponent(MBB.state.lang)}`);
+        const r = await MBB.api(`api/places?wp=${encodeURIComponent(P.wp)}&lang=${encodeURIComponent(MBB.state.lang)}`);
         wikis.set(key, r.ok ? (await r.json()).wiki || null : null);
       } catch { return; }
     }
@@ -188,7 +188,7 @@
     const { pois, dests } = nearby(P);
     const city = MBB.C.cities[MBB.state.city];
     const fromCity = P.kind === "city" && P.id === MBB.state.city ? 0 : MBB.maps.km(city, P);
-    const facts = (P.facts || []).map(([ic, k, v]) => `<div class="fact">${icon(ic)}<span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+    const facts = (P.facts || []).map(([ic, k, v]) => `<div class="fact">${icon(ic)}<span>${esc(k)}</span><b>${MBB.priceHtml(v)}</b></div>`).join("");
     const cityPicks = P.kind === "city" ? MBB.C.pois.filter(p => p.city === P.id).slice(0, 12)
       .map(p => ({ href: `#place-poi-${p.id}`, name: MBB.placeName(p), sub: p.t.map(k => t(`theme.${k}`)).join(" · "), photo: `poi:${p.id}`, ic: "pin", d: MBB.maps.km(P, p), lat: p.lat, lng: p.lng })) : [];
     // Google Maps searches near the place; English terms work best in Malaysia.
@@ -214,6 +214,8 @@
 
       <div class="actions pl-actions">
         <a class="btn btn-main btn-sm" href="https://www.google.com/maps/dir/?api=1&destination=${P.lat},${P.lng}" target="_blank" rel="noopener">${icon("route")}${esc(t("place.directions"))}</a>
+        ${MBB.state.from === "CN" ? `<a class="btn btn-ghost btn-sm" href="${esc(MBB.maps.amap(P.lat, P.lng, P.name))}" target="_blank" rel="noopener">${esc(t("plan.amap"))}</a>
+        <a class="btn btn-ghost btn-sm" href="${esc(MBB.maps.baidu(P.lat, P.lng, P.name))}" target="_blank" rel="noopener">${esc(t("place.baidu"))}</a>` : ""}
         <a class="btn btn-ghost btn-sm" href="https://waze.com/ul?ll=${P.lat},${P.lng}&navigate=yes" target="_blank" rel="noopener">Waze</a>
         <button type="button" class="btn btn-ghost btn-sm" id="pl-driver">${icon("expand")}${esc(t("tools.driverShow"))}</button>
         <button type="button" class="btn btn-ghost btn-sm" id="pl-share">${icon("share")}${esc(t("place.share"))}</button>
@@ -230,10 +232,10 @@
 
       <div id="pl-wiki"></div>
 
-      <section class="card pl-ask">
+      ${MBB.features.ask ? `<section class="card pl-ask">
         <h2>${icon("spark")}${esc(t("place.askTitle"))}</h2>
         <div class="chips">${askChips(P)}</div>
-      </section>
+      </section>` : ""}
 
       ${cityPicks.length ? `<section><div class="section-title"><h2>${esc(t("place.cityPicks", { c: P.name }))}</h2></div><div class="near-grid">${cityPicks.map(card).join("")}</div></section>` : ""}
       ${pois.length && P.kind !== "city" ? `<section><div class="section-title"><h2>${esc(t("place.nearPicks"))}</h2></div><div class="near-grid">${pois.map(card).join("")}</div></section>` : ""}
@@ -252,8 +254,8 @@
     $("#pl-driver").addEventListener("click", () => MBB.present({ kicker: MBB.C.driverCard.ms, big: P.local || P.name, sub: [P.local && P.local !== P.name ? P.name : "", P.addr || P.area].filter(Boolean).join(" · ") }));
     $("#pl-share").addEventListener("click", async () => {
       const data = { title: P.name, text: `${P.name} · Miiuz BB`, url: location.href };
-      try { if (navigator.share) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
-      MBB.copy(location.href).then(ok => MBB.toast(ok ? t("member.linkCopied") : t("common.copyFail")));
+      try { if (navigator.share && !MBB.install.wechat) { await navigator.share(data); return; } } catch (e) { if (e?.name === "AbortError") return; }
+      MBB.copy(location.href).then(ok => MBB.copied(ok, t("member.linkCopied")));
     });
     $("#pl-plan")?.addEventListener("click", () => { MBB.setCity(P.kind === "city" ? P.id : P.city); MBB.go("plan"); });
     $("#pl-locate").addEventListener("click", () => {
@@ -265,7 +267,7 @@
           () => { out.textContent = t("sos.locFail"); }, { enableHighAccuracy: false, timeout: 12000, maximumAge: 120000 });
       } catch { out.textContent = t("sos.locFail"); }
     });
-    view.querySelector(".pl-ask").addEventListener("click", e => {
+    view.querySelector(".pl-ask")?.addEventListener("click", e => {
       const b = e.target.closest("[data-ask]");
       if (b) MBB.chat.askAbout(askText(P, b.dataset.ask));
     });
@@ -287,7 +289,7 @@
     else view.innerHTML = `<a class="back" href="#search" data-back>${icon("back")}${esc(t("search.title"))}</a><p class="hint">${esc(t("search.searching"))}</p>`;
     if (have?.full || window.claude) { if (!have) notFound(view); return; }
     try {
-      const r = await fetch(`api/places?id=${encodeURIComponent(id)}&lang=${encodeURIComponent(MBB.state.lang)}`);
+      const r = await MBB.api(`api/places?id=${encodeURIComponent(id)}&lang=${encodeURIComponent(MBB.state.lang)}`);
       if (!r.ok) throw new Error(String(r.status));
       const { place } = await r.json();
       remember({ ...place, full: true });

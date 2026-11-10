@@ -42,7 +42,7 @@
     }
     for (const g of C.guide) {
       add({ kind: "topic", href: `#guide-${g.id}`, title: L(g.title), sub: L(g.lead), ic: g.icon, boost: 3 },
-        [L(g.title), g.title.en], [L(g.lead), g.lead.en, ...g.sections.flatMap(s => [L(s.h), ...s.items.map(L)])]);
+        [L(g.title), g.title.en], [L(g.lead), g.lead.en, ...g.sections.flatMap(s => [L(s.h), ...s.items.filter(MBB.forMe).map(L)])]);
     }
     const food = C.guide.find(g => g.id === "food");
     (food?.dishes || []).forEach((d, i) => {
@@ -93,7 +93,7 @@
 
   function remoteBlock(q) {
     const R = S.remote;
-    const askBtn = `<button type="button" class="s-row s-ask" id="s-ask"><span class="badge-ic">${icon("spark")}</span><span><b>${esc(t("search.ask", { q }))}</b><small>${esc(t("search.askD"))}</small></span>${icon("next", "next")}</button>`;
+    const askBtn = !MBB.features.ask ? "" : `<button type="button" class="s-row s-ask" id="s-ask"><span class="badge-ic">${icon("spark")}</span><span><b>${esc(t("search.ask", { q }))}</b><small>${esc(t("search.askD"))}</small></span>${icon("next", "next")}</button>`;
     if (R.q !== q || R.state === "idle") {
       return `<button type="button" class="s-row s-more" id="s-remote"><span class="badge-ic hot">${icon("globe")}</span><span><b>${esc(t("search.all", { q }))}</b><small>${esc(t("search.allD"))}</small></span>${icon("next", "next")}</button>${askBtn}`;
     }
@@ -148,7 +148,7 @@
     S.remote = { q, state: "loading", results: [] };
     results();
     try {
-      const r = await fetch(`api/places?q=${encodeURIComponent(q.toLowerCase().replace(/\s+/g, " "))}`);
+      const r = await MBB.api(`api/places?q=${encodeURIComponent(q.toLowerCase().replace(/\s+/g, " "))}`);
       if (!r.ok) throw new Error(String(r.status));
       const j = await r.json();
       (j.results || []).forEach(MBB.place.remember);
@@ -162,6 +162,7 @@
   function render() {
     const v = $("#view-search");
     v.innerHTML = `
+      <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head">
         <p class="eyebrow" lang="ms">Cuti-cuti Malaysia!</p>
         <h1>${esc(t("search.title"))}</h1>
