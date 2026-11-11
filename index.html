@@ -56,15 +56,17 @@
 <nav class="tabbar" data-i18n-aria="nav.label">
   <div class="tabbar-in">
     <a href="#home" data-tab="home"><span class="tab-ic" data-icon="home"></span><span data-i18n="nav.home">首页</span></a>
+    <a href="#explore" data-tab="explore"><span class="tab-ic" data-icon="compass"></span><span data-i18n="nav.explore">探索</span></a>
     <a href="#guide" data-tab="guide"><span class="tab-ic" data-icon="guide"></span><span data-i18n="nav.guide">指南</span></a>
     <a href="#plan" data-tab="plan"><span class="tab-ic" data-icon="plan"></span><span data-i18n="nav.plan">行程</span></a>
     <a href="#tools" data-tab="tools"><span class="tab-ic" data-icon="tools"></span><span data-i18n="nav.tools">工具</span></a>
-    <a href="#ask" data-tab="ask"><span class="tab-soon" id="tab-soon" data-i18n="ask.soonTag" hidden>即将</span><span class="tab-ic" data-icon="ask"></span><span data-i18n="nav.ask">问 Miiuz</span></a>
   </div>
 </nav>
 
 <main class="wrap" id="main">
   <section class="view" id="view-home" data-view="home"></section>
+
+  <section class="view" id="view-explore" data-view="explore" hidden></section>
 
   <section class="view" id="view-guide" data-view="guide" hidden></section>
 
@@ -218,6 +220,7 @@
 <script src="js/maps.js"></script>
 <script src="js/search.js"></script>
 <script src="js/place.js"></script>
+<script src="js/explore.js"></script>
 <script src="js/app.js"></script>
 <!-- preview:end -->
 <!-- Vercel Web Analytics (README → Deploy): cookieless, anonymous visit counts. After preview:end, so the

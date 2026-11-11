@@ -56,9 +56,9 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
 - Content: `js/data/malaysia.js` (zh + en), `malaysia.ko.js`, `malaysia.ja.js`,
   `malaysia.explore.js` (destinations, souvenirs, photo article titles `wp`).
 - UI strings: `js/i18n.js`. Language list (BCP 47): `js/locales.js`.
-- Screens: `js/guide.js`, `planner.js`, `tools.js`, `chat.js`, `search.js`, `place.js`,
-  `member.js`, `app.js` (routing by `#hash`: home, guide, plan, tools, ask, search, place,
-  member, credits).
+- Screens: `js/explore.js`, `guide.js`, `planner.js`, `tools.js`, `chat.js`, `search.js`,
+  `place.js`, `member.js`, `app.js` (routing by `#hash`: home, explore, guide, plan, tools, ask,
+  search, place, member, credits). Tabs: Home, Explore, Guide, Plan, Tools (#49).
 
 ## Rules for changes
 
