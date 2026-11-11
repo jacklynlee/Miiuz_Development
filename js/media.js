@@ -32,6 +32,15 @@
 
   const get = key => items[key] || null;
   const credit = p => `${p.by} · ${p.lic}`;
+  // Photos load through our own domain (api/photo.mjs, #39): Wikimedia is blocked in mainland China
+  // and on Chinese roaming SIMs. The photo lists keep Commons' own addresses, so older copies of the
+  // app and saved lists keep working. Inside a Claude artifact there's no /api, so it stays as it is.
+  // Thumbnails are on thumb.wikimedia.org (with tracking parameters, dropped here), originals on upload.wikimedia.org.
+  const COMMONS = /^https:\/\/(?:thumb|upload)\.wikimedia\.org\/wikipedia\/commons\/([^?#]+)/;
+  const own = src => {
+    const m = window.claude ? null : COMMONS.exec(String(src || ""));
+    return m ? "/api/photo?p=" + encodeURIComponent(m[1]) : src;
+  };
 
   // A photo with its credit, or a placeholder tile. size: "s" (cards) | "l" (page header).
   // link: make the credit a link to the photo's Commons page (not inside another link).
@@ -39,7 +48,7 @@
     const p = typeof keyOrPhoto === "string" ? get(keyOrPhoto) : keyOrPhoto;
     if (p && typeof keyOrPhoto !== "string") viewed.set(p.file, { p, label: alt });
     if (!p) return `<figure class="ph ph-none ${cls}" aria-hidden="true">${icon(ic)}</figure>`;
-    const src = size === "l" ? p.srcL : p.src;
+    const src = own(size === "l" ? p.srcL : p.src);
     return `<figure class="ph ${cls}">
       ${icon(ic)}
       <img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" crossorigin="anonymous" referrerpolicy="strict-origin-when-cross-origin"${p.w && p.h ? ` width="${p.w}" height="${p.h}"` : ""}>
@@ -77,7 +86,7 @@
       <a class="back" href="#home" data-back>${icon("back")}${esc(t("nav.home"))}</a>
       <div class="view-head"><h1>${esc(t("credits.title"))}</h1><p>${esc(t("credits.lead"))}</p></div>
       ${rows.length ? `<ul class="credits">${rows.map(({ label: l, p }) => `<li>
-        <img src="${esc(p.src)}" alt="" loading="lazy" crossorigin="anonymous" width="64" height="48">
+        <img src="${esc(own(p.src))}" alt="" loading="lazy" crossorigin="anonymous" width="64" height="48">
         <div><b>${esc(l)}</b><small><a href="${esc(p.page)}" target="_blank" rel="noopener">${esc(p.file)}</a> · ${esc(p.by)} · ${p.licUrl ? `<a href="${esc(p.licUrl)}" target="_blank" rel="noopener">${esc(p.lic)}</a>` : esc(p.lic)}</small></div>
       </li>`).join("")}</ul>` : `<p class="hint">${esc(t("credits.none"))}</p>`}
       <div class="card credits-more">

@@ -16,6 +16,9 @@
     "api/media.mjs": {
       "maxDuration": 60,
       "includeFiles": "js/**"
+    },
+    "api/photo.mjs": {
+      "maxDuration": 20
     }
   },
   "headers": [
