@@ -4,7 +4,7 @@
   const { $, $$, esc, t, L, icon } = MBB;
   const VIEWS = ["home", "explore", "guide", "plan", "trip", "tools", "ask", "member", "search", "place", "credits"];
   // Screens without a tab of their own light up the tab they belong to (#49).
-  const TAB_OF = { search: "explore", place: "explore", trip: "plan" };
+  const TAB_OF = { search: "explore", place: "explore", plan: "trip" }; // the day planner is part of My trip (#56)
   let route = { view: "home" }, pendingScroll = null, moves = 0;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
@@ -110,7 +110,7 @@
   function quickList(st) {
     return st === "before"
       ? quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
-        quick("#tools", "check", "home.check", "home.q.checkD", "warm", "tool-check") +
+        quick("#trip", "check", "home.check", "home.q.checkD", "warm", "trip-check") +
         quick("#guide-connect", "signal", "home.q.connect", "home.q.connectD") +
         quick("#guide-money", "coins", "home.q.money", "home.q.moneyD") +
         quick("#plan", "plan", "home.q.plan", "home.q.planD") +
@@ -118,7 +118,7 @@
       : quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
         quick("#guide-airport", "plane", "home.q.airport", "home.q.airportD") +
         quick("#guide-money", "coins", "home.q.money", "home.q.moneyD", "warm") +
-        quick("#tools", "pin", "tools.driver", "tools.driverLead", "", "tool-driver") +
+        quick("#trip", "pin", "tools.driver", "tools.driverLead", "", "trip-where") +
         quick("#plan", "plan", "home.q.plan", "home.q.planD") +
         (MBB.features.ask ? quick("#ask", "spark", "home.q.ask", "home.q.askD") : quick("#guide-food", "bowl", "home.q.food", "home.q.foodD"));
   }
@@ -133,7 +133,7 @@
     const home = MBB.state.home, r = MBB.rate(home);
     let month;
     try { month = new Date(2026, now.month, 1).toLocaleDateString(MBB.locale(), { month: "long" }); } catch { month = String(now.month + 1); }
-    const prog = MBB.tools.progress();
+    const prog = MBB.trip.progress();
     const pct = prog.total ? Math.round((prog.done / prog.total) * 100) : 0;
     const cityChips = Object.entries(C.cities).map(([k, c]) =>
       `<div class="chip"><input type="radio" name="hcity" id="h-city-${k}" value="${k}"${k === MBB.state.city ? " checked" : ""}><label for="h-city-${k}">${esc(L(c))}</label></div>`).join("");
@@ -188,7 +188,7 @@
       </section>
 
       <section class="card progress">
-        <div class="section-title"><h2>${esc(t("home.check"))}</h2><a href="#tools" data-scroll="tool-check">${esc(t("home.checkOpen"))}</a></div>
+        <div class="section-title"><h2>${esc(t("home.check"))}</h2><a href="#trip" data-scroll="trip-check">${esc(t("home.checkOpen"))}</a></div>
         <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${prog.total}" aria-valuenow="${prog.done}"><i style="width:${pct}%"></i></div>
         <p class="hint">${esc(t("home.checkProgress", { n: prog.done, total: prog.total }))}</p>
       </section>`;
@@ -212,7 +212,6 @@
     const mine = MBB.store.get("sos", {});
     const prof = MBB.member.state.profile || {};
     const em = prof.emergency_phone ? prof : null;
-    const hotel = MBB.store.get("hotel", "");
     $("#sos-sheet").innerHTML = `
       <div class="sheet-head">
         <div><h2 id="sos-title">${esc(t("sos.title"))}</h2><p>${esc(t("sos.lead"))}</p></div>
@@ -244,8 +243,6 @@
         ${em ? `<div class="sos-em"><span><b>${esc(t("sos.emergencyContact"))}</b><small>${esc([em.emergency_name, em.emergency_relation].filter(Boolean).join(" · "))} ${esc(em.emergency_phone)}</small></span>
           <a class="icon-btn" href="tel:${esc(em.emergency_phone)}">${icon("phone")}${esc(t("sos.call"))}</a></div>`
           : `<label for="sos-em">${esc(t("sos.emergencyLocal"))}<input type="text" id="sos-em" inputmode="text" value="${esc(mine.emergency || "")}"></label>`}
-        <label for="sos-hotel">${esc(t("sos.hotel"))}<textarea id="sos-hotel" rows="2" placeholder="${esc(t("tools.driverPh"))}">${esc(hotel)}</textarea></label>
-        <div class="actions"><button type="button" class="btn btn-main btn-sm" id="sos-driver">${icon("expand")}${esc(t("tools.driverShow"))}</button></div>
         <label for="sos-embassy">${esc(t("sos.embassy"))}<input type="text" id="sos-embassy" inputmode="tel" value="${esc(mine.embassy || "")}"></label>
         <label for="sos-ins">${esc(t("sos.insurance"))}<input type="text" id="sos-ins" inputmode="tel" value="${esc(mine.insurance || "")}"></label>
         <p class="hint">${esc(t("sos.mineNote"))}</p>
@@ -256,12 +253,13 @@
       MBB.copy(b.dataset.copy).then(ok => MBB.copied(ok, t("sos.copied", { x: b.dataset.copy })));
     }));
     $("#sos-locate").addEventListener("click", locate);
-    $("#sos-hotel").addEventListener("input", e => { MBB.store.set("hotel", e.target.value); MBB.emit("hotel"); });
     const saveMine = () => MBB.store.set("sos", { ...MBB.store.get("sos", {}), embassy: $("#sos-embassy").value, insurance: $("#sos-ins").value, ...($("#sos-em") ? { emergency: $("#sos-em").value } : {}) });
     $("#sos-embassy").addEventListener("input", saveMine);
     $("#sos-em")?.addEventListener("input", saveMine);
     $("#sos-ins").addEventListener("input", saveMine);
-    $("#sos-driver").addEventListener("click", () => { closeSOS(); MBB.tools.showDriver(); });
+    $("#sos-driver")?.addEventListener("click", () => { closeSOS(); MBB.trip.showDriver(); });
+    // "Change it in My trip": the sheet closes as the link opens the tab.
+    $$("a[href^='#']", $("#sos-sheet")).forEach(a => a.addEventListener("click", closeSOS));
   }
   function locate() {
     const out = $("#sos-loc");

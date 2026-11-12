@@ -756,10 +756,13 @@ textarea { min-height: 64px; resize: vertical; }
 .trip-facts dt { color: var(--muted); }
 .trip-facts dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
 /* Hotel names, addresses and phone numbers are usually Latin: in RTL languages each keeps its own order. */
-.trip-facts dd, .trip-top h3, .sos-trip small { unicode-bidi: plaintext; }
-[dir="rtl"] .trip-facts dd, [dir="rtl"] .trip-top h3, [dir="rtl"] .sos-trip small { text-align: right; }
+.trip-facts dd, .trip-top h3, .sos-trip small, .trip-where-at > * { unicode-bidi: plaintext; }
+[dir="rtl"] .trip-facts dd, [dir="rtl"] .trip-top h3, [dir="rtl"] .sos-trip small, [dir="rtl"] .trip-where-at > * { text-align: right; }
 .trip-empty { color: var(--muted); margin: 0; }
-#p-trip:empty { display: none; }
+/* Where I'm staying (#56): the current stay, or one box for a hotel without a booking. */
+.trip-where-at h3 { margin: 0; font-size: 18px; overflow-wrap: anywhere; }
+.trip-where-at p { margin: 2px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
+.trip-where > .hint { margin: 0; }
 
 /* ---------- Our Pick! (#50) ---------- */
 .pick-card { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; color: var(--fg); text-decoration: none; min-width: 0; }

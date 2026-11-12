@@ -1,4 +1,5 @@
-/* Miiuz Beyond Borders — tools: currency, bill splitter, driver card, phrasebook, checklist. */
+/* Miiuz Beyond Borders — tools: currency converter, bill splitter, Malay phrasebook.
+ * The driver card and the trip checklist moved to My trip (js/trip.js, #56). */
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
@@ -6,9 +7,7 @@
   const S = {
     myr: 100, homeAmt: null,
     subtotal: 120, sc: true, sst: true, people: 2,
-    hotel: MBB.store.get("hotel", ""),
     cat: MBB.store.get("phr.cat", "basics"),
-    checked: new Set(MBB.store.get("check", [])),
   };
 
   const curName = code => {
@@ -66,15 +65,7 @@
           <p class="hint">${esc(t("tools.billNote"))}</p>
         </section>
 
-        <section class="card tool" id="tool-driver">
-          <h2>${icon("pin")}${esc(t("tools.driver"))}</h2>
-          <p>${esc(t("tools.driverLead"))}</p>
-          <label class="sr-only" for="d-hotel">${esc(t("sos.hotel"))}</label>
-          <textarea id="d-hotel" rows="3" placeholder="${esc(t("tools.driverPh"))}">${esc(S.hotel)}</textarea>
-          <div class="actions"><button type="button" class="btn btn-main" id="d-show">${icon("expand")}${esc(t("tools.driverShow"))}</button></div>
-        </section>
-
-        <section class="card tool" id="tool-phrases">
+        <section class="card tool wide" id="tool-phrases">
           <h2>${icon("speaker")}${esc(t("tools.phrases"))}</h2>
           <p>${esc(t("tools.phrasesLead"))}</p>
           <div class="phr-tabs" role="group">${MBB.C.phrases.map(c => `<button type="button" data-cat="${c.id}" aria-pressed="${c.id === cat.id}">${esc(L(c.title))}</button>`).join("")}</div>
@@ -85,15 +76,6 @@
                 <button type="button" class="icon-btn" data-show="${i}" aria-label="${esc(t("tools.present"))}: ${esc(p.ms)}">${icon("expand")}</button>
               </div>
             </li>`).join("")}</ul>
-        </section>
-
-        <section class="card tool wide" id="tool-check">
-          <h2>${icon("check")}${esc(t("tools.check"))}</h2>
-          <div class="checklist">${MBB.C.checklist.map(g => `<div>
-              <h3>${esc(L(g.title))}</h3>
-              ${g.items.map(it => `<label for="ck-${it.id}"><input type="checkbox" id="ck-${it.id}" data-check="${it.id}"${S.checked.has(it.id) ? " checked" : ""}><span>${esc(L(it))}</span></label>`).join("")}
-            </div>`).join("")}</div>
-          <div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="ck-reset">${esc(t("tools.checkReset"))}</button></div>
         </section>
       </div>`;
     syncFx("myr");
@@ -152,14 +134,6 @@
     ["#b-sub", "#b-people"].forEach(s => $(s).addEventListener("input", billUpdate));
     ["#b-sc", "#b-sst"].forEach(s => $(s).addEventListener("change", billUpdate));
 
-    let saveTimer = null;
-    $("#d-hotel").addEventListener("input", e => {
-      S.hotel = e.target.value;
-      clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => { MBB.store.set("hotel", S.hotel); MBB.emit("hotel"); }, 400);
-    });
-    $("#d-show").addEventListener("click", showDriver);
-
     $$(".phr-tabs button").forEach(b => b.addEventListener("click", () => { S.cat = b.dataset.cat; MBB.store.set("phr.cat", S.cat); render(); $("#tool-phrases").scrollIntoView({ block: "nearest" }); }));
     $$("[data-speak]").forEach(b => b.addEventListener("click", () => {
       const p = cat.items[Number(b.dataset.speak)];
@@ -169,37 +143,13 @@
       const p = cat.items[Number(b.dataset.show)];
       MBB.present({ big: p.ms, sub: L(p) === p.en ? p.en : `${L(p)} · ${p.en}` });
     }));
-
-    $$("[data-check]").forEach(c => c.addEventListener("change", () => {
-      c.checked ? S.checked.add(c.dataset.check) : S.checked.delete(c.dataset.check);
-      MBB.store.set("check", [...S.checked]);
-      MBB.emit("check");
-    }));
-    $("#ck-reset").addEventListener("click", () => {
-      S.checked.clear(); MBB.store.set("check", []);
-      $$("[data-check]").forEach(c => (c.checked = false));
-      MBB.emit("check");
-    });
-  }
-
-  function showDriver() {
-    const hotel = (S.hotel || "").trim();
-    if (!hotel) { MBB.toast(t("tools.driverEmpty"), { type: "error" }); MBB.go("tools", "tool-driver"); return; }
-    const d = MBB.C.driverCard;
-    MBB.present({ kicker: d.ms, big: hotel, sub: L(d) === d.en ? d.en : `${L(d)} · ${d.en}` });
   }
 
   MBB.tools = {
     init() {
       MBB.on("lang", render);
       MBB.on("fx", render);
-      MBB.on("hotel", () => { S.hotel = MBB.store.get("hotel", ""); const el = $("#d-hotel"); if (el && el !== document.activeElement) el.value = S.hotel; });
       render();
-    },
-    showDriver,
-    progress() {
-      const all = MBB.C.checklist.flatMap(g => g.items.map(i => i.id));
-      return { done: all.filter(id => S.checked.has(id)).length, total: all.length };
     },
   };
 })();

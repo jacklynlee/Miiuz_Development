@@ -1,12 +1,15 @@
-/* Miiuz Beyond Borders — My trip (#5): every stay and car tour in one place, wherever it was booked.
- * Travellers add bookings by hand (reading confirmations with AI comes later). Bookings are kept on
- * the phone (mbb.trip). A member's bookings are also kept in their account (Supabase trip_bookings,
- * which only that member can read or change), so they're on every device they sign in on.
- * Home, the driver card, SOS, place pages and the planner use them. Passport and ID numbers are
- * never asked for, and bookings added here never earn points (#8). */
+/* Miiuz Beyond Borders — My trip, the traveller's own things in one tab (#5, #56):
+ *  - Where I'm staying: the current stay, or a hotel typed in without a booking (mbb.hotel). It's the
+ *    only place to change it; the driver card, SOS, Home and Ask Miiuz all read it from here.
+ *  - Stays and car tours, wherever they were booked, added by hand (reading confirmations with AI
+ *    comes later). Kept on the phone (mbb.trip); a member's bookings are also kept in their account
+ *    (Supabase trip_bookings, which only that member can read or change), so they're on every
+ *    device they sign in on. Passport and ID numbers are never asked for, and bookings added here
+ *    never earn points (#8).
+ *  - A link to the day planner (#plan, which belongs to this tab), and the trip checklist (mbb.check). */
 (function () {
   const MBB = window.MBB;
-  const { $, esc, t, L, icon } = MBB;
+  const { $, $$, esc, t, L, icon } = MBB;
   const KEY = "trip", GONE = "trip.gone";
   const PLATFORMS = ["Agoda", "Booking.com", "Airbnb", "Trip.com", "Klook", "KKday", "Expedia", "Traveloka"];
   // The only fields kept for each kind: anything else is dropped when saving or syncing.
@@ -49,7 +52,6 @@
   function save(next, { sync = true } = {}) {
     list = next.map(clean).filter(Boolean);
     MBB.store.set(KEY, list);
-    autoHotel();
     MBB.emit("trip");
     if (sync) queueSync();
   }
@@ -85,30 +87,37 @@
     const n = Math.round((Date.parse(b.checkOut) - Date.parse(b.checkIn)) / 864e5);
     return n > 0 ? (MBB.state.lang === "en" && n === 1 ? "1 night" : t("trip.nights", { n })) : "";
   }
-  const count = n => (MBB.state.lang === "en" && n === 1 ? "1 booking" : t("trip.count", { n }));
   const tel = p => String(p).replace(/[^\d+]/g, "");
   const telLink = p => `<a href="tel:${esc(tel(p))}" dir="ltr">${esc(p)}</a>`;
   const placeText = b => (b.kind === "stay" ? [b.name, b.address] : [b.pickup]).filter(Boolean).join(", ");
   const directions = b => `https://www.google.com/maps/dir/?api=1&destination=${b.lat != null ? `${b.lat},${b.lng}` : encodeURIComponent(placeText(b))}`;
 
-  /* ---------- the driver card follows the current stay ---------- */
-  // Fills the saved hotel (driver card, SOS) with the current stay, unless the traveller typed their own.
-  function autoHotel() {
+  /* ---------- where I'm staying ---------- */
+  // The hotel typed in without a booking (Tools and SOS kept it here before #56). Text that release
+  // 1.0 copied in from a stay by itself (mbb.hotel.auto) isn't the traveller's own, so it's left out.
+  function typed() {
+    const h = MBB.store.get("hotel", "");
+    return typeof h === "string" && h !== MBB.store.get("hotel.auto", null) ? h : "";
+  }
+  // The current stay wins; without one, the typed hotel. As text for Ask Miiuz, or "".
+  function whereText() {
     const s = stayOn();
-    if (!s) return;
-    const text = [s.name, s.address].filter(Boolean).join("\n");
-    const hotel = MBB.store.get("hotel", ""), auto = MBB.store.get("hotel.auto", null);
-    if (hotel === text || (hotel.trim() && hotel !== auto)) return;
-    MBB.store.set("hotel", text);
-    MBB.store.set("hotel.auto", text);
-    MBB.emit("hotel");
+    return s ? [s.name, s.address].filter(Boolean).join("\n") : typed().trim();
   }
 
+  let focusWhere = false;
+  // The full-screen card for a driver: a booking's place, or where I'm staying.
   function showDriver(b) {
     const d = MBB.C.driverCard;
     const gloss = L(d) === d.en ? d.en : `${L(d)} · ${d.en}`;
-    if (b.kind === "stay") MBB.present({ kicker: d.ms, big: b.name, sub: b.address || gloss });
-    else MBB.present({ kicker: d.ms, big: b.pickup || b.name, sub: gloss });
+    b = b || stayOn();
+    if (b?.kind === "stay") return MBB.present({ kicker: d.ms, big: b.name, sub: b.address || gloss });
+    if (b) return MBB.present({ kicker: d.ms, big: b.pickup || b.name, sub: gloss });
+    const h = ($("#trip-hotel")?.value ?? typed()).trim();
+    if (h) return MBB.present({ kicker: d.ms, big: h, sub: gloss });
+    MBB.toast(t("tools.driverEmpty"), { type: "error" });
+    focusWhere = true;
+    MBB.go("trip", "trip-where");
   }
 
   /* ---------- the page (#trip) ---------- */
@@ -205,10 +214,45 @@
 
   function listsHtml() {
     const up = upcoming(), old = past();
-    return `${up.length ? `<section class="trip-list"><div class="section-title"><h2>${esc(t("trip.upcoming"))}</h2></div>${up.map(itemHtml).join("")}</section>`
-      : `<p class="card trip-empty">${esc(t(list.length ? "trip.noneUpcoming" : "trip.empty"))}</p>`}
+    return `${up.length ? up.map(itemHtml).join("") : `<p class="card trip-empty">${esc(t(list.length ? "trip.noneUpcoming" : "trip.empty"))}</p>`}
       ${old.length ? `<details class="trip-past"><summary>${esc(t("trip.past"))} (${old.length})</summary>${old.map(itemHtml).join("")}</details>` : ""}
       <p class="hint">${esc(t(member()?.status === "member" ? "trip.savedAccount" : "trip.savedLocal"))}</p>`;
+  }
+
+  // Where I'm staying: the current stay, or one box for a hotel without a booking.
+  function whereHtml() {
+    const s = stayOn();
+    const head = `<h2>${icon("bed")}${esc(t("sos.myStay"))}</h2>`;
+    const show = attr => `<button type="button" class="btn btn-main" ${attr}>${icon("expand")}${esc(t("tools.driverShow"))}</button>`;
+    if (s) {
+      return `${head}
+        <div class="trip-where-at"><h3>${esc(s.name)}</h3>${s.address ? `<p>${esc(s.address)}</p>` : ""}</div>
+        ${s.checkOut ? `<p class="hint">${esc(t("trip.checkOutOn", { d: when(s.checkOut, s.checkOutTime) }))}</p>` : ""}
+        <div class="actions">${show(`data-driver="${s.id}"`)}
+          <a class="btn btn-ghost" href="${esc(directions(s))}" target="_blank" rel="noopener">${icon("route")}${esc(t("place.directions"))}</a></div>`;
+    }
+    return `${head}
+      <p>${esc(t("trip.whereLead"))}</p>
+      <label class="sr-only" for="trip-hotel">${esc(t("sos.hotel"))}</label>
+      <textarea id="trip-hotel" rows="3" dir="auto" autocomplete="off" placeholder="${esc(t("tools.driverPh"))}">${esc(typed())}</textarea>
+      <div class="actions">${show('id="trip-show"')}</div>`;
+  }
+
+  /* ---------- trip checklist (moved from Tools, #56) ---------- */
+  const checked = new Set(MBB.store.get("check", []));
+  function checkHtml() {
+    return `<section class="card tool" id="trip-check">
+      <h2>${icon("check")}${esc(t("tools.check"))}</h2>
+      <div class="checklist">${MBB.C.checklist.map(g => `<div>
+          <h3>${esc(L(g.title))}</h3>
+          ${g.items.map(it => `<label for="ck-${it.id}"><input type="checkbox" id="ck-${it.id}" data-check="${it.id}"${checked.has(it.id) ? " checked" : ""}><span>${esc(L(it))}</span></label>`).join("")}
+        </div>`).join("")}</div>
+      <div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="ck-reset">${esc(t("tools.checkReset"))}</button></div>
+    </section>`;
+  }
+  function progress() {
+    const all = MBB.C.checklist.flatMap(g => g.items.map(i => i.id));
+    return { done: all.filter(id => checked.has(id)).length, total: all.length };
   }
 
   function render() {
@@ -219,17 +263,28 @@
     const b = editing ? editing.draft || list.find(x => x.id === editing.id) || {} : null;
     v.innerHTML = `
       <div class="view-head"><h1>${esc(t("trip.title"))}</h1><p>${esc(t("trip.lead"))}</p></div>
-      <div class="actions">
-        <button type="button" class="btn btn-main" data-add="stay">${icon("bed")}${esc(t("trip.addStay"))}</button>
-        <button type="button" class="btn btn-ghost" data-add="tour">${icon("car")}${esc(t("trip.addTour"))}</button>
-      </div>
-      ${editing ? formHtml(editing.kind, b) : ""}
-      <div id="t-lists">${listsHtml()}</div>`;
+      <section class="card tool trip-where" id="trip-where">${whereHtml()}</section>
+      <section class="trip-list" id="trip-bookings">
+        <div class="section-title"><h2>${esc(t("trip.upcoming"))}</h2></div>
+        <div class="actions">
+          <button type="button" class="btn btn-main" data-add="stay">${icon("bed")}${esc(t("trip.addStay"))}</button>
+          <button type="button" class="btn btn-ghost" data-add="tour">${icon("car")}${esc(t("trip.addTour"))}</button>
+        </div>
+        ${editing ? formHtml(editing.kind, b) : ""}
+        <div class="trip-list" id="t-lists">${listsHtml()}</div>
+      </section>
+      <div class="quick" id="trip-plan"><a href="#plan"><span class="badge-ic">${icon("plan")}</span>
+        <span><b>${esc(t("home.q.plan"))}</b><small>${esc(t("home.q.planD"))}</small></span>${icon("next", "next")}</a></div>
+      ${checkHtml()}`;
+    if (focusWhere) { focusWhere = false; $("#trip-hotel", v)?.focus({ preventScroll: true }); }
   }
-  // Bookings changed (saved, deleted, synced): redraw the lists only, so an open form keeps its text.
+  // Bookings changed (saved, deleted, synced): redraw the lists, and where I'm staying unless the
+  // traveller is typing there, so an open form or the hotel box keeps its text.
   function refreshLists() {
     const el = $("#t-lists");
     if (el) el.innerHTML = listsHtml();
+    const w = $("#trip-where");
+    if (w && !(stayOn() == null && $("#trip-hotel", w))) w.innerHTML = whereHtml();
   }
 
   function fromForm(form) {
@@ -333,6 +388,12 @@
       if (el.dataset.edit) { const b = list.find(x => x.id === el.dataset.edit); if (b) open(b.kind, b.id); return; }
       if (el.dataset.del) return remove(el.dataset.del);
       if (el.dataset.driver) { const b = list.find(x => x.id === el.dataset.driver); if (b) showDriver(b); return; }
+      if (el.id === "trip-show") return showDriver();
+      if (el.id === "ck-reset") {
+        checked.clear(); MBB.store.set("check", []);
+        $$("[data-check]", v).forEach(c => (c.checked = false));
+        return MBB.emit("check");
+      }
       if (!form) return;
       if (el.id === "tf-cancel") return close();
       if (el.id === "tf-find") return findOnMap(form);
@@ -340,8 +401,21 @@
       if (el.hasAttribute("data-unpin")) { form.elements.lat.value = ""; form.elements.lng.value = ""; $("#tf-pin", form).innerHTML = ""; }
     });
     v.addEventListener("submit", e => { e.preventDefault(); submit(e.target); });
-    // A new tour's pickup follows its date, until the traveller types their own.
+    // The hotel typed without a booking: saved as it's typed, and from now on it's the traveller's own.
+    v.addEventListener("input", e => {
+      if (e.target.id !== "trip-hotel") return;
+      MBB.store.set("hotel", e.target.value);
+      MBB.store.set("hotel.auto", null);
+      MBB.emit("hotel");
+    });
     v.addEventListener("change", e => {
+      const c = e.target.dataset.check;
+      if (c) {
+        e.target.checked ? checked.add(c) : checked.delete(c);
+        MBB.store.set("check", [...checked]);
+        return MBB.emit("check");
+      }
+      // A new tour's pickup follows its date, until the traveller types their own.
       const form = e.target.closest("#tf");
       if (!form || e.target.name !== "date" || form.dataset.id) return;
       const pu = form.elements.pickup, auto = pickupFrom(stayOn(e.target.value));
@@ -429,20 +503,15 @@
       </section>`;
   }
 
-  // The planner tab's link to My trip.
-  function planLink() {
-    const el = $("#p-trip");
-    if (!el) return;
-    const s = stayOn(), n = upcoming().length;
-    const sub = s ? t("trip.stayingAt", { s: s.name }) : n ? count(n) : t("trip.planLinkEmpty");
-    el.innerHTML = `<a href="#trip"><span class="badge-ic">${icon("bed")}</span><span><b>${esc(t("trip.title"))}</b><small>${esc(sub)}</small></span>${icon("next", "next")}</a>`;
-  }
-
-  // SOS: where I'm staying, and today's driver.
+  // SOS: where I'm staying (changed in My trip only, #56), and today's driver.
   function sosHtml() {
-    const s = stayOn();
+    const s = stayOn(), mine = s ? [s.name, s.address, s.phone].filter(Boolean).join(" · ") : typed().trim().replace(/\s*\n\s*/g, " · ");
     const call = p => (p ? `<a class="icon-btn" href="tel:${esc(tel(p))}">${icon("phone")}${esc(t("sos.call"))}</a>` : "");
-    let h = s ? `<div class="sos-em sos-trip"><span><b>${esc(t("sos.myStay"))}</b><small>${esc([s.name, s.address, s.phone].filter(Boolean).join(" · "))}</small></span>${call(s.phone)}</div>` : "";
+    const edit = key => `<a class="btn btn-ghost btn-sm" href="#trip" data-scroll="trip-where">${esc(t(key))}</a>`;
+    let h = mine
+      ? `<div class="sos-em sos-trip"><span><b>${esc(t("sos.myStay"))}</b><small>${esc(mine)}</small></span>${call(s?.phone)}</div>
+        <div class="actions"><button type="button" class="btn btn-main btn-sm" id="sos-driver">${icon("expand")}${esc(t("tools.driverShow"))}</button>${edit("trip.change")}</div>`
+      : `<div class="actions">${edit("trip.whereAdd")}</div>`;
     for (const b of toursOn()) {
       const who = [b.driver, b.phone, [b.plate, b.vehicle].filter(Boolean).join(" "), [b.operator, b.licence].filter(Boolean).join(" ")].filter(Boolean).join(" · ");
       h += `<div class="sos-em sos-trip"><span><b>${esc(t("sos.myTour"))}: ${esc(b.name)}</b><small>${esc(who)}</small></span>${call(b.phone)}</div>`;
@@ -468,17 +537,14 @@
   MBB.trip = {
     init() {
       bind();
-      autoHotel();
       // The page itself is redrawn by app.js (routing, language and home-country changes).
-      MBB.on("trip", () => { planLink(); if (location.hash === "#trip") refreshLists(); });
-      MBB.on("lang", planLink);
+      MBB.on("trip", () => { if (location.hash === "#trip") refreshLists(); });
       MBB.on("member", onMember);
       window.addEventListener("online", queueSync);
       document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") queueSync(); });
-      planLink();
     },
     render,
-    homeHtml, sosHtml, fromStay, base,
+    homeHtml, sosHtml, fromStay, base, showDriver, whereText, progress,
     stayOn, list: () => [...list],
   };
 })();

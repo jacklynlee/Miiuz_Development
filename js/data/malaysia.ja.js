@@ -384,7 +384,7 @@
         adapter: "G型（英国式）変換プラグ／100V家電なら変圧器",
         pay: "海外で使えるクレジットカード（Visa / Mastercard）",
         esim: "eSIMを購入、または空港でSIMを買う予定",
-        hotel: "Miiuz BBにホテルの住所を保存（ツール → ドライバーに見せる）",
+        hotel: "Miiuz BBにホテルの住所を保存（わたしの旅程 → 滞在先）",
       } },
       landed: { title: "到着後", items: {
         online: "SIM / eSIMを開通してネット接続を確認",
