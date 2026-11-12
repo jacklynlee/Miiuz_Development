@@ -10,7 +10,7 @@ Live at **https://www.miiuz-bb.com**.
 It grew out of the original *Miiuz Beyond Borders* half-day planner artifact: the planner is
 still here, now alongside everything else a visitor needs.
 
-## What's inside
+## What's inside 
 
 | Tab | What it does |
 |---|---|
