@@ -14,13 +14,14 @@ still here, now alongside everything else a visitor needs.
 
 | Tab | What it does |
 |---|---|
-| **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, a map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, "just landed" shortcuts, checklist progress |
+| **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, "just landed" shortcuts, a link to Explore, checklist progress |
+| **Explore** | A map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, and when to go (weather, festivals). Search and place pages belong to this tab (#49) |
 | **Search** | Type to search the app's own places, guide, dishes, souvenirs and phrases instantly (offline, in every language); press Search to find *any* place in Malaysia on OpenStreetMap |
 | **Place pages** | Photo, what it is (plus a Wikipedia summary in the traveller's language), opening hours / phone / website where known, street map, directions (Google Maps, Waze), "show the driver" card, distance from your city or from you, nearby Miiuz picks and destinations, nearby hospitals / police / ATMs, one-tap questions for Miiuz |
 | **Guide** | Photo galleries of 11 must-try dishes and 12 souvenirs, and 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
 | **Plan** | The day planner from the original artifact: pick city, time window (or work back from a flight), travel style, interests, group and budget; get a route with travel times, map links and ticket links |
 | **Tools** | Currency converter (live rates), bill splitter (10% service + 6% SST), "show the driver" hotel card, Malay phrasebook with audio and full-screen "show" mode, trip checklist |
-| **Ask Miiuz** | AI travel assistant on Claude: answers in the traveller's language, searches the web for current prices/hours, cites sources, and can rewrite the day plan on screen |
+| **Ask Miiuz** (`#ask`, switched off until #13, no tab) | AI travel assistant on Claude: answers in the traveller's language, searches the web for current prices/hours, cites sources, and can rewrite the day plan on screen |
 | **SOS** (header) | Emergency numbers (999 / 112 / 994 / tourist police / consular lines), share my location, nearest hospitals & police, saved hotel & embassy numbers |
 | **Members** (header) | Free membership: +10 points for joining, +10 per invited friend, Basic → Silver → Gold → Platinum tiers, member-only offers, goodies and news |
 
@@ -316,7 +317,7 @@ js/core.js              state, storage, helpers, icons
 js/translate.js         on-demand AI translation    js/i18n-entries.js  translatable string inventory
 js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
-js/guide.js · planner.js · tools.js · chat.js · app.js   the screens
+js/explore.js · guide.js · planner.js · tools.js · chat.js · app.js   the screens
 js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo titles and pins
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps

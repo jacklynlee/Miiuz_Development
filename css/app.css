@@ -159,8 +159,6 @@ h1, h2, h3 { text-wrap: balance; }
 .tabbar a[aria-current="page"] .tab-ic { background: var(--teal-soft); }
 .tab-ic { display: grid; place-items: center; width: 44px; height: 28px; border-radius: 999px; transition: background .15s; }
 .tabbar a { position: relative; }
-/* "Soon" on a tab whose feature isn't released yet (Ask Miiuz in v1.0.0) */
-.tab-soon { position: absolute; top: 2px; inset-inline-start: calc(50% + 3px); font-size: 9px; font-weight: 700; line-height: 1; padding: 2px 5px; border-radius: 999px; background: var(--turmeric-soft); color: var(--fg); white-space: nowrap; pointer-events: none; }
 main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) + 24px); }
 @media (min-width: 900px) {
   .tabbar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 59px); bottom: auto; border-top: 0; border-bottom: 1px solid var(--line); padding-bottom: 0; }
@@ -169,7 +167,6 @@ main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) +
   .tabbar a[aria-current="page"] { border-bottom-color: var(--teal); }
   .tabbar a[aria-current="page"] .tab-ic { background: transparent; }
   .tab-ic { width: auto; height: auto; }
-  .tab-soon { position: static; order: 1; font-size: 11px; padding: 3px 7px; }
   main { padding-bottom: 48px; }
 }
 

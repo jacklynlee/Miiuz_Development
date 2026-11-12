@@ -2,7 +2,9 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
-  const VIEWS = ["home", "guide", "plan", "tools", "ask", "member", "search", "place", "credits"];
+  const VIEWS = ["home", "explore", "guide", "plan", "tools", "ask", "member", "search", "place", "credits"];
+  // Screens without a tab of their own light up the tab they belong to (#49).
+  const TAB_OF = { search: "explore", place: "explore" };
   let route = { view: "home" }, pendingScroll = null, moves = 0;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
@@ -17,8 +19,10 @@
     const prev = route;
     route = parse();
     VIEWS.forEach(v => { $(`#view-${v}`).hidden = v !== route.view; });
-    $$(".tabbar a").forEach(a => (a.dataset.tab === route.view ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+    const tab = TAB_OF[route.view] || route.view;
+    $$(".tabbar a").forEach(a => (a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
     if (route.view === "home") renderHome();
+    if (route.view === "explore") MBB.explore.render();
     if (route.view === "guide") MBB.guide.render(route.sub);
     if (route.view === "member") { MBB.member.hideNudge(false); MBB.member.render(); }
     if (route.view === "search") MBB.search.render();
@@ -176,28 +180,8 @@
         <div class="quick" id="h-quick">${quickList(st)}</div>
       </section>
 
-      <section class="explore">
-        <div class="section-title"><h2>${esc(t("explore.title"))}</h2><a href="#search" data-search>${esc(t("explore.all"))}</a></div>
-        <p class="hint">${esc(t("explore.lead"))}</p>
-        <div class="mymap-wrap">${MBB.maps.overview()}</div>
-        <div class="strip">${C.destinations.map(MBB.place.destCard).join("")}</div>
-      </section>
-
       <section>
-        <div class="section-title"><h2>${esc(t("home.food"))}</h2><a href="#guide-food">${esc(t("home.more"))}</a></div>
-        <div class="strip">${(C.guide.find(g => g.id === "food")?.dishes || []).map((d, i) => `<a class="pic-card" href="#guide-food" data-scroll="dish-${i}">
-          ${MBB.media.html(`dish:${i}`, { alt: "", ic: "bowl" })}<span><b>${esc(d.ms)}</b><small>${esc(L(d))}</small></span></a>`).join("")}</div>
-      </section>
-
-      <section>
-        <div class="section-title"><h2>${esc(t("home.souvenirs"))}</h2><a href="#guide-shopping">${esc(t("home.more"))}</a></div>
-        <div class="strip">${C.souvenirs.map(sv => `<a class="pic-card" href="#guide-shopping" data-scroll="souv-${sv.id}">
-          ${MBB.media.html(`souv:${sv.id}`, { alt: "", ic: "gift" })}<span><b>${esc(L(sv.name))}</b><small>${esc(L(sv.desc))}</small></span></a>`).join("")}</div>
-      </section>
-
-      <section>
-        <div class="section-title"><h2>${esc(t("home.guide"))}</h2><a href="#guide">${esc(t("home.allTopics"))}</a></div>
-        <div class="topics">${C.guide.map(MBB.guide.topicCard).join("")}</div>
+        <div class="quick">${quick("#explore", "compass", "explore.title", "explore.homeD")}</div>
       </section>
 
       <section class="card progress">
@@ -363,13 +347,14 @@
     // Home-country hints that arrive after start-up. Malaysia is ignored (see js/country.js).
     MBB.config().then(cfg => MBB.hintFrom("ip", cfg?.country));
     MBB.on("member", () => MBB.hintFrom("member", MBB.member.state.profile?.nationality));
-    MBB.on("city", () => { if (route.view === "home" || route.view === "guide") show(); });
+    MBB.on("city", () => { if (["home", "explore", "guide"].includes(route.view)) show(); });
     MBB.on("fx", () => { if (route.view === "home") renderHome(); });
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
     MBB.on("member", () => { if (route.view === "home") renderHome(); });
     MBB.on("install", () => { if (route.view === "home") renderHome(); });
     MBB.on("media", () => {
       if (route.view === "home") renderHome();
+      if (route.view === "explore") MBB.explore.render();
       if (route.view === "guide" && route.sub) MBB.guide.render(route.sub);
       if (route.view === "credits") MBB.media.renderCredits($("#view-credits")); // opened before the photo list arrived
     });

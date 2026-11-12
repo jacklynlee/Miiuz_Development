@@ -271,7 +271,6 @@
       const on = MBB.features.ask;
       $("#chat").hidden = !on;
       $("#ask-soon").hidden = on;
-      $("#tab-soon").hidden = on;
       if (!on) return;
       $("#c-form").addEventListener("submit", e => { e.preventDefault(); const v = $("#c-input").value; $("#c-input").value = ""; ask(v); });
       $("#c-input").addEventListener("keydown", e => {
