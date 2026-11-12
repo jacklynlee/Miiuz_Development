@@ -226,7 +226,7 @@
       <section class="card pl-map">
         <h2>${icon("map")}${esc(t("place.map"))}</h2>
         <div class="street" id="pl-map"></div>
-        <p class="hint" id="pl-dist">${fromCity > 0.5 ? esc(t("place.fromCity", { n: distance(fromCity), c: L(city) })) : ""}</p>
+        <p class="hint" id="pl-dist">${esc([fromCity > 0.5 ? t("place.fromCity", { n: distance(fromCity), c: L(city) }) : "", MBB.trip.fromStay(P)].filter(Boolean).join(" · "))}</p>
         <button type="button" class="btn btn-ghost btn-sm" id="pl-locate">${icon("locate")}${esc(t("place.fromMe"))}</button>
       </section>
 

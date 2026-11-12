@@ -71,6 +71,7 @@
   <section class="view" id="view-guide" data-view="guide" hidden></section>
 
   <section class="view" id="view-plan" data-view="plan" hidden>
+    <div class="quick" id="p-trip"></div>
     <div class="view-head">
       <h1 data-i18n="plan.title">行程规划</h1>
       <p data-i18n="plan.lead"></p>
@@ -113,6 +114,7 @@
           <legend data-i18n="plan.options">其他</legend>
           <label class="toggle" for="p-rain"><input type="checkbox" id="p-rain"> <span data-i18n="plan.rain"></span></label>
           <label class="toggle" for="p-nowalk"><input type="checkbox" id="p-nowalk"> <span data-i18n="plan.nowalk"></span></label>
+          <label class="toggle" for="p-stay" id="p-stay-row" hidden><input type="checkbox" id="p-stay" checked> <span id="p-stay-label"></span></label>
         </fieldset>
         <div class="actions">
           <button type="submit" class="btn btn-main" data-i18n="plan.go">生成路线</button>
@@ -131,6 +133,8 @@
       </div>
     </div>
   </section>
+
+  <section class="view" id="view-trip" data-view="trip" hidden></section>
 
   <section class="view" id="view-tools" data-view="tools" hidden></section>
 
@@ -221,6 +225,7 @@
 <script src="js/search.js"></script>
 <script src="js/place.js"></script>
 <script src="js/explore.js"></script>
+<script src="js/trip.js"></script>
 <script src="js/app.js"></script>
 <!-- preview:end -->
 <!-- Vercel Web Analytics (README → Deploy): cookieless, anonymous visit counts. After preview:end, so the

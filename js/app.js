@@ -2,9 +2,9 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
-  const VIEWS = ["home", "explore", "guide", "plan", "tools", "ask", "member", "search", "place", "credits"];
+  const VIEWS = ["home", "explore", "guide", "plan", "trip", "tools", "ask", "member", "search", "place", "credits"];
   // Screens without a tab of their own light up the tab they belong to (#49).
-  const TAB_OF = { search: "explore", place: "explore" };
+  const TAB_OF = { search: "explore", place: "explore", trip: "plan" };
   let route = { view: "home" }, pendingScroll = null, moves = 0;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
@@ -24,6 +24,7 @@
     if (route.view === "home") renderHome();
     if (route.view === "explore") MBB.explore.render();
     if (route.view === "guide") MBB.guide.render(route.sub);
+    if (route.view === "trip") MBB.trip.render();
     if (route.view === "member") { MBB.member.hideNudge(false); MBB.member.render(); }
     if (route.view === "search") MBB.search.render();
     if (route.view === "place") MBB.place.render(route.sub);
@@ -149,6 +150,8 @@
         ${fromLine()}
       </section>
 
+      ${MBB.trip.homeHtml()}
+
       ${fromCard()}
 
       <div class="glance">
@@ -237,6 +240,7 @@
       </div>
       <div class="sos-block">
         <h3>${esc(t("sos.mine"))}</h3>
+        ${MBB.trip.sosHtml()}
         ${em ? `<div class="sos-em"><span><b>${esc(t("sos.emergencyContact"))}</b><small>${esc([em.emergency_name, em.emergency_relation].filter(Boolean).join(" · "))} ${esc(em.emergency_phone)}</small></span>
           <a class="icon-btn" href="tel:${esc(em.emergency_phone)}">${icon("phone")}${esc(t("sos.call"))}</a></div>`
           : `<label for="sos-em">${esc(t("sos.emergencyLocal"))}<input type="text" id="sos-em" inputmode="text" value="${esc(mine.emergency || "")}"></label>`}
@@ -311,6 +315,7 @@
     MBB.applyStatic();
     buildLangSelect();
 
+    MBB.trip.init(); // before the planner and members, which use it
     MBB.planner.init();
     MBB.tools.init();
     MBB.chat.init();
@@ -350,6 +355,7 @@
     MBB.on("city", () => { if (["home", "explore", "guide"].includes(route.view)) show(); });
     MBB.on("fx", () => { if (route.view === "home") renderHome(); });
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
+    MBB.on("trip", () => { if (route.view === "home") renderHome(); });
     MBB.on("member", () => { if (route.view === "home") renderHome(); });
     MBB.on("install", () => { if (route.view === "home") renderHome(); });
     MBB.on("media", () => {

@@ -518,6 +518,7 @@
     island: '<path d="M3 19c3-3 15-3 18 0"/><path d="M12 17V8"/><path d="M12 8c-2-3-6-3-8-1 3-1 6 0 8 1zM12 8c2-3 6-3 8-1-3-1-6 0-8 1z"/>',
     building: '<rect x="4" y="3" width="10" height="18"/><path d="M14 9h6v12h-6"/><path d="M7 7h1M10 7h1M7 11h1M10 11h1M7 15h1M10 15h1"/>',
     bed: '<path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>',
+    car: '<path d="M3 17v-4l2.2-5.2A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1.3L21 13v4z"/><path d="M3 13h18"/><circle cx="7.5" cy="15" r="1"/><circle cx="16.5" cy="15" r="1"/><path d="M5 17v2.5M19 17v2.5"/>',
     landmark: '<path d="M3 21h18M4 10h16M12 3l9 5H3z"/><path d="M6 10v9M10 10v9M14 10v9M18 10v9"/>',
     fish: '<path d="M3 12c3-4 8-5 12-3l4-3v12l-4-3c-4 2-9 1-12-3z"/><circle cx="8" cy="11" r=".8"/>',
     share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',

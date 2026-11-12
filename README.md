@@ -19,7 +19,8 @@ still here, now alongside everything else a visitor needs.
 | **Search** | Type to search the app's own places, guide, dishes, souvenirs and phrases instantly (offline, in every language); press Search to find *any* place in Malaysia on OpenStreetMap |
 | **Place pages** | Photo, what it is (plus a Wikipedia summary in the traveller's language), opening hours / phone / website where known, street map, directions (Google Maps, Waze), "show the driver" card, distance from your city or from you, nearby Miiuz picks and destinations, nearby hospitals / police / ATMs, one-tap questions for Miiuz |
 | **Guide** | Photo galleries of 11 must-try dishes and 12 souvenirs, and 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
-| **Plan** | The day planner from the original artifact: pick city, time window (or work back from a flight), travel style, interests, group and budget; get a route with travel times, map links and ticket links |
+| **Plan** | The day planner from the original artifact: pick city, time window (or work back from a flight), travel style, interests, group and budget; get a route with travel times, map links and ticket links. It can start and end the day at the hotel in My trip |
+| **My trip** (`#trip`, from Plan and Home) | Stays and car tours the traveller booked anywhere (Agoda, Booking.com, Airbnb, Klook…), typed in by hand: dates, address, booking reference, driver, car, guide. Home shows today's stay and tour, SOS shows their numbers, the driver card follows the current hotel, place pages show the distance from it. Kept on the phone, and in the account for members (#5) |
 | **Tools** | Currency converter (live rates), bill splitter (10% service + 6% SST), "show the driver" hotel card, Malay phrasebook with audio and full-screen "show" mode, trip checklist |
 | **Ask Miiuz** (`#ask`, switched off until #13, no tab) | AI travel assistant on Claude: answers in the traveller's language, searches the web for current prices/hours, cites sources, and can rewrite the day plan on screen |
 | **SOS** (header) | Emergency numbers (999 / 112 / 994 / tourist police / consular lines), share my location, nearest hospitals & police, saved hotel & embassy numbers |
@@ -163,6 +164,10 @@ hourly), never while typing. Until Supabase is connected, membership is hidden a
 
 Points are written only by the database (triggers in `supabase/schema.sql`), after the email
 address is verified, once per person; members can read but never change their own points.
+
+**My trip** bookings (#5) are kept in the `trip_bookings` table, so they're on every device a
+member signs in on. Only that member can read, add, change or delete them, and they're removed
+with the account. Guests' bookings stay on their phone. Bookings never earn points.
 
 ### Set up (once)
 
@@ -318,6 +323,7 @@ js/translate.js         on-demand AI translation    js/i18n-entries.js  translat
 js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
 js/explore.js · guide.js · planner.js · tools.js · chat.js · app.js   the screens
+js/trip.js              My trip: stays and car tours, kept on the phone and in members' accounts
 js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo titles and pins
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps

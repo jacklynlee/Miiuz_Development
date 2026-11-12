@@ -23,6 +23,7 @@
     group: GROUPS.includes(saved.group) ? saved.group : "couple",
     budget: BUDGETS.includes(saved.budget) ? saved.budget : "1",
     rain: !!saved.rain, nowalk: !!saved.nowalk,
+    fromStay: saved.fromStay !== false,
   };
   const savePrefs = () => MBB.store.set("plan.prefs", { ...prefs, themes: [...prefs.themes] });
 
@@ -46,7 +47,15 @@
     $("#p-budget").innerHTML = BUDGETS.map(k => chip("budget", "radio", k, t(`budget.${k}`), "", k === prefs.budget)).join("");
     $("#p-start").value = prefs.start; $("#p-end").value = prefs.end; $("#p-flight").value = prefs.flight;
     $("#p-flight-on").checked = prefs.flightOn; $("#p-rain").checked = prefs.rain; $("#p-nowalk").checked = prefs.nowalk;
+    stayRow();
     updateFlightHint();
+  }
+  // Start (and end) the day at the current stay in My trip (#5), when it's on the map and in this city.
+  const home = () => MBB.trip.base(city());
+  function stayRow() {
+    const b = home();
+    $("#p-stay-row").hidden = !b;
+    if (b) { $("#p-stay-label").textContent = t("plan.fromStay", { s: b.name }); $("#p-stay").checked = prefs.fromStay; }
   }
   function readForm() {
     const f = $("#prefs");
@@ -58,6 +67,7 @@
     prefs.group = pick("group") || prefs.group;
     prefs.budget = pick("budget") || prefs.budget;
     prefs.rain = $("#p-rain").checked; prefs.nowalk = $("#p-nowalk").checked;
+    if (!$("#p-stay-row").hidden) prefs.fromStay = $("#p-stay").checked;
     prefs.start = $("#p-start").value || "13:00";
     prefs.flightOn = $("#p-flight-on").checked;
     prefs.flight = $("#p-flight").value || "22:30";
@@ -105,7 +115,10 @@
     const rand = rng(seed);
     const day = MBB.localNow().day;
     const pool = pois().filter(p => (!p.days || p.days.includes(day)) && !(p.closed || []).includes(day));
-    const stops = []; let tm = win.start, pos = null, foods = 0;
+    // From the stay, and back to it in time (not when the day ends at the airport).
+    const base = prefs.fromStay ? home() : null;
+    const back = p => (base && !prefs.flightOn ? leg(p, base).min : 0);
+    const stops = []; let tm = win.start, pos = base, foods = 0;
     while (stops.length < P.max) {
       let best = null;
       for (const p of pool) {
@@ -117,7 +130,7 @@
         const dur = Math.round(p.d * pace / 5) * 5;
         if (wait > 30) continue;
         if (arrive + dur > p.c * 60 + 1) continue;
-        if (arrive + dur > win.end) continue;
+        if (arrive + dur + back(p) > win.end) continue;
         const h = (arrive / 60) % 24;
         let s = 0;
         for (const th of prefs.themes) if (p.t.includes(th)) s += 3;
@@ -141,7 +154,8 @@
       if (best.p.t.includes("food")) foods++;
       tm = best.arrive + best.dur; pos = best.p;
     }
-    return { stops, source: "rule" };
+    const end = stops[stops.length - 1];
+    return { stops, source: "rule", home: base, back: base && end && !prefs.flightOn ? leg(end.poi, base) : null };
   }
 
   /* ---------- render ---------- */
@@ -180,9 +194,12 @@
     $("#p-summary").innerHTML = `<h2>${esc(title)}</h2><div class="meta">${pills}</div><p>${esc(intro)}</p>`;
 
     const li = [];
+    const legRow = l => `<li class="leg"><div></div><div>${esc(t(l.mode === "walk" ? "plan.walk" : "plan.car"))} ${esc(t("plan.legMin", { m: l.min }))}${l.km ? ` · ${esc(MBB.dist(l.km))}` : ""}</div></li>`;
+    const endRow = (at, title, msg) => `<li class="stop"><div class="time">${clock(at)}</div><div class="card endcard"><h3>${esc(title)}</h3>${msg ? `<p class="why">${esc(msg)}</p>` : ""}</div></li>`;
+    if (pl.home && pl.stops.length) li.push(endRow(win.start, t("plan.leave", { s: pl.home.name }), ""));
     pl.stops.forEach(s => {
       const p = s.poi, n = stopNames(s);
-      if (s.leg) li.push(`<li class="leg"><div></div><div>${esc(t(s.leg.mode === "walk" ? "plan.walk" : "plan.car"))} ${esc(t("plan.legMin", { m: s.leg.min }))}${s.leg.km ? ` · ${esc(MBB.dist(s.leg.km))}` : ""}</div></li>`);
+      if (s.leg) li.push(legRow(s.leg));
       else if (s.legText) li.push(`<li class="leg"><div></div><div>${esc(s.legText)}</div></li>`);
       const q = encodeURIComponent(`${n.en || n.main}, ${c.en}, Malaysia`);
       const tags = p ? p.t.map(k => `<span class="tag${k === "food" ? " food" : ""}">${esc(t(`theme.${k}`))}</span>`).join("") + `<span class="tag">${MBB.priceHtml(t("plan.cost")[p.k])}</span>` : "";
@@ -197,11 +214,15 @@
         <div class="book"><span>${esc(t("plan.book"))}</span>${SITES.map(([label, url]) => `<a href="${url(encodeURIComponent(n.en || n.main))}" target="_blank" rel="noopener">${label}</a>`).join("")}</div>
         </div></li>`);
     });
-    if (pl.stops.length) {
+    if (pl.back) {
+      const at = last.end + pl.back.min, left = win.end - at;
+      li.push(legRow(pl.back));
+      li.push(endRow(at, t("plan.back", { s: pl.home.name }), left >= 40 ? t("plan.endFree", { m: Math.round(left) }) : ""));
+    } else if (pl.stops.length) {
       const endMsg = prefs.flightOn
         ? t("plan.endFlight", { a: L(c.airport), m: c.transfer })
         : (free >= 40 ? t("plan.endFree", { m: Math.round(free) }) : t("plan.endDone"));
-      li.push(`<li class="stop"><div class="time">${clock(win.end)}</div><div class="card endcard"><h3>${esc(t(prefs.flightOn ? "plan.toAirport" : "plan.wrap"))}</h3><p class="why">${esc(endMsg)}</p></div></li>`);
+      li.push(endRow(win.end, t(prefs.flightOn ? "plan.toAirport" : "plan.wrap"), endMsg));
     }
     $("#p-timeline").classList.toggle("h12", MBB.h12());
     $("#p-timeline").innerHTML = li.join("");
@@ -212,6 +233,7 @@
   function planText() {
     const c = city();
     const lines = [t("plan.copyHead", { c: L(c), a: clock(win.start), b: clock(win.end) })];
+    if (current.home && current.stops.length) lines.push(`${clock(win.start)}  ${t("plan.leave", { s: current.home.name })}`);
     current.stops.forEach(s => {
       const n = stopNames(s);
       if (s.leg) lines.push(`   ↓ ${t(s.leg.mode === "walk" ? "plan.walk" : "plan.car")} ${t("plan.legMin", { m: s.leg.min })}`);
@@ -221,6 +243,11 @@
       if (tip) lines.push(`   ${t("plan.tip")}${tip}`);
     });
     if (prefs.flightOn) lines.push(`${clock(win.end)}  ${t("plan.copyLeave", { a: L(c.airport) })}`);
+    else if (current.back) {
+      const end = current.stops[current.stops.length - 1].end;
+      lines.push(`   ↓ ${t(current.back.mode === "walk" ? "plan.walk" : "plan.car")} ${t("plan.legMin", { m: current.back.min })}`);
+      lines.push(`${clock(end + current.back.min)}  ${t("plan.back", { s: current.home.name })}`);
+    }
     lines.push(t("plan.copyFoot"));
     return lines.join("\n");
   }
@@ -281,6 +308,13 @@
     MBB.on("lang", () => { buildForm(); if (current) render(current); });
     MBB.on("from", () => { if (current) render(current); });
     MBB.on("city", () => { buildForm(); generate(); });
+    // A new or changed stay in My trip: offer it, and plan from it.
+    let lastHome = JSON.stringify(home());
+    MBB.on("trip", () => {
+      const h = JSON.stringify(home());
+      if (h === lastHome) return;
+      lastHome = h; stayRow(); generate();
+    });
     generate();
   }
 
