@@ -19,6 +19,9 @@
     },
     "api/photo.mjs": {
       "maxDuration": 20
+    },
+    "api/picks.mjs": {
+      "maxDuration": 15
     }
   },
   "headers": [

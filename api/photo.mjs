@@ -10,9 +10,13 @@
  *  - Fetched with our User-Agent (Wikimedia's policy), and cached by Vercel's CDN for a year and by
  *    phones for 30 days, so each photo is fetched from Wikimedia rarely. The service worker also
  *    keeps the photos a traveller has seen, for offline use (sw.js).
- *  - Files too big for a function response go straight to Wikimedia instead (rare: thumbnails are small). */
+ *  - Files too big for a function response go straight to Wikimedia instead (rare: thumbnails are small).
+ * GET /api/photo?pick=<file>: an Our Pick! photo (#50), the owner's own photo used with their written
+ * permission, from our Supabase project's public Storage bucket "our-picks". Only plain file names
+ * ("nasi-lemak-wanjo-1.webp"), cached the same way. */
 import { sendJson, rateLimiter } from "./_http.mjs";
 import { UA } from "./_wiki.mjs";
+import { PHOTO_FILE } from "./picks.mjs";
 
 // Commons serves thumbnails from thumb.wikimedia.org and original files from upload.wikimedia.org.
 const upstream = p => `https://${p.startsWith("thumb/") ? "thumb" : "upload"}.wikimedia.org/wikipedia/commons/${p}`;
@@ -25,15 +29,22 @@ const CACHE = "public, max-age=2592000, s-maxage=31536000, stale-while-revalidat
 const limited = rateLimiter(Number(process.env.MIIUZ_PHOTO_LIMIT || 600));
 
 export const photoPath = p => (typeof p === "string" && PATH.test(p) && !p.split("/").includes("..") ? p : null);
+// An Our Pick! photo in our own Supabase Storage, or null.
+function pickUrl(file) {
+  const base = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+  if (typeof file !== "string" || !PHOTO_FILE.test(file) || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(base)) return null;
+  return `${base.replace(/\/+$/, "")}/storage/v1/object/public/our-picks/${file}`;
+}
 
 export default async function handler(req, res) {
   if (req.method !== "GET" && req.method !== "HEAD") { res.setHeader("Allow", "GET, HEAD"); return sendJson(res, 405, { error: "GET only" }); }
-  const p = photoPath(new URL(req.url, "http://x").searchParams.get("p"));
-  if (!p) return sendJson(res, 400, { error: "not a Commons file" }, "public, max-age=3600, s-maxage=86400");
+  const q = new URL(req.url, "http://x").searchParams;
+  const p = photoPath(q.get("p"));
+  const url = p ? upstream(p) : q.has("pick") ? pickUrl(q.get("pick")) : null;
+  if (!url) return sendJson(res, 400, { error: "not a Commons file or an Our Pick! photo" }, "public, max-age=3600, s-maxage=86400");
   if (limited(req)) return sendJson(res, 429, { error: "rate_limited" });
 
-  const url = upstream(p);
-  // Too big for a function response: let the phone fetch it from Wikimedia itself.
+  // Too big for a function response: let the phone fetch it from Wikimedia (or Supabase) itself.
   const away = () => {
     res.statusCode = 302;
     res.setHeader("Location", url);
@@ -44,7 +55,7 @@ export default async function handler(req, res) {
   const timer = setTimeout(() => ctl.abort(), 12000);
   try {
     const r = await fetch(url, { headers: { "User-Agent": UA, Accept: "image/*" }, signal: ctl.signal });
-    if (r.status === 404) return sendJson(res, 404, { error: "not_found" }, "public, max-age=3600, s-maxage=86400");
+    if (r.status === 404 || r.status === 400) return sendJson(res, 404, { error: "not_found" }, "public, max-age=3600, s-maxage=86400");
     if (!r.ok) return sendJson(res, 502, { error: "upstream" }, "public, max-age=60, s-maxage=60");
     const type = String(r.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
     if (!TYPES.has(type)) return sendJson(res, 415, { error: "not a photo" }, "public, max-age=3600, s-maxage=86400");

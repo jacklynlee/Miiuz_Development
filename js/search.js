@@ -55,10 +55,12 @@
     for (const c of C.phrases) c.items.forEach((p, i) => {
       add({ kind: "phrase", phrase: [c.id, i], title: p.ms, sub: L(p), ic: "speaker", boost: 0 }, [p.ms], [L(p), p.en]);
     });
+    for (const { item, keys, text } of MBB.picks.searchItems()) add(item, keys, text); // Our Pick! (#50)
     return out;
   }
   const getIndex = () => (index && indexLang === MBB.state.lang ? index : ((indexLang = MBB.state.lang), (index = build())));
   MBB.on("lang", () => { index = null; });
+  MBB.on("picks", () => { index = null; });
 
   function score(q, it) {
     let s = 0;
@@ -86,7 +88,8 @@
   /* ---------- rendering ---------- */
   const row = it => {
     const attrs = it.phrase ? `href="#search" data-phrase="${it.phrase.join(":")}"` : `href="${it.href}"${it.scroll ? ` data-scroll="${it.scroll}"` : ""}`;
-    const thumb = it.photo && MBB.media.get(it.photo) ? MBB.media.html(it.photo, { alt: "", ic: it.ic, cls: "s-thumb" }) : `<span class="badge-ic">${icon(it.ic || "pin")}</span>`;
+    const ph = it.photo && (typeof it.photo === "object" ? it.photo : MBB.media.get(it.photo)); // Our Pick! photos are objects
+    const thumb = ph ? MBB.media.html(ph, { alt: "", ic: it.ic, cls: "s-thumb" }) : `<span class="badge-ic">${icon(it.ic || "pin")}</span>`;
     return `<a class="s-row" ${attrs}>${thumb}<span><b>${esc(it.title)}</b><small>${esc(it.sub || "")}</small></span>${icon("next", "next")}</a>`;
   };
   const group = (title, list, max) => (list.length ? `<section class="s-group"><h2>${esc(title)}</h2><div class="s-list">${list.slice(0, max).map(row).join("")}</div></section>` : "");
@@ -134,7 +137,7 @@
     const found = find(q);
     const by = k => found.filter(x => k.includes(x.kind));
     out.innerHTML = `
-      ${group(t("search.places"), by(["city", "dest", "poi"]), 12)}
+      ${group(t("search.places"), by(["city", "dest", "poi", "pick"]), 12)}
       ${remoteBlock(q)}
       ${group(t("search.guide"), by(["topic"]), 5)}
       ${group(t("search.food"), by(["dish", "souv"]), 6)}

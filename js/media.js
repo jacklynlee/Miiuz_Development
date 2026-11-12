@@ -1,6 +1,7 @@
 /* Miiuz Beyond Borders — photos. The app's own destinations, places, dishes and souvenirs are
  * illustrated with freely licensed Wikimedia Commons photos found by /api/media; each photo
- * carries its author and licence, shown on the photo and on the #credits page. Without a
+ * carries its author and licence, shown on the photo and on the #credits page. Our Pick! places
+ * (#50) use the owner's own photos, with their written permission and credit. Without a
  * connection (or inside a Claude artifact) cards fall back to a coloured tile with an icon. */
 (function () {
   const MBB = window.MBB;
@@ -32,6 +33,8 @@
 
   const get = key => items[key] || null;
   const credit = p => `${p.by} · ${p.lic}`;
+  // Commons pages open in a new tab; an Our Pick! photo (#50) links to its place page in the app.
+  const target = p => (String(p.page || "").startsWith("#") ? "" : ' target="_blank" rel="noopener"');
   // Photos load through our own domain (api/photo.mjs, #39): Wikimedia is blocked in mainland China
   // and on Chinese roaming SIMs. The photo lists keep Commons' own addresses, so older copies of the
   // app and saved lists keep working. Inside a Claude artifact there's no /api, so it stays as it is.
@@ -46,14 +49,14 @@
   // link: make the credit a link to the photo's Commons page (not inside another link).
   function html(keyOrPhoto, { size = "s", alt = "", ic = "camera", cls = "", link = false } = {}) {
     const p = typeof keyOrPhoto === "string" ? get(keyOrPhoto) : keyOrPhoto;
-    if (p && typeof keyOrPhoto !== "string") viewed.set(p.file, { p, label: alt });
+    if (p && typeof keyOrPhoto !== "string") viewed.set(p.file, { p, label: alt || viewed.get(p.file)?.label || p.by || "" }); // a card's photo has no alt text
     if (!p) return `<figure class="ph ph-none ${cls}" aria-hidden="true">${icon(ic)}</figure>`;
     const src = own(size === "l" ? p.srcL : p.src);
     return `<figure class="ph ${cls}">
       ${icon(ic)}
       <img src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" crossorigin="anonymous" referrerpolicy="strict-origin-when-cross-origin"${p.w && p.h ? ` width="${p.w}" height="${p.h}"` : ""}>
       <figcaption>${link
-        ? `<a href="${esc(p.page)}" target="_blank" rel="noopener" title="${esc(`${p.file} — ${credit(p)}`)}">${icon("camera")}<span>${esc(credit(p))}</span></a>`
+        ? `<a href="${esc(p.page)}"${target(p)} title="${esc(`${p.file} — ${credit(p)}`)}">${icon("camera")}<span>${esc(credit(p))}</span></a>`
         : `<span title="${esc(`${p.file} — ${credit(p)}`)}">${icon("camera")}<span>${esc(credit(p))}</span></span>`}</figcaption>
     </figure>`;
   }
@@ -87,7 +90,7 @@
       <div class="view-head"><h1>${esc(t("credits.title"))}</h1><p>${esc(t("credits.lead"))}</p></div>
       ${rows.length ? `<ul class="credits">${rows.map(({ label: l, p }) => `<li>
         <img src="${esc(own(p.src))}" alt="" loading="lazy" crossorigin="anonymous" width="64" height="48">
-        <div><b>${esc(l)}</b><small><a href="${esc(p.page)}" target="_blank" rel="noopener">${esc(p.file)}</a> · ${esc(p.by)} · ${p.licUrl ? `<a href="${esc(p.licUrl)}" target="_blank" rel="noopener">${esc(p.lic)}</a>` : esc(p.lic)}</small></div>
+        <div><b>${esc(l)}</b><small><a href="${esc(p.page)}"${target(p)}>${esc(p.file)}</a> · ${esc(p.by)} · ${p.licUrl ? `<a href="${esc(p.licUrl)}" target="_blank" rel="noopener">${esc(p.lic)}</a>` : esc(p.lic)}</small></div>
       </li>`).join("")}</ul>` : `<p class="hint">${esc(t("credits.none"))}</p>`}
       <div class="card credits-more">
         <p>${esc(t("credits.maps"))} <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">© OpenStreetMap</a> · <a href="https://openfreemap.org" target="_blank" rel="noopener">OpenFreeMap</a> · <a href="https://www.naturalearthdata.com" target="_blank" rel="noopener">Natural Earth</a></p>

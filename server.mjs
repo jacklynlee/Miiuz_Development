@@ -11,6 +11,7 @@ import config from "./api/config.mjs";
 import places from "./api/places.mjs";
 import media from "./api/media.mjs";
 import photo from "./api/photo.mjs";
+import picks from "./api/picks.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 3000);
@@ -29,6 +30,7 @@ http.createServer(async (req, res) => {
   if (url.pathname === "/api/places") return places(req, res);
   if (url.pathname === "/api/media") return media(req, res);
   if (url.pathname === "/api/photo") return photo(req, res);
+  if (url.pathname === "/api/picks") return picks(req, res);
   // Vercel Web Analytics only runs on Vercel. Locally its script is empty, so nothing is sent and there's no 404.
   if (url.pathname.startsWith("/_vercel/insights/")) {
     res.writeHead(200, { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-store" }).end("/* Vercel Web Analytics is off locally */\n");

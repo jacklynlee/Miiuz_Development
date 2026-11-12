@@ -1,5 +1,6 @@
 /* Miiuz Beyond Borders — place pages (#place-<kind>-<id>):
  *   city-kl · dest-langkawi · poi-batu   the app's own places, with hand-written notes
+ *   pick-nasi-lemak-wanjo                 Our Pick! food places (#50, js/picks.js)
  *   osm-N123456                          anything found on OpenStreetMap
  * Each shows a photo, what it is (plus a Wikipedia summary in the reader's language when
  * one exists), a street map, directions, a "show the driver" card, nearby Miiuz picks,
@@ -100,6 +101,7 @@
       return { kind, id, name: MBB.placeName(p), local: p.en, lat: p.lat, lng: p.lng, ic: "pin", type: p.t.map(k => t(`theme.${k}`)).join(" · "),
         area: L(C.cities[p.city]), city: p.city, photo: `poi:${id}`, wp: (C.photos.poi[id] || [])[0], lead: L(p.why), tip: L(p.tip), facts, zoom: 16 };
     }
+    if (kind === "pick") return MBB.picks.place(id);
     return null;
   }
 
@@ -118,7 +120,7 @@
   /* ---------- pieces ---------- */
   function nearby(P) {
     const C = MBB.C, km = MBB.maps.km;
-    const radius = P.kind === "osm" || P.kind === "poi" ? 3 : P.kind === "city" ? 8 : 0;
+    const radius = P.kind === "osm" || P.kind === "poi" || P.kind === "pick" ? 3 : P.kind === "city" ? 8 : 0;
     const pois = radius ? C.pois.filter(p => !(P.kind === "poi" && p.id === P.id)).map(p => ({ p, d: km(P, p) })).filter(x => x.d <= radius).sort((a, b) => a.d - b.d).slice(0, 8)
       .map(({ p, d }) => ({ href: `#place-poi-${p.id}`, name: MBB.placeName(p), sub: L(C.cities[p.city]), photo: `poi:${p.id}`, ic: "pin", d, lat: p.lat, lng: p.lng })) : [];
     const dests = C.destinations.filter(d => !(P.kind === "dest" && d.id === P.id)).map(d => ({ d, x: km(P, d) })).filter(o => o.x <= 120).sort((a, b) => a.x - b.x).slice(0, 4)
@@ -198,7 +200,8 @@
       <a class="back" href="#search" data-back>${icon("back")}${esc(t("search.title"))}</a>
       <div class="pl-hero" id="pl-photo">${heroHtml(P)}</div>
       <div class="pl-head">
-        <p class="pl-type">${icon(P.ic)}<span>${esc(P.type)}</span>${P.kind !== "osm" ? `<span class="pill teal">${esc(t("place.pick"))}</span>` : ""}</p>
+        <p class="pl-type">${icon(P.ic)}<span>${esc(P.type)}</span>${P.kind === "pick" ? `<span class="pill teal">${MBB.picks.BRAND}</span>${P.pick.sponsored ? `<span class="pill warn">${esc(t("pick.sponsored"))}</span>` : ""}`
+          : P.kind !== "osm" ? `<span class="pill teal">${esc(t("place.pick"))}</span>` : ""}</p>
         <h1>${esc(P.name)}</h1>
         ${P.local && P.local !== P.name ? `<p class="pl-local" lang="ms">${esc(P.local)}</p>` : ""}
         <p class="pl-area">${icon("pin")}${esc(P.addr || P.area || "")}</p>
@@ -206,7 +209,7 @@
       ${P.lead ? `<p class="pl-lead">${esc(P.lead)}</p>` : ""}
       ${P.tip ? `<p class="pl-tip">${icon("spark")}<span>${esc(P.tip)}</span></p>` : ""}
       ${facts ? `<div class="facts pl-facts">${facts}</div>` : ""}
-      ${P.kind === "osm" && (P.phone || P.web) ? `<div class="actions">
+      ${P.phone || P.web ? `<div class="actions">
         ${P.phone ? `<a class="btn btn-ghost btn-sm" href="tel:${esc(P.phone.replace(/[^\d+]/g, ""))}">${icon("phone")}${esc(P.phone)}</a>` : ""}
         ${P.web ? `<a class="btn btn-ghost btn-sm" href="${esc(P.web)}" target="_blank" rel="noopener">${icon("external")}${esc(t("place.website"))}</a>` : ""}
       </div>` : ""}
@@ -222,6 +225,7 @@
       </div>
       ${P.kind === "city" ? `<div class="actions"><button type="button" class="btn btn-ai btn-sm" id="pl-plan">${icon("plan")}${esc(t("place.planCity"))}</button></div>` : ""}
       ${P.kind === "poi" ? `<div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="pl-plan">${icon("plan")}${esc(t("place.planCity"))} · ${esc(P.area)}</button></div>` : ""}
+      ${P.kind === "pick" ? MBB.picks.pageHtml(P.pick) : ""}
 
       <section class="card pl-map">
         <h2>${icon("map")}${esc(t("place.map"))}</h2>
@@ -238,6 +242,7 @@
       </section>` : ""}
 
       ${cityPicks.length ? `<section><div class="section-title"><h2>${esc(t("place.cityPicks", { c: P.name }))}</h2></div><div class="near-grid">${cityPicks.map(card).join("")}</div></section>` : ""}
+      ${P.kind === "city" ? `<div id="pl-picks">${MBB.picks.sectionHtml(P.id)}</div>` : ""}
       ${pois.length && P.kind !== "city" ? `<section><div class="section-title"><h2>${esc(t("place.nearPicks"))}</h2></div><div class="near-grid">${pois.map(card).join("")}</div></section>` : ""}
       ${dests.length ? `<section><div class="section-title"><h2>${esc(t("place.nearDest"))}</h2></div><div class="near-grid">${dests.map(card).join("")}</div></section>` : ""}
 
@@ -308,15 +313,27 @@
 
   function render(sub) {
     const view = $("#view-place");
-    const m = /^(city|dest|poi|osm)-(.+)$/.exec(sub || "");
+    const m = /^(city|dest|poi|pick|osm)-(.+)$/.exec(sub || "");
     if (!m) return notFound(view);
     if (m[1] === "osm") return renderOsm(view, m[2]);
     const P = fromApp(m[1], m[2]);
+    if (!P && m[1] === "pick" && MBB.picks.loading()) {
+      // Opened from a link before the listings have arrived: they're on their way.
+      current = null;
+      view.innerHTML = `<a class="back" href="#search" data-back>${icon("back")}${esc(t("search.title"))}</a><p class="hint">${esc(t("search.searching"))}</p>`;
+      return;
+    }
     return P ? paint(view, P) : notFound(view);
   }
 
   // Photos arrive after the page is drawn the first time.
   MBB.on("media", () => { if (current && current.kind !== "osm" && $("#pl-photo")) $("#pl-photo").innerHTML = heroHtml(current); });
+  // Our Pick! listings arrived or changed: a city page updates its strip, a pick's page is drawn again.
+  MBB.on("picks", () => {
+    const h = location.hash;
+    if (current?.kind === "city" && $("#pl-picks")) $("#pl-picks").innerHTML = MBB.picks.sectionHtml(current.id);
+    else if (h.startsWith("#place-pick-")) render(h.slice(7));
+  });
 
   MBB.place = { render, remember, curatedFor, typeIcon, osmName, osmSub, destCard, DEST_ICON };
 })();
