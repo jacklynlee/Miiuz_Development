@@ -54,7 +54,9 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
 ## Where things live
 
 - Content: `js/data/malaysia.js` (zh + en), `malaysia.ko.js`, `malaysia.ja.js`,
-  `malaysia.explore.js` (destinations, souvenirs, photo article titles `wp`).
+  `malaysia.explore.js` (destinations, souvenirs, photo article titles `wp`). Our Pick! food
+  listings (#50) are not in the repo: staff add them in Supabase (`our_picks`), and the app reads
+  them through `api/picks.mjs` (`js/picks.js`).
 - UI strings: `js/i18n.js`. Language list (BCP 47): `js/locales.js`.
 - Screens: `js/explore.js`, `guide.js`, `planner.js`, `trip.js`, `tools.js`, `chat.js`,
   `search.js`, `place.js`, `member.js`, `app.js` (routing by `#hash`: home, explore, guide, plan,
@@ -70,11 +72,15 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
   working.
 - Facts (visas, MDAC, fares, SST, emergency numbers) must be accurate. When you re-verify them,
   update `checked` in `js/data/malaysia.js`.
+- Never call a place halal unless it has a valid certificate from JAKIM or a state Islamic
+  authority. Uncertified places are "no pork, not halal-certified" or "not halal".
 - Write prices as plain ringgit (`RM55`, `RM1–RM10`) in every language. The app adds the
   traveller's own currency. Render text that may contain a price with `MBB.priceHtml()`, not `esc()`.
 - Photos must be freely licensed (Wikimedia Commons) with credits shown. Never hot-link
   unlicensed images. Each item's photo is a reviewed Commons file in `photos.pin`
-  (`js/data/malaysia.explore.js`): check the file's Commons page before pinning it.
+  (`js/data/malaysia.explore.js`): check the file's Commons page before pinning it. The one
+  exception is Our Pick! (#50): the owner's own photos, with their written consent and a credit,
+  in Supabase Storage → `our-picks`.
 - Never commit `.env` or any API key. Secrets belong in Vercel → Environment Variables.
 - Personal data: national ID and passport numbers are deliberately not collected. Keep it that
   way (Malaysia PDPA).

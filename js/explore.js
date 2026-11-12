@@ -1,5 +1,6 @@
 /* Miiuz Beyond Borders — Explore tab (#49): where to go, what to eat, what to bring home, when to go.
- * Cards open the place page or the Guide topic. Later: Our Pick! (#50), stays (#4), car tours (#10). */
+ * Cards open the place page or the Guide topic. Our Pick! (#50) food places follow the food to try.
+ * Later: stays (#4), car tours (#10). */
 (function () {
   const MBB = window.MBB;
   const { $, esc, t, L, icon } = MBB;
@@ -31,6 +32,8 @@
           ${MBB.media.html(`dish:${i}`, { alt: "", ic: "bowl" })}<span><b>${esc(d.ms)}</b><small>${esc(L(d))}</small></span></a>`).join("")}</div>
       </section>
 
+      <div id="x-picks">${MBB.picks.sectionHtml()}</div>
+
       <section>
         <div class="section-title"><h2>${esc(t("home.souvenirs"))}</h2><a href="#guide-shopping">${esc(t("home.more"))}</a></div>
         <div class="strip">${C.souvenirs.map(sv => `<a class="pic-card" href="#guide-shopping" data-scroll="souv-${sv.id}">
@@ -42,6 +45,9 @@
         <div class="topics">${when.map(MBB.guide.topicCard).join("")}</div>
       </section>`;
   }
+
+  // Our Pick! listings arrived or changed: update their section only.
+  MBB.on("picks", () => { const el = $("#x-picks"); if (el && !$("#view-explore").hidden) el.innerHTML = MBB.picks.sectionHtml(); });
 
   MBB.explore = { render };
 })();

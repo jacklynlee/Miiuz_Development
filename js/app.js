@@ -316,6 +316,7 @@
     buildLangSelect();
 
     MBB.trip.init(); // before the planner and members, which use it
+    MBB.picks.init(); // before the first screen, so a shared #place-pick-… link finds its listing
     MBB.planner.init();
     MBB.tools.init();
     MBB.chat.init();

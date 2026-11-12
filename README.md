@@ -16,6 +16,7 @@ still here, now alongside everything else a visitor needs.
 |---|---|
 | **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, "just landed" shortcuts, a link to Explore, checklist progress |
 | **Explore** | A map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, and when to go (weather, festivals). Search and place pages belong to this tab (#49) |
+| **Our Pick!** (Explore, city pages, search) | Food places the Miiuz team visited and recommends, listed with the owner's consent: what to order and for how much, halal status, open now, how to pay, the owner's photos, directions and the driver card (#50). Listings live in Supabase, so staff add them without a release |
 | **Search** | Type to search the app's own places, guide, dishes, souvenirs and phrases instantly (offline, in every language); press Search to find *any* place in Malaysia on OpenStreetMap |
 | **Place pages** | Photo, what it is (plus a Wikipedia summary in the traveller's language), opening hours / phone / website where known, street map, directions (Google Maps, Waze), "show the driver" card, distance from your city or from you, nearby Miiuz picks and destinations, nearby hospitals / police / ATMs, one-tap questions for Miiuz |
 | **Guide** | Photo galleries of 11 must-try dishes and 12 souvenirs, and 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
@@ -169,6 +170,9 @@ address is verified, once per person; members can read but never change their ow
 member signs in on. Only that member can read, add, change or delete them, and they're removed
 with the account. Guests' bookings stay on their phone. Bookings never earn points.
 
+**Our Pick!** listings (#50) are in the `our_picks` table, readable by everyone; see
+[Our Pick! listings](#our-pick-listings-staff) below for how staff add them.
+
 ### Set up (once)
 
 1. Create a project at [supabase.com](https://supabase.com) (region: Southeast Asia / Singapore).
@@ -250,6 +254,56 @@ notice in Malay and English that says what you collect and why; have one reviewe
 launching membership. Phone numbers and emergency contacts are visible only to the member
 and to you (the Supabase project owner).
 
+### Our Pick! listings (staff)
+
+Food places the Miiuz team visited and recommends (#50). They show in Explore, on their city's
+page and in search, and each has its own page (`#place-pick-<slug>`). Everyone sees live
+listings, guests too. The app reads them through `/api/picks`, which Vercel caches for 5 minutes,
+and keeps the last ones on the phone for offline use.
+
+**Collect in one visit:**
+- The owner's **written consent** to be listed and to use their photos. Keep the signed form, and
+  note where in `consent_note` (staff only: the app can't read it).
+- Name, address, opening hours and days closed; 2–3 dishes to order with prices; the price range
+  per person; how to pay (`cash`, `duitnow`, `card`, `alipay`, `wechat`).
+- **Halal status, from the certificate.** Only JAKIM or a state Islamic authority (JAWI in KL)
+  can certify, and calling an uncertified place halal is against the law. Use `certified` with
+  the issuer and expiry date, `no_pork` if there's no pork or lard but no certificate, otherwise
+  `not_halal`. The app stops saying "halal" after `halal_expires`, so update it when the
+  certificate is renewed.
+- If the place pays, or gets anything in return, tick `sponsored`: the app then says "Sponsored".
+
+**Add it:**
+1. **Photos:** Storage → `our-picks` → upload JPEG or WebP, about 1600 px wide and under 2 MB,
+   named like `kedai-contoh-1.webp` (lower case, no spaces). To replace a photo, upload it under a
+   new name: phones keep photos they've already seen.
+2. **Listing:** Table Editor → `our_picks` → Insert row, or SQL (the example is made up):
+   ```sql
+   insert into our_picks (slug, name, area, address, lat, lng, blurb, dishes, price_range,
+     halal, halal_body, halal_expires, hours, hours_note, pay, phone, photos, photo_credit,
+     consent_on, consent_note, checked_on)
+   values ('kedai-contoh', 'Kedai Contoh', 'Kampung Baru', 'Jalan Raja Muda Musa, Kampung Baru, 50300 Kuala Lumpur',
+     3.1650, 101.7004,
+     '{"en": "Why we like it, in one or two sentences.", "zh": "…", "ko": "…", "ja": "…"}',
+     '[{"ms": "Nasi lemak ayam goreng", "en": "Coconut rice with fried chicken", "zh": "炸鸡椰浆饭", "ko": "…", "ja": "…", "price": "RM12"}]',
+     'RM8–RM15', 'certified', 'JAKIM', '2027-06-30', 'Mo-Sa 07:00-15:00; Su off',
+     '{"en": "Closed on public holidays", "zh": "…", "ko": "…", "ja": "…"}',
+     '{cash,duitnow}', '+60 3-0000 0000', '["kedai-contoh-1.webp", "kedai-contoh-2.webp"]', 'Kedai Contoh',
+     '2026-11-20', 'Signed form: Drive → Our Pick! → Kedai Contoh.pdf', '2026-11-20');
+   ```
+   - **Text** (`blurb`, dish names, `hours_note`) in EN, 简体中文, 한국어 and 日本語; other languages
+     are translated from English automatically. `names` holds the name in other scripts, e.g.
+     `{"zh": "…"}`. Prices are plain ringgit.
+   - **Hours** use OpenStreetMap's short form: `Mo-Sa 07:00-15:00; Su off`, a break
+     `Tu-Su 07:00-11:30,17:00-22:00`, past midnight `Mo-Su 18:00-02:00`, or `24/7`. Days not named
+     are closed. The database refuses anything it can't read, and the other checks (halal
+     certificate, photo names, a location in Malaysia).
+   - **Location:** right-click the entrance in Google Maps to copy its latitude and longitude.
+3. **Check, then approve:** a second person checks the listing against the notes and photos, then
+   ticks `approved`. It can't be approved without `consent_on`. It appears within 5 minutes.
+   Untick `active` to hide it for a while; `sort` orders the list (lower first).
+4. **Recheck** each place at least every 6 months and update `checked_on` (the app shows the month).
+
 ## Search, maps and photos
 
 - **Search anywhere** uses OpenStreetMap's Nominatim through `api/places.mjs`, limited to
@@ -281,6 +335,9 @@ and to you (the Supabase project owner).
     fetches Commons photos (JPEG, PNG, WebP, GIF), and Vercel's CDN keeps each one for a year.
   - **Offline:** photos the traveller has seen are kept (at most 200, about 12 MB).
   - **Updates:** the app asks for the photo list again after it updates, otherwise every 3 days.
+  - **Our Pick! is the one exception** (#50): those are the owner's own photos, used with their
+    written permission and credited to the place. They're in Supabase Storage → `our-picks` and
+    load through `/api/photo?pick=<file>`, which only fetches from that bucket.
 - **Maps**: the Malaysia overview is drawn offline from Natural Earth (public domain;
   rebuild with `scripts/build-map.mjs`). Street maps use MapLibre GL (our own copy in `vendor/`)
   with OpenFreeMap tiles (free, no key, © OpenStreetMap contributors) and fall back to the
@@ -328,13 +385,15 @@ js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, ph
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps
 js/media.js             photos with credits, credits page
+js/picks.js             Our Pick!: listings from /api/picks, open now, halal status, cards and place pages
 js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
 js/install.js           "install the app" card (Android prompt / iPhone instructions), WeChat bar
 js/update.js            version, update bar and "Please update" (with sw.js)
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
 api/config.mjs          hands the public Supabase URL + key and the visitor's country to the app
 api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)
-api/photo.mjs           Commons photos through our own domain, for travellers in China (#39)
+api/picks.mjs           live Our Pick! listings from Supabase (cached 5 minutes)
+api/photo.mjs           Commons and Our Pick! photos through our own domain, for travellers in China (#39)
 supabase/email/         sign-in emails for Supabase (generated by scripts/build-emails.mjs: npm run emails)
 supabase/schema.sql     membership database: tables, points triggers, tiers, access rules
 sw.js · manifest.webmanifest · icons/   PWA (offline, one cache per build)

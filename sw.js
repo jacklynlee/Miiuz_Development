@@ -22,7 +22,7 @@ const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "js/data/malaysia.js", "js/data/malaysia.explore.js", "js/data/malaysia.map.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
   "js/i18n.js", "js/locales.js", "js/country.js", "js/core.js", "js/i18n-entries.js", "js/ai.js", "js/prompt.js", "js/translate.js",
-  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/update.js", "js/member.js", "js/media.js", "js/maps.js", "js/search.js", "js/place.js", "js/explore.js", "js/trip.js", "js/app.js",
+  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/update.js", "js/member.js", "js/media.js", "js/picks.js", "js/maps.js", "js/search.js", "js/place.js", "js/explore.js", "js/trip.js", "js/app.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
   // Latin fonts, so text looks right offline from the first visit. Other subsets, MapLibre and the
   // Supabase client (vendor/) are cached the first time they're used.
