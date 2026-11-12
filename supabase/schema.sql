@@ -4,13 +4,16 @@
 -- Points rules (change the numbers in award_join_points if needed):
 --   +10 for the new member, once their email is verified
 --   +10 for the member whose invite link they used
+--   Bookings through Miiuz (#8): stays and car tours booked from the app's partner links earn
+--   the points in booking_points_rules once the partner reports them completed, and lose them
+--   if the partner reports a cancellation later (partner_bookings, README → Points for bookings)
 -- Points are written only by the database itself; the app can read a member's own
 -- points but can never add or change them. To award points by hand (a promotion, a
 -- purchase), add a row to points_ledger with reason 'adjustment'.
 --
 -- Tiers (table member_tiers; edit min_points there): Basic 0, Silver 1,000,
--- Gold 5,000, Platinum 10,000 — based on points ever earned, so a tier never drops.
--- Points and tiers don't expire.
+-- Gold 5,000, Platinum 10,000 — based on points ever earned, so spending points never
+-- lowers a tier (taking back a cancelled booking's points can). Points and tiers don't expire.
 
 -- ---------- tables ----------
 create table if not exists public.profiles (
@@ -34,12 +37,17 @@ alter table public.profiles add column if not exists sms_opt_in_at timestamptz;
 alter table public.profiles add column if not exists emergency_name text check (char_length(emergency_name) <= 80);
 alter table public.profiles add column if not exists emergency_relation text check (char_length(emergency_relation) <= 40);
 alter table public.profiles add column if not exists emergency_phone text check (emergency_phone ~ '^\+[0-9]{7,15}$');
+-- Bookings through Miiuz (#8): a random tag for each member, added to partner links (Stays, Car
+-- tours) so a partner's booking report can be matched to the member. It says nothing about who
+-- they are. Existing members get one when this runs. Members can read theirs, never change it.
+alter table public.profiles add column if not exists booking_tag text not null default substr(md5(gen_random_uuid()::text), 1, 16);
+create unique index if not exists profiles_booking_tag on public.profiles (booking_tag);
 
 create table if not exists public.points_ledger (
   id bigint generated always as identity primary key,
   user_id uuid not null references public.profiles (id) on delete cascade,
   points integer not null,
-  reason text not null check (reason in ('signup', 'referral', 'adjustment', 'redeem')),
+  reason text not null check (reason in ('signup', 'referral', 'adjustment', 'redeem', 'booking')),
   related_user uuid references public.profiles (id) on delete set null,
   note text,
   created_at timestamptz not null default now()
@@ -47,6 +55,10 @@ create table if not exists public.points_ledger (
 create unique index if not exists points_one_signup on public.points_ledger (user_id) where reason = 'signup';
 create unique index if not exists points_one_referral_per_friend on public.points_ledger (related_user) where reason = 'referral';
 create index if not exists points_by_user on public.points_ledger (user_id, created_at desc);
+-- Databases made before bookings earned points (#8): allow 'booking'. Every existing row still fits.
+alter table public.points_ledger drop constraint if exists points_ledger_reason_check;
+alter table public.points_ledger add constraint points_ledger_reason_check
+  check (reason in ('signup', 'referral', 'adjustment', 'redeem', 'booking'));
 
 create table if not exists public.member_tiers (
   tier text primary key check (tier in ('basic', 'silver', 'gold', 'platinum')),
@@ -90,6 +102,54 @@ create table if not exists public.trip_bookings (
   created_at timestamptz not null default now()
 );
 create index if not exists trip_bookings_by_user on public.trip_bookings (user_id, starts_on);
+
+-- Bookings through Miiuz (#8): stays and car tours booked with a partner from the app's links, as
+-- the partners' reports list them. Staff only: the app can't read or change them. Staff import a
+-- report into partner_report and run apply_partner_report(), or edit a row in Table Editor.
+-- A completed booking gives its member its points; a cancelled one takes them back.
+create table if not exists public.partner_bookings (
+  id bigint generated always as identity primary key,
+  partner text not null check (partner in ('agoda', 'booking', 'klook', 'kkday')),
+  booking_ref text not null check (char_length(booking_ref) between 1 and 100), -- the partner's booking number
+  kind text not null check (kind in ('stay', 'tour')),
+  tag text check (char_length(tag) <= 100),         -- the booking tag in the report (sub-id, label)
+  user_id uuid references public.profiles (id) on delete set null, -- the member, found from the tag
+  amount_myr numeric(12, 2) check (amount_myr >= 0), -- what the traveller paid, in ringgit
+  status text not null default 'pending' check (status in ('pending', 'completed', 'cancelled')),
+  points integer check (points >= 0),               -- from booking_points_rules when it's completed
+  note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (partner, booking_ref)
+);
+create index if not exists partner_bookings_by_user on public.partner_bookings (user_id);
+
+-- Points for a completed booking: flat + per_rm × ringgit paid (rounded down), at most max_points.
+-- Zero until the amount is decided with the monetisation plan; then edit it in Table Editor.
+-- A change counts for bookings completed after it.
+create table if not exists public.booking_points_rules (
+  kind text primary key check (kind in ('stay', 'tour')),
+  flat integer not null default 0 check (flat >= 0),
+  per_rm numeric(8, 4) not null default 0 check (per_rm >= 0),
+  max_points integer check (max_points >= 0),
+  updated_at timestamptz not null default now()
+);
+insert into public.booking_points_rules (kind) values ('stay'), ('tour') on conflict (kind) do nothing;
+
+-- A partner's report, imported by staff (Table Editor → partner_report → Insert → Import data from
+-- CSV). apply_partner_report() moves its rows into partner_bookings. Plain text, so any CSV imports;
+-- rows it can't use stay here with the reason in `problem`.
+create table if not exists public.partner_report (
+  id bigint generated always as identity primary key,
+  partner text, booking_ref text, kind text, tag text, amount_myr text, status text,
+  problem text
+);
+
+-- Each booking's points in the ledger (they add up to the booking's points).
+alter table public.points_ledger add column if not exists booking_id bigint references public.partner_bookings (id) on delete restrict;
+create index if not exists points_by_booking on public.points_ledger (booking_id) where booking_id is not null;
+alter table public.points_ledger drop constraint if exists points_ledger_booking_has_id;
+alter table public.points_ledger add constraint points_ledger_booking_has_id check ((reason = 'booking') = (booking_id is not null));
 
 -- Our Pick! (#50): food places the Miiuz team visited and recommends, listed with the owner's
 -- written consent. Staff add rows in Table Editor → our_picks (README → Our Pick!). Everyone,
@@ -253,6 +313,125 @@ drop trigger if exists our_picks_touch on public.our_picks;
 create trigger our_picks_touch before update on public.our_picks
   for each row execute function public.touch_updated_at();
 
+-- ---------- points for bookings (#8) ----------
+create or replace function public.booking_points(k text, amount numeric) returns integer
+language sql stable set search_path = public as $$
+  select coalesce((select least(coalesce(r.max_points, 2147483647), r.flat + floor(r.per_rm * coalesce(amount, 0)), 2147483647)::integer
+                   from public.booking_points_rules r where r.kind = k), 0);
+$$;
+
+-- Before a booking is saved: the member is the one with its tag (a member staff set by hand stays
+-- unless the tag matches someone), and its points are fixed when it's first completed.
+create or replace function public.prepare_partner_booking() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare m uuid;
+begin
+  if new.tag is not null and (tg_op = 'INSERT' or new.tag is distinct from old.tag) then
+    select id into m from public.profiles where booking_tag = new.tag;
+    if m is not null or (tg_op = 'UPDATE' and new.user_id is not distinct from old.user_id) then
+      new.user_id := m;
+    end if;
+  end if;
+  if new.status = 'completed' and new.points is null then
+    new.points := public.booking_points(new.kind, new.amount_myr);
+  end if;
+  new.updated_at := now();
+  return new;
+end $$;
+
+-- After a booking is saved: its member's points for it add up to its points while it's completed,
+-- and to 0 otherwise (pending, cancelled, no member). Only the difference is written, so saving or
+-- importing the same booking again never adds points twice.
+create or replace function public.sync_booking_points() returns trigger
+language plpgsql security definer set search_path = public as $$
+declare
+  target integer := case when new.status = 'completed' and new.user_id is not null then coalesce(new.points, 0) else 0 end;
+  have integer;
+  r record;
+begin
+  -- Points that went to someone else for this booking (its tag or member was corrected) go back.
+  -- Members being deleted are skipped: their points go with them.
+  for r in select l.user_id, sum(l.points)::integer as pts
+           from public.points_ledger l join public.profiles p on p.id = l.user_id
+           where l.booking_id = new.id and l.user_id is distinct from new.user_id
+           group by l.user_id having sum(l.points) <> 0 loop
+    insert into public.points_ledger (user_id, points, reason, booking_id, note)
+    values (r.user_id, -r.pts, 'booking', new.id, 'Moved to another member');
+  end loop;
+  if new.user_id is not null then
+    select coalesce(sum(points), 0)::integer into have from public.points_ledger
+    where booking_id = new.id and user_id = new.user_id;
+    if target <> have then
+      insert into public.points_ledger (user_id, points, reason, booking_id, note)
+      values (new.user_id, target - have, 'booking', new.id, initcap(new.status));
+    end if;
+  end if;
+  return null;
+end $$;
+drop trigger if exists partner_bookings_prepare on public.partner_bookings;
+create trigger partner_bookings_prepare before insert or update on public.partner_bookings
+  for each row execute function public.prepare_partner_booking();
+drop trigger if exists partner_bookings_points on public.partner_bookings;
+create trigger partner_bookings_points after insert or update on public.partner_bookings
+  for each row execute function public.sync_booking_points();
+revoke execute on function public.prepare_partner_booking() from public, anon, authenticated;
+revoke execute on function public.sync_booking_points() from public, anon, authenticated;
+
+-- Move an imported report from partner_report into partner_bookings. Run it in SQL Editor:
+--   select * from apply_partner_report();
+-- partner: agoda, booking, klook or kkday. kind: stay or tour. status: pending, completed or
+-- cancelled. amount_myr: ringgit paid ("RM1,234.50" is fine), may be empty.
+-- A status only moves forward (pending → completed or cancelled, completed → cancelled), so an
+-- older report run again can't undo a cancellation; edit the booking by hand for that.
+create or replace function public.apply_partner_report()
+returns table (added integer, changed integer, unchanged integer, problems integer)
+language plpgsql security definer set search_path = public as $$
+declare
+  r public.partner_report;
+  b public.partner_bookings;
+  p text; k text; st text; ref text; tg text; amt numeric; bad text;
+  a integer := 0; c integer := 0; n integer := 0;
+begin
+  update public.partner_report set problem = null where problem is not null;
+  for r in select * from public.partner_report order by id loop
+    p := lower(trim(r.partner)); k := lower(trim(r.kind)); st := lower(trim(r.status));
+    ref := trim(r.booking_ref); tg := nullif(trim(r.tag), ''); amt := null; bad := null;
+    if p is null or p not in ('agoda', 'booking', 'klook', 'kkday') then bad := 'partner must be agoda, booking, klook or kkday';
+    elsif k is null or k not in ('stay', 'tour') then bad := 'kind must be stay or tour';
+    elsif st is null or st not in ('pending', 'completed', 'cancelled') then bad := 'status must be pending, completed or cancelled';
+    elsif coalesce(ref, '') = '' or char_length(ref) > 100 then bad := 'booking_ref is missing or too long';
+    elsif nullif(trim(r.amount_myr), '') is not null then
+      if replace(regexp_replace(trim(r.amount_myr), '^(RM|MYR)\s*', '', 'i'), ',', '') ~ '^[0-9]+(\.[0-9]{1,2})?$' then
+        amt := replace(regexp_replace(trim(r.amount_myr), '^(RM|MYR)\s*', '', 'i'), ',', '')::numeric;
+      else bad := 'amount_myr must be ringgit, like 1234.50';
+      end if;
+    end if;
+    if bad is not null then
+      update public.partner_report set problem = bad where id = r.id;
+      continue;
+    end if;
+    select * into b from public.partner_bookings where partner = p and booking_ref = ref for update;
+    if not found then
+      insert into public.partner_bookings (partner, booking_ref, kind, tag, amount_myr, status)
+      values (p, ref, k, tg, amt, st);
+      a := a + 1;
+    else
+      st := case when b.status = 'cancelled' or st = 'pending' then b.status else st end;
+      if st <> b.status or (amt is not null and amt is distinct from b.amount_myr) or (b.tag is null and tg is not null) then
+        update public.partner_bookings
+        set status = st, amount_myr = coalesce(amt, b.amount_myr), tag = coalesce(b.tag, tg)
+        where id = b.id;
+        c := c + 1;
+      else
+        n := n + 1;
+      end if;
+    end if;
+    delete from public.partner_report where id = r.id;
+  end loop;
+  return query select a, c, n, (select count(*)::integer from public.partner_report);
+end $$;
+revoke execute on function public.apply_partner_report() from public, anon, authenticated;
+
 -- ---------- tiers ----------
 -- Tier for a number of points ever earned.
 create or replace function public.tier_for(points integer) returns text
@@ -260,13 +439,14 @@ language sql stable set search_path = public as $$
   select tier from public.member_tiers where min_points <= points order by min_points desc limit 1;
 $$;
 
--- The signed-in member's balance, points ever earned, tier and the next tier.
+-- The signed-in member's balance, points ever earned, tier and the next tier. Points ever earned:
+-- everything added, less booking points taken back after a cancellation (spending doesn't count).
 create or replace function public.my_status()
 returns table (balance integer, lifetime integer, tier text, next_tier text, next_at integer)
 language sql stable security definer set search_path = public as $$
   with s as (
     select coalesce(sum(points), 0)::int as balance,
-           coalesce(sum(points) filter (where points > 0), 0)::int as lifetime
+           coalesce(sum(points) filter (where points > 0 or reason = 'booking'), 0)::int as lifetime
     from public.points_ledger where user_id = auth.uid()
   )
   select s.balance, s.lifetime, public.tier_for(s.lifetime),
@@ -280,7 +460,7 @@ grant execute on function public.my_status() to authenticated;
 create or replace function public.my_tier_rank() returns smallint
 language sql stable security definer set search_path = public as $$
   select t.rank from public.member_tiers t
-  where t.tier = public.tier_for((select coalesce(sum(points) filter (where points > 0), 0)::int
+  where t.tier = public.tier_for((select coalesce(sum(points) filter (where points > 0 or reason = 'booking'), 0)::int
                                   from public.points_ledger where user_id = auth.uid()));
 $$;
 revoke execute on function public.my_tier_rank() from public, anon;
@@ -355,6 +535,13 @@ revoke all on public.our_picks from anon, authenticated;
 grant select (slug, city, name, names, area, address, lat, lng, blurb, dishes, price_range, halal, halal_body, halal_expires,
   hours, hours_note, pay, phone, photos, photo_credit, sponsored, checked_on, sort, updated_at)
   on public.our_picks to anon, authenticated;
+
+-- Points for bookings (#8): staff only. The app can't read or change partner bookings, reports or
+-- the points rules; members see their points in points_ledger.
+alter table public.partner_bookings enable row level security;
+alter table public.booking_points_rules enable row level security;
+alter table public.partner_report enable row level security;
+revoke all on public.partner_bookings, public.booking_points_rules, public.partner_report from anon, authenticated;
 
 -- ---------- first news item (edit or delete it in Table Editor) ----------
 insert into public.member_offers (kind, title, body)

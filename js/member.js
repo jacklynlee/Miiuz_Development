@@ -411,7 +411,7 @@
       </article>`).join("") : `<p class="hint">${esc(t("member.noOffers"))}</p>`;
 
     const history = M.ledger.length ? `<ul class="history">${M.ledger.map(x => `
-      <li><span>${esc(t(`member.r.${x.reason}`))}<small>${esc(date(x.created_at))}</small></span><b class="mono ${x.points < 0 ? "neg" : ""}">${x.points > 0 ? "+" : ""}${num(x.points)}</b></li>`).join("")}</ul>` : `<p class="hint">—</p>`;
+      <li><span>${esc(t(x.reason === "booking" && x.points < 0 ? "member.r.bookingBack" : `member.r.${x.reason}`))}<small>${esc(date(x.created_at))}</small></span><b class="mono ${x.points < 0 ? "neg" : ""}">${x.points > 0 ? "+" : ""}${num(x.points)}</b></li>`).join("")}</ul>` : `<p class="hint">—</p>`;
 
     const details = M.editing ? `
         <form id="m-details" class="m-form" novalidate>
