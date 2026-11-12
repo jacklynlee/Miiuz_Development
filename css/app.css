@@ -729,6 +729,38 @@ textarea { min-height: 64px; resize: vertical; }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
 
+/* ---------- My trip (#5) ---------- */
+.trip-form { display: flex; flex-direction: column; gap: 12px; }
+.trip-form h2 { font-family: var(--display); font-weight: 900; font-size: 21px; margin: 0; }
+.trip-form label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
+.trip-form .row > label { flex: 1 1 130px; }
+.trip-form input, .trip-form textarea { font: inherit; font-size: 16px; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; width: 100%; min-width: 0; }
+.trip-form input[type=date], .trip-form input[type=time] { font-family: var(--mono); font-variant-numeric: tabular-nums; min-height: 42px; }
+.trip-form .req { color: var(--hibiscus); }
+.trip-map { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px dashed var(--line); border-radius: 10px; }
+.trip-map > .btn { align-self: flex-start; }
+.trip-map .s-row { font: inherit; width: 100%; text-align: start; cursor: pointer; }
+.trip-pin { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--teal); font-weight: 600; font-size: 14px; }
+.trip-pin svg { width: 18px; height: 18px; flex: none; }
+.trip-pin .btn { margin-inline-start: auto; }
+.trip-list, .trip-past { display: flex; flex-direction: column; gap: 10px; }
+.trip-list .section-title { margin: 0; }
+.trip-past summary { cursor: pointer; font-weight: 700; padding: 6px 0; }
+.trip-item { display: flex; flex-direction: column; gap: 12px; }
+.trip-item.now { border-color: var(--teal); box-shadow: inset 3px 0 0 var(--teal); }
+[dir="rtl"] .trip-item.now { box-shadow: inset -3px 0 0 var(--teal); }
+.trip-top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: start; }
+.trip-top h3 { margin: 0; font-size: 17px; overflow-wrap: anywhere; }
+.trip-top p { margin: 0; font-size: 13px; color: var(--muted); }
+.trip-facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 0; font-size: 14px; }
+.trip-facts dt { color: var(--muted); }
+.trip-facts dd { margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+/* Hotel names, addresses and phone numbers are usually Latin: in RTL languages each keeps its own order. */
+.trip-facts dd, .trip-top h3, .sos-trip small { unicode-bidi: plaintext; }
+[dir="rtl"] .trip-facts dd, [dir="rtl"] .trip-top h3, [dir="rtl"] .sos-trip small { text-align: right; }
+.trip-empty { color: var(--muted); margin: 0; }
+#p-trip:empty { display: none; }
+
 /* iPhone zooms in on any field under 16px when it gets focus, and stays zoomed (#31).
    Last in the file, so it wins over smaller sizes set above. */
 @media (pointer: coarse) {

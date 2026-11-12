@@ -1,4 +1,4 @@
--- Miiuz Beyond Borders — membership, points and member offers.
+-- Miiuz Beyond Borders — membership, points, member offers and My trip bookings.
 -- Run once in Supabase → SQL Editor → New query → paste all → Run. Safe to run again.
 --
 -- Points rules (change the numbers in award_join_points if needed):
@@ -73,6 +73,23 @@ create table if not exists public.member_offers (
   active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+-- My trip (#5): a member's stays and car tours, so they're on every device the member signs in
+-- on. Only that member can read or change them. Guests' bookings stay on their phone. `details`
+-- holds only the fields the app shows (js/trip.js); passport and ID numbers are never asked for.
+-- The app writes updated_at (newest edit wins when two devices change the same booking).
+-- These bookings never earn points (#8).
+create table if not exists public.trip_bookings (
+  id uuid primary key,
+  user_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
+  kind text not null check (kind in ('stay', 'tour')),
+  details jsonb not null default '{}'::jsonb check (jsonb_typeof(details) = 'object' and pg_column_size(details) <= 8192),
+  starts_on date not null,
+  ends_on date,
+  updated_at timestamptz not null default now(),
+  created_at timestamptz not null default now()
+);
+create index if not exists trip_bookings_by_user on public.trip_bookings (user_id, starts_on);
 
 -- ---------- points ----------
 create or replace function public.new_referral_code() returns text
@@ -236,6 +253,23 @@ create policy "members read live offers" on public.member_offers
     and (select t.rank from public.member_tiers t where t.tier = min_tier) <= public.my_tier_rank()
   );
 revoke insert, update, delete on public.member_offers from anon, authenticated;
+
+-- My trip: each member reads and changes only their own bookings. Guests can't touch the table.
+alter table public.trip_bookings enable row level security;
+drop policy if exists "members read own bookings" on public.trip_bookings;
+create policy "members read own bookings" on public.trip_bookings
+  for select to authenticated using ((select auth.uid()) = user_id);
+drop policy if exists "members add own bookings" on public.trip_bookings;
+create policy "members add own bookings" on public.trip_bookings
+  for insert to authenticated with check ((select auth.uid()) = user_id);
+drop policy if exists "members change own bookings" on public.trip_bookings;
+create policy "members change own bookings" on public.trip_bookings
+  for update to authenticated using ((select auth.uid()) = user_id) with check ((select auth.uid()) = user_id);
+drop policy if exists "members delete own bookings" on public.trip_bookings;
+create policy "members delete own bookings" on public.trip_bookings
+  for delete to authenticated using ((select auth.uid()) = user_id);
+revoke all on public.trip_bookings from anon;
+grant select, insert, update, delete on public.trip_bookings to authenticated;
 
 -- ---------- first news item (edit or delete it in Table Editor) ----------
 insert into public.member_offers (kind, title, body)
