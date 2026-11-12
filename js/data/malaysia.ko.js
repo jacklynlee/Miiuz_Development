@@ -384,7 +384,7 @@
         adapter: "G타입(영국식) 어댑터",
         pay: "해외 결제 되는 카드(Visa/Mastercard) 또는 카카오페이·네이버페이 해외 결제 설정",
         esim: "eSIM 구매 또는 공항에서 유심 구매 계획",
-        hotel: "Miiuz BB에 호텔 주소 저장(도구 → 기사님께 보여주기)",
+        hotel: "Miiuz BB에 호텔 주소 저장(내 여행 → 내 숙소)",
       } },
       landed: { title: "도착 후", items: {
         online: "유심/eSIM 개통, 인터넷 확인",

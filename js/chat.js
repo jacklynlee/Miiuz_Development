@@ -102,7 +102,7 @@
       home, rate: r ? (r >= 100 ? r.toFixed(0) : r.toFixed(3)) : null, rateLive: MBB.fx.live,
       cityName: MBB.C.cities[plan.city].en,
       plan,
-      hotel: MBB.store.get("hotel", ""),
+      hotel: MBB.trip.whereText(), // the current stay, or the hotel typed in My trip
     });
   }
 

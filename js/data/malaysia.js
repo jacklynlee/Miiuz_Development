@@ -642,7 +642,7 @@
         { id: "adapter", zh: "英标三孔转换插头（G 型）", en: "Type G (UK) plug adapter" },
         { id: "pay", zh: "支付宝 / 微信开通境外支付，或带一张 Visa / 银联卡", en: "A Visa or Mastercard (and your bank told about the trip), or Alipay/WeChat Pay set up for abroad" },
         { id: "esim", zh: "买好 eSIM，或计划在机场买 SIM 卡", en: "eSIM bought, or plan to buy a SIM at the airport" },
-        { id: "hotel", zh: "把酒店地址存进 Miiuz BB（工具 → 给司机看）", en: "Hotel address saved in Miiuz BB (Tools → Show the driver)" },
+        { id: "hotel", zh: "把酒店地址存进 Miiuz BB（我的行程 → 我住的地方）", en: "Hotel address saved in Miiuz BB (My trip → Where I'm staying)" },
       ] },
       { id: "landed", title: { zh: "落地后", en: "After landing" }, items: [
         { id: "online", zh: "开通 SIM 卡或 eSIM，确认能上网", en: "SIM or eSIM working" },
