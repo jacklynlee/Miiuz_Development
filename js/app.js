@@ -2,9 +2,10 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
-  const VIEWS = ["home", "explore", "guide", "plan", "trip", "tools", "ask", "member", "search", "place", "credits"];
+  const VIEWS = ["home", "explore", "guide", "plan", "trip", "tools", "ask", "member", "search", "place", "credits", "stays", "tours"];
   // Screens without a tab of their own light up the tab they belong to (#49).
-  const TAB_OF = { search: "explore", place: "explore", plan: "trip" }; // the day planner is part of My trip (#56)
+  // The day planner is part of My trip (#56); Stays and Car tours are part of Explore (#4, #10).
+  const TAB_OF = { search: "explore", place: "explore", stays: "explore", tours: "explore", plan: "trip" };
   let route = { view: "home" }, pendingScroll = null, moves = 0;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
@@ -25,6 +26,8 @@
     if (route.view === "explore") MBB.explore.render();
     if (route.view === "guide") MBB.guide.render(route.sub);
     if (route.view === "trip") MBB.trip.render();
+    if (route.view === "stays") MBB.book.renderStays();
+    if (route.view === "tours") MBB.book.renderTours();
     if (route.view === "member") { MBB.member.hideNudge(false); MBB.member.render(); }
     if (route.view === "search") MBB.search.render();
     if (route.view === "place") MBB.place.render(route.sub);
@@ -314,6 +317,7 @@
     buildLangSelect();
 
     MBB.trip.init(); // before the planner and members, which use it
+    MBB.book.init();
     MBB.picks.init(); // before the first screen, so a shared #place-pick-… link finds its listing
     MBB.planner.init();
     MBB.tools.init();

@@ -259,7 +259,7 @@
     const v = view();
     if (!v) return;
     const form = $("#tf", v);
-    if (form && editing) editing.draft = fromForm(form); // keep what was typed (e.g. language change)
+    if (form && editing && !editing.fresh) editing.draft = fromForm(form); // keep what was typed (e.g. language change)
     const b = editing ? editing.draft || list.find(x => x.id === editing.id) || {} : null;
     v.innerHTML = `
       <div class="view-head"><h1>${esc(t("trip.title"))}</h1><p>${esc(t("trip.lead"))}</p></div>
@@ -272,11 +272,21 @@
         </div>
         ${editing ? formHtml(editing.kind, b) : ""}
         <div class="trip-list" id="t-lists">${listsHtml()}</div>
+        <div class="quick" id="trip-find">
+          <a href="#stays"><span class="badge-ic">${icon("bed")}</span><span><b>${esc(t("book.findStay"))}</b><small>${esc(t("stays.homeD"))}</small></span>${icon("next", "next")}</a>
+          <a href="#tours"><span class="badge-ic">${icon("car")}</span><span><b>${esc(t("book.findTour"))}</b><small>${esc(t("tours.homeD"))}</small></span>${icon("next", "next")}</a>
+        </div>
       </section>
       <div class="quick" id="trip-plan"><a href="#plan"><span class="badge-ic">${icon("plan")}</span>
         <span><b>${esc(t("home.q.plan"))}</b><small>${esc(t("home.q.planD"))}</small></span>${icon("next", "next")}</a></div>
       ${checkHtml()}`;
     if (focusWhere) { focusWhere = false; $("#trip-hotel", v)?.focus({ preventScroll: true }); }
+    if (editing?.fresh) { // opened from Stays or Car tours
+      editing.fresh = false;
+      const f = $("#tf", v);
+      if (editing.kind === "tour") f.elements.pickup.dataset.auto = f.elements.pickup.value;
+      $("input[name=name]", f).focus({ preventScroll: true });
+    }
   }
   // Bookings changed (saved, deleted, synced): redraw the lists, and where I'm staying unless the
   // traveller is typing there, so an open form or the hotel box keeps its text.
@@ -294,14 +304,18 @@
     return b;
   }
 
+  // A new booking: a tour starts today, picked up from where the traveller stays that day.
+  function newDraft(kind, extra = {}) {
+    const draft = { ...extra, kind };
+    if (kind === "tour") {
+      if (!draft.date) draft.date = today();
+      if (draft.pickup === undefined) Object.assign(draft, pickupFrom(stayOn(draft.date)));
+    }
+    return draft;
+  }
   function open(kind, id = null) {
     found = [];
-    if (id) { editing = { kind, id }; }
-    else {
-      const draft = { kind };
-      if (kind === "tour") { draft.date = today(); Object.assign(draft, pickupFrom(stayOn(draft.date))); }
-      editing = { kind, draft };
-    }
+    editing = id ? { kind, id } : { kind, draft: newDraft(kind) };
     render();
     const form = $("#tf");
     if (!id && kind === "tour") form.elements.pickup.dataset.auto = form.elements.pickup.value; // filled in for them, not typed
@@ -309,6 +323,12 @@
     $("input[name=name]", form).focus({ preventScroll: true });
   }
   function close() { editing = null; found = []; render(); }
+  // Stays and Car tours: "Booked one? Add it to My trip", with what they already know filled in.
+  function add(kind, extra) {
+    found = [];
+    editing = { kind, draft: newDraft(kind, extra), fresh: true };
+    MBB.go("trip", "tf");
+  }
 
   // A tour's pickup defaults to where the traveller stays that day.
   function pickupFrom(s) {
@@ -544,7 +564,7 @@
       document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") queueSync(); });
     },
     render,
-    homeHtml, sosHtml, fromStay, base, showDriver, whereText, progress,
+    homeHtml, sosHtml, fromStay, base, showDriver, whereText, progress, add, today, pickupFrom,
     stayOn, list: () => [...list],
   };
 })();

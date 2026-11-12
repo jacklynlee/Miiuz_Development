@@ -293,6 +293,15 @@
     };
   }
 
+  // Today's plan in English, for the message to a driver (Car tours, #10).
+  function brief() {
+    if (!current?.stops?.length) return null;
+    return {
+      city: MBB.state.city, start: fmt(win.start), end: fmt(win.end), minutes: win.end - win.start, group: prefs.group,
+      stops: current.stops.map(s => `${fmt(s.start)}–${fmt(s.end)}  ${stopNames(s).en}`),
+    };
+  }
+
   function init() {
     buildForm();
     $("#prefs").addEventListener("submit", e => { e.preventDefault(); generate(); });
@@ -303,6 +312,7 @@
     $("#p-copy").addEventListener("click", () => {
       MBB.copy(planText()).then(ok => MBB.copied(ok, t("plan.copied")));
     });
+    $("#p-car").addEventListener("click", e => { e.preventDefault(); MBB.book.fromPlan(); });
     $("#p-ask").hidden = !MBB.features.ask;
     $("#p-ask").addEventListener("click", e => { e.preventDefault(); MBB.chat.prefill(""); });
     MBB.on("lang", () => { buildForm(); if (current) render(current); });
@@ -318,5 +328,5 @@
     generate();
   }
 
-  MBB.planner = { init, applyAI, snapshot, generate };
+  MBB.planner = { init, applyAI, snapshot, generate, brief };
 })();

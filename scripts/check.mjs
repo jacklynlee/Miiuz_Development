@@ -68,6 +68,13 @@ for (const p of C.pois) if (!C.photos.poi[p.id]?.length) fail(`place ${p.id}: no
 const dishes = C.guide.find(g => g.id === "food").dishes;
 if (C.photos.dishes.length !== dishes.length || C.dishNames.length !== dishes.length) fail("photos.dishes / dishNames must match the Food guide's dishes");
 if (!MAP.land || !MAP.near || !(MAP.k > 0)) fail("map data missing (run scripts/build-map.mjs)");
+// Stays and car tours (#4, #10): every city and destination can be searched on the partners' sites.
+for (const id of [...Object.keys(C.cities), ...C.destinations.map(d => d.id)]) {
+  const b = C.book[id];
+  if (!b || !/, Malaysia$/.test(b.booking || "")) fail(`book.${id}: no Booking.com place`);
+  else if (b.agoda != null && !(Number.isInteger(b.agoda) && b.agoda > 0)) fail(`book.${id}: Agoda city id must be a whole number`);
+}
+for (const id of Object.keys(C.book)) if (!C.cities[id] && !dids.has(id)) fail(`book.${id}: not a city or destination`);
 
 // Every literal t("key") in the app must exist (dynamic keys like t(`ptype.${k}`) are checked by prefix).
 for (const f of readdirSync(path.join(root, "js")).filter(f => f.endsWith(".js"))) {
