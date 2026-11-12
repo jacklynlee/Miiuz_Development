@@ -5,12 +5,12 @@ country. It starts with **Malaysia**: hand-written day plans for Kuala Lumpur, P
 20 more destinations from Langkawi to Kuching, and search for any place in the country. It is
 built so more countries can be added.
 
-Live at **https://www.miiuz-bb.com**.
+Live at **https://www.miiuz-bb.com**. 
 
 It grew out of the original *Miiuz Beyond Borders* half-day planner artifact: the planner is
 still here, now alongside everything else a visitor needs.
 
-## What's inside 
+## What's inside
 
 | Tab | What it does |
 |---|---|
