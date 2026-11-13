@@ -225,6 +225,7 @@
       </div>
       ${P.kind === "city" ? `<div class="actions"><button type="button" class="btn btn-ai btn-sm" id="pl-plan">${icon("plan")}${esc(t("place.planCity"))}</button></div>` : ""}
       ${P.kind === "poi" ? `<div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="pl-plan">${icon("plan")}${esc(t("place.planCity"))} · ${esc(P.area)}</button></div>` : ""}
+      ${MBB.book.canStayNear(P) ? `<div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="pl-stays">${icon("bed")}${esc(t("place.stays"))}</button></div>` : ""}
       ${P.kind === "pick" ? MBB.picks.pageHtml(P.pick) : ""}
 
       <section class="card pl-map">
@@ -263,6 +264,7 @@
       MBB.copy(location.href).then(ok => MBB.copied(ok, t("member.linkCopied")));
     });
     $("#pl-plan")?.addEventListener("click", () => { MBB.setCity(P.kind === "city" ? P.id : P.city); MBB.go("plan"); });
+    $("#pl-stays")?.addEventListener("click", () => MBB.book.stayNear(P));
     $("#pl-locate").addEventListener("click", () => {
       const out = $("#pl-dist");
       out.textContent = t("sos.locating");

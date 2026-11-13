@@ -1,6 +1,6 @@
 /* Miiuz Beyond Borders — Explore tab (#49): where to go, what to eat, what to bring home, when to go.
  * Cards open the place page or the Guide topic. Our Pick! (#50) food places follow the food to try.
- * Later: stays (#4), car tours (#10). */
+ * Stays (#4) and Car tours (#10) open the partners' search: js/book.js. */
 (function () {
   const MBB = window.MBB;
   const { $, esc, t, L, icon } = MBB;
@@ -24,6 +24,14 @@
         <p class="hint">${esc(t("explore.lead"))}</p>
         <div class="mymap-wrap">${MBB.maps.overview()}</div>
         <div class="strip">${C.destinations.map(MBB.place.destCard).join("")}</div>
+      </section>
+
+      <section>
+        <div class="section-title"><h2>${esc(t("explore.book"))}</h2></div>
+        <div class="quick">
+          <a href="#stays"><span class="badge-ic">${icon("bed")}</span><span><b>${esc(t("book.findStay"))}</b><small>${esc(t("stays.homeD"))}</small></span>${icon("next", "next")}</a>
+          <a href="#tours"><span class="badge-ic">${icon("car")}</span><span><b>${esc(t("book.findTour"))}</b><small>${esc(t("tours.homeD"))}</small></span>${icon("next", "next")}</a>
+        </div>
       </section>
 
       <section>

@@ -17,6 +17,7 @@ still here, now alongside everything else a visitor needs.
 | **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, "just landed" shortcuts, a link to Explore, checklist progress |
 | **Explore** | A map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, and when to go (weather, festivals). Search and place pages belong to this tab (#49) |
 | **Our Pick!** (Explore, city pages, search) | Food places the Miiuz team visited and recommends, listed with the owner's consent: what to order and for how much, halal status, open now, how to pay, the owner's photos, directions and the driver card (#50). Listings live in Supabase, so staff add them without a release |
+| **Stays** and **Car tours** (`#stays`, `#tours`, part of Explore) | Choose the place, dates and group once, then search Agoda and Booking.com (stays) or Klook and KKday (a private car with a driver) with them filled in. Travellers book and pay on the partner's site (#4, #10). Place pages have "Find a stay nearby", which searches Booking.com around that spot. Car tours writes an English message for the driver with the pickup (that day's stay in My trip, if it's near) and the day's plan; the day planner's "Book a car for this plan" opens it filled in. "Booked one? Add it to My trip" starts the booking with what's already known. Plain links to the partners until they approve Miiuz, then affiliate links (`MIIUZ_LINK_*`, see Deploy) |
 | **Search** | Type to search the app's own places, guide, dishes, souvenirs and phrases instantly (offline, in every language); press Search to find *any* place in Malaysia on OpenStreetMap |
 | **Place pages** | Photo, what it is (plus a Wikipedia summary in the traveller's language), opening hours / phone / website where known, street map, directions (Google Maps, Waze), "show the driver" card, distance from your city or from you, nearby Miiuz picks and destinations, nearby hospitals / police / ATMs, one-tap questions for Miiuz |
 | **Guide** | Photo galleries of 11 must-try dishes and 12 souvenirs, and 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
@@ -117,6 +118,12 @@ npm run check          # syntax + data + translation sanity checks
    - `MIIUZ_ALLOWED_ORIGINS` to only accept AI requests from your own domain (recommended)
    - `MIIUZ_RATE_LIMIT` / `MIIUZ_TRANSLATE_LIMIT` per-IP request limits
    - `MIIUZ_MIN_VERSION` to force older copies to update (rarely; see Updates)
+   - `MIIUZ_LINK_AGODA`, `MIIUZ_LINK_BOOKING`, `MIIUZ_LINK_KLOOK`, `MIIUZ_LINK_KKDAY`: affiliate
+     link templates for Stays and Car tours, set once that partner approves Miiuz. `{url}` is the
+     partner's own search address (`{url_enc}` the same, encoded) and `{tag}` the member's
+     booking tag, or `guest`. For example `{url}&cid=123456&tag={tag}`, or
+     `https://partner.example/track?id=123&to={url_enc}`. A malformed template is ignored (plain
+     link). Redeploy after changing one. With none set, the commission note isn't shown
 4. Check that AI is on: open `https://your-app/api/chat`. It must say `"configured":true`. If it
    says `false`, the key is missing from that environment, or you haven't redeployed since adding
    it (a new variable only reaches new deployments).
@@ -381,6 +388,7 @@ js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
 js/explore.js · guide.js · planner.js · tools.js · chat.js · app.js   the screens
 js/trip.js              My trip: stays and car tours, kept on the phone and in members' accounts
+js/book.js              Stays and Car tours: partner searches with the place, dates and group filled in
 js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo titles and pins
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps
@@ -409,6 +417,11 @@ Rebuild the single-file claude.ai preview with `npm run build:preview`.
 Facts were checked in October 2026 (visa rules, MDAC, KLIA Ekspres fares, SST, payments,
 emergency numbers). Rules and prices change; the app tells travellers to confirm with
 official sources. Update `checked` in `js/data/malaysia.js` when you re-verify.
+
+Partner searches for Stays and Car tours (`book` in `js/data/malaysia.explore.js`): Agoda city
+ids and the names Booking.com, Klook and KKday search for, checked in November 2026. Every city
+and destination needs one (`npm run check`). After adding a destination, find its Agoda id from
+the Agoda city page and check that the search opens the right place on each site.
 
 ---
 

@@ -764,6 +764,25 @@ textarea { min-height: 64px; resize: vertical; }
 .trip-where-at p { margin: 2px 0 0; overflow-wrap: anywhere; white-space: pre-line; }
 .trip-where > .hint { margin: 0; }
 
+/* ---------- Stays and Car tours (#4, #10) ---------- */
+.book-form label:not(.toggle) { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--muted); min-width: 0; }
+.book-form input[type=date] { font: inherit; font-size: 16px; font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; width: 100%; min-width: 0; min-height: 42px; }
+.book-form select, .book-form input { font-size: 16px; }
+.book-form fieldset { gap: 0; }
+.book-near { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 600; color: var(--teal); }
+.book-near svg { width: 18px; height: 18px; flex: none; }
+.book-near .btn { margin-inline-start: auto; }
+#bs-near:empty { display: none; }
+.book-go { display: flex; flex-direction: column; gap: 8px; }
+.book-go .btn { flex: 1 1 180px; }
+.hint.warn { color: var(--hibiscus); font-weight: 600; }
+.book-after { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; border-color: var(--teal); }
+.book-after b { display: block; }
+.book-after small { display: block; color: var(--muted); font-size: 13px; }
+.book-msg { margin: 0; padding: 12px; background: var(--surface-2); border-radius: 10px; font: inherit; font-size: 14px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; text-align: left; }
+.book-tips { margin: 0; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+#trip-find { margin-top: 4px; }
+
 /* ---------- Our Pick! (#50) ---------- */
 .pick-card { position: relative; display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; color: var(--fg); text-decoration: none; min-width: 0; }
 .pick-card:hover { border-color: var(--teal); }

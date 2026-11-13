@@ -58,10 +58,14 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
   listings (#50) are not in the repo: staff add them in Supabase (`our_picks`), and the app reads
   them through `api/picks.mjs` (`js/picks.js`).
 - UI strings: `js/i18n.js`. Language list (BCP 47): `js/locales.js`.
-- Screens: `js/explore.js`, `guide.js`, `planner.js`, `trip.js`, `tools.js`, `chat.js`,
+- Screens: `js/explore.js`, `guide.js`, `planner.js`, `trip.js`, `book.js`, `tools.js`, `chat.js`,
   `search.js`, `place.js`, `member.js`, `app.js` (routing by `#hash`: home, explore, guide, plan,
-  trip, tools, ask, search, place, member, credits). Tabs: Home, Explore, Guide, My trip, Tools
-  (#49, #56). The day planner (`#plan`) belongs to the My trip tab.
+  trip, stays, tours, tools, ask, search, place, member, credits). Tabs: Home, Explore, Guide,
+  My trip, Tools (#49, #56). The day planner (`#plan`) belongs to the My trip tab; Stays and Car
+  tours (`#stays`, `#tours`, `js/book.js`) belong to Explore.
+- Stays and Car tours (#4, #10) link out to Agoda, Booking.com, Klook and KKday; travellers book
+  on their site. Affiliate templates come from `MIIUZ_LINK_*` in Vercel (`api/config.mjs`).
+  Partner place ids and search names: `book` in `js/data/malaysia.explore.js`.
 
 ## Rules for changes
 
