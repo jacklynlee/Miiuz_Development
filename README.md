@@ -159,12 +159,18 @@ password) and get:
 
 - **+10 points** when they join, and **+10 points** for every friend who joins with their
   invite link (`https://your-app/?ref=CODE`). The friend gets their own +10 too.
+- **Points for bookings** (#8) made through the app's partner links (Stays, Car tours), once the
+  partner reports the stay or tour completed. They're taken back if the partner reports a
+  cancellation. The amount is set in `booking_points_rules`, and it's 0 until decided. Bookings
+  that travellers type into My trip themselves never earn points. See
+  [Points for bookings](#points-for-bookings-staff).
 - **Details at sign-up:** nationality (required), and optionally a phone number (with a
   WhatsApp/SMS offers opt-in) and an emergency contact, which members can call in one tap from
   the SOS screen. National ID and passport numbers are deliberately **not** collected. Members
   can view and edit their details any time; already-registered members use the **Sign in** tab.
 - **Tiers** by points ever earned: Basic (0) → Silver (1,000) → Gold (5,000) → Platinum (10,000).
-  Spending points never lowers a tier, and neither points nor tiers expire.
+  Spending points never lowers a tier, and neither points nor tiers expire. Taking back a
+  cancelled booking's points can.
 - **Member offers, goodies and news**, optionally limited to a tier and above.
 
 Guests are invited to join after 5 minutes of use, then again after 10, 20, 40 minutes (at most
@@ -260,6 +266,57 @@ Marketing emails and WhatsApp/SMS offers go only to members who ticked the opt-i
 notice in Malay and English that says what you collect and why; have one reviewed before
 launching membership. Phone numbers and emergency contacts are visible only to the member
 and to you (the Supabase project owner).
+
+### Points for bookings (staff)
+
+Each member has a random `booking_tag` (in `profiles`). It's 16 letters and digits that say
+nothing about who they are. Once a partner approves Miiuz and its `MIIUZ_LINK_…` template
+includes `{tag}`, a signed-in member's partner links carry their tag, and guests' links carry
+`guest`. Partners list the tag in their booking reports (as a sub-id or label), and that's how
+a booking finds its member. Mention the tag in the privacy notice.
+
+**Set the amount** (Table Editor → `booking_points_rules`, one row each for `stay` and `tour`):
+points = `flat` + `per_rm` × ringgit paid, rounded down, at most `max_points` (empty = no
+limit). For example, flat 50 and per_rm 0.1 gives 80 points for a RM300 stay. A change counts
+for bookings completed after it.
+
+**Import a report** (each month, or whenever a partner sends one):
+
+1. Download the partner's report and make a CSV with these columns: `partner` (`agoda`,
+   `booking`, `klook` or `kkday`), `booking_ref` (the partner's booking number), `kind` (`stay` or
+   `tour`), `tag` (the sub-id or label), `amount_myr` (ringgit paid; `RM1,234.50` is fine; it may
+   be empty) and `status`. Use `completed` only once the partner confirms the stay or tour
+   happened (often "approved", "paid" or "stayed" in their report), `cancelled` for cancellations,
+   and `pending` for anything else.
+2. Table Editor → `partner_report` → Insert → Import data from CSV.
+3. SQL Editor: `select * from apply_partner_report();`. It shows how many bookings were added,
+   changed and unchanged, and how many rows have problems. Good rows leave `partner_report`.
+   Rows it couldn't use stay there with the reason in `problem`. Fix them and run it again, or
+   delete them.
+
+Importing the same report twice never adds points twice, because each partner booking number is
+one row. A status only moves forward (pending → completed or cancelled, completed → cancelled),
+so an older report can't undo a cancellation.
+
+```sql
+-- A member's bookings and points
+select b.partner, b.booking_ref, b.kind, b.status, b.amount_myr, b.points, b.updated_at
+from partner_bookings b join auth.users u on u.id = b.user_id
+where u.email = 'member@example.com' order by b.created_at desc;
+
+-- Bookings with no member (guests, or a tag that matched nobody)
+select partner, booking_ref, tag, status from partner_bookings where user_id is null;
+
+-- The partner was wrong about a cancellation: complete it again by hand (points come back)
+update partner_bookings set status = 'completed' where partner = 'agoda' and booking_ref = '123456789';
+
+-- Completed before the points rules were set: work out their points from today's rules
+update partner_bookings set points = null where status = 'completed' and points = 0;
+```
+
+Changing a booking's `status`, `points`, `tag` or `user_id` by hand keeps the member's points
+right: the database writes the difference to `points_ledger`. A booking with points can't be
+deleted; mark it `cancelled` instead.
 
 ### Our Pick! listings (staff)
 

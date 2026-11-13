@@ -309,6 +309,8 @@
     "member.r.referral": { zh: "朋友通过你的链接加入", en: "A friend joined with your link", ko: "친구가 내 링크로 가입", ja: "友だちがあなたのリンクから登録" },
     "member.r.adjustment": { zh: "积分奖励", en: "Bonus points", ko: "보너스 포인트", ja: "ボーナスポイント" },
     "member.r.redeem": { zh: "积分兑换", en: "Points redeemed", ko: "포인트 사용", ja: "ポイント交換" },
+    "member.r.booking": { zh: "通过 Miiuz 预订", en: "Booked through Miiuz", ko: "Miiuz에서 예약", ja: "Miiuzから予約" },
+    "member.r.bookingBack": { zh: "预订已取消或更改", en: "Booking cancelled or changed", ko: "예약 취소 또는 변경", ja: "予約のキャンセル・変更" },
     "member.settingsTitle": { zh: "账户设置", en: "Account", ko: "계정", ja: "アカウント" },
     "member.signOut": { zh: "退出登录", en: "Sign out", ko: "로그아웃", ja: "ログアウト" },
 
