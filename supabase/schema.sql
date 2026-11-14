@@ -125,8 +125,9 @@ create table if not exists public.partner_bookings (
 create index if not exists partner_bookings_by_user on public.partner_bookings (user_id);
 
 -- Points for a completed booking: flat + per_rm × ringgit paid (rounded down), at most max_points.
--- Zero until the amount is decided with the monetisation plan; then edit it in Table Editor.
--- A change counts for bookings completed after it.
+-- To start with (November 2026): 20 + 1 per RM, at most 1,000 per booking, so a RM300 stay earns
+-- 320. Change it in Table Editor; a change counts for bookings completed after it. Running this
+-- file again never changes rules that were edited. To pause booking points, set max_points to 0.
 create table if not exists public.booking_points_rules (
   kind text primary key check (kind in ('stay', 'tour')),
   flat integer not null default 0 check (flat >= 0),
@@ -134,7 +135,11 @@ create table if not exists public.booking_points_rules (
   max_points integer check (max_points >= 0),
   updated_at timestamptz not null default now()
 );
-insert into public.booking_points_rules (kind) values ('stay'), ('tour') on conflict (kind) do nothing;
+insert into public.booking_points_rules (kind, flat, per_rm, max_points)
+values ('stay', 20, 1, 1000), ('tour', 20, 1, 1000) on conflict (kind) do nothing;
+-- Databases made before there was a starting amount: rules still at their first all-zero setting.
+update public.booking_points_rules set flat = 20, per_rm = 1, max_points = 1000, updated_at = now()
+where flat = 0 and per_rm = 0 and max_points is null;
 
 -- A partner's report, imported by staff (Table Editor → partner_report → Insert → Import data from
 -- CSV). apply_partner_report() moves its rows into partner_bookings. Plain text, so any CSV imports;
