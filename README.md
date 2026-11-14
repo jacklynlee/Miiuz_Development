@@ -161,7 +161,8 @@ password) and get:
   invite link (`https://your-app/?ref=CODE`). The friend gets their own +10 too.
 - **Points for bookings** (#8) made through the app's partner links (Stays, Car tours), once the
   partner reports the stay or tour completed. They're taken back if the partner reports a
-  cancellation. The amount is set in `booking_points_rules`, and it's 0 until decided. Bookings
+  cancellation. To start with, 20 points plus 1 per RM paid, at most 1,000 per booking (a RM300
+  stay earns 320), set in `booking_points_rules`. Bookings
   that travellers type into My trip themselves never earn points. See
   [Points for bookings](#points-for-bookings-staff).
 - **Details at sign-up:** nationality (required), and optionally a phone number (with a
@@ -277,8 +278,9 @@ a booking finds its member. Mention the tag in the privacy notice.
 
 **Set the amount** (Table Editor → `booking_points_rules`, one row each for `stay` and `tour`):
 points = `flat` + `per_rm` × ringgit paid, rounded down, at most `max_points` (empty = no
-limit). For example, flat 50 and per_rm 0.1 gives 80 points for a RM300 stay. A change counts
-for bookings completed after it.
+limit). It starts at flat 20, per_rm 1 and max_points 1,000 for both, so a RM300 stay earns 320
+points. A change counts for bookings completed after it. To pause booking points, set
+`max_points` to 0. Running `schema.sql` again never changes rules you've edited.
 
 **Import a report** (each month, or whenever a partner sends one):
 
