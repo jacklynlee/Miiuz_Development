@@ -133,10 +133,12 @@
     ];
   }
 
-  function goHtml(list) {
+  // `hint`: what the partners' search can't take from here (Car tours: everything but the place).
+  function goHtml(list, hint = "") {
     const off = navigator.onLine === false;
     return `<div class="actions">${list.map(([p, url]) => `<a class="btn btn-main" data-partner="${p}" href="${esc(out(p, url))}" target="_blank" rel="noopener">${icon("external")}${esc(t("book.searchOn", { p: isolate(NAMES[p]) }))}</a>`).join("")}</div>
       ${off ? `<p class="hint warn">${esc(t("book.offline"))}</p>` : ""}
+      ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}
       <p class="hint">${esc(t("book.note"))}</p>
       ${list.some(([p]) => links[p]) ? `<p class="hint">${esc(t("book.commission"))}</p>` : ""}`;
   }
@@ -242,7 +244,7 @@
     return lines.join("\n");
   }
   function chip(value, title, sub) {
-    return `<div class="chip"><input type="radio" name="len" id="bt-len-${value}" value="${value}"${T.len === value ? " checked" : ""}><label for="bt-len-${value}">${esc(t(title))}<i>${esc(t(sub))}</i></label></div>`;
+    return `<div class="chip"><input type="radio" name="len" form="bt-form" id="bt-len-${value}" value="${value}"${T.len === value ? " checked" : ""}><label for="bt-len-${value}">${esc(t(title))}<i>${esc(t(sub))}</i></label></div>`;
   }
   function renderTours() {
     const v = $("#view-tours");
@@ -253,24 +255,24 @@
       <div class="view-head"><h1>${esc(t("tours.title"))}</h1><p>${esc(t("tours.lead"))}</p></div>
       <form class="panel book-form" id="bt-form" autocomplete="off" novalidate>
         <label for="bt-where">${esc(t("book.where"))}${selectHtml("bt-where", T.where, true)}</label>
+      </form>
+      <section class="book-go" id="bt-go">${goHtml(tourLinks(T), t("tours.searchHint"))}</section>
+      <section class="card book-after" id="bt-after" aria-live="polite"${opened.tour ? "" : " hidden"}>${afterHtml("tour")}</section>
+      <section class="card tool book-form" id="bt-day">
+        <h2>${icon("copy")}${esc(t("tours.msgTitle"))}</h2>
+        <p>${esc(t("tours.msgHint"))}</p>
         <div class="row">
-          <label for="bt-date">${esc(t("trip.f.date"))}<input type="date" id="bt-date" name="date" value="${T.date}" min="${today()}" max="${addDays(today(), 364)}" required></label>
-          <label for="bt-people">${esc(t("tours.people"))}<input type="number" inputmode="numeric" id="bt-people" name="people" min="1" max="15" step="1" value="${T.people}"></label>
+          <label for="bt-date">${esc(t("trip.f.date"))}<input type="date" form="bt-form" id="bt-date" name="date" value="${T.date}" min="${today()}" max="${addDays(today(), 364)}" required></label>
+          <label for="bt-people">${esc(t("tours.people"))}<input type="number" form="bt-form" inputmode="numeric" id="bt-people" name="people" min="1" max="15" step="1" value="${T.people}"></label>
         </div>
         <fieldset><legend>${esc(t("tours.length"))}</legend>
           <div class="chips">${chip("half", "tours.half", "tours.halfD")}${chip("full", "tours.full", "tours.fullD")}</div>
         </fieldset>
-        <label for="bt-lang">${esc(t("tours.lang"))}<select id="bt-lang" name="lang">
+        <label for="bt-lang">${esc(t("tours.lang"))}<select form="bt-form" id="bt-lang" name="lang">
           <option value="">${esc(t("tours.langAny"))}</option>
           ${Object.entries(SPEAKS).map(([k, [own]]) => `<option value="${k}"${T.lang === k ? " selected" : ""}>${esc(own)}</option>`).join("")}
         </select></label>
-        <label class="toggle" for="bt-plan" id="bt-plan-row"${plan ? "" : " hidden"}><input type="checkbox" id="bt-plan" name="withPlan"${T.withPlan ? " checked" : ""}> <span>${esc(t("tours.withPlan"))}</span></label>
-      </form>
-      <section class="book-go" id="bt-go">${goHtml(tourLinks(T))}</section>
-      <section class="card book-after" id="bt-after" aria-live="polite"${opened.tour ? "" : " hidden"}>${afterHtml("tour")}</section>
-      <section class="card tool">
-        <h2>${icon("copy")}${esc(t("tours.msgTitle"))}</h2>
-        <p>${esc(t("tours.msgHint"))}</p>
+        <label class="toggle" for="bt-plan" id="bt-plan-row"${plan ? "" : " hidden"}><input type="checkbox" form="bt-form" id="bt-plan" name="withPlan"${T.withPlan ? " checked" : ""}> <span>${esc(t("tours.withPlan"))}</span></label>
         <pre class="book-msg" id="bt-msg" dir="ltr" lang="en">${esc(message())}</pre>
         <div class="actions"><button type="button" class="btn btn-ghost btn-sm" id="bt-copy">${icon("copy")}${esc(t("tours.copy"))}</button></div>
       </section>
@@ -293,14 +295,14 @@
     if (el.date.value !== T.date) el.date.value = T.date;
     saveTour();
     $("#bt-plan-row").hidden = !planFor(T.where);
-    $("#bt-go").innerHTML = goHtml(tourLinks(T));
+    $("#bt-go").innerHTML = goHtml(tourLinks(T), t("tours.searchHint"));
     $("#bt-msg").textContent = message();
   }
 
   /* ---------- both pages ---------- */
   function refreshGo() {
     if (visible("stays") && S) $("#bs-go").innerHTML = goHtml(stayLinks(S));
-    if (visible("tours") && T) $("#bt-go").innerHTML = goHtml(tourLinks(T));
+    if (visible("tours") && T) $("#bt-go").innerHTML = goHtml(tourLinks(T), t("tours.searchHint"));
   }
   function bind() {
     for (const [id, update] of [["stays", updateStay], ["tours", updateTour]]) {
