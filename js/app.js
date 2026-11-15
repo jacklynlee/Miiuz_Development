@@ -165,7 +165,7 @@
         </div>
         <a class="tile" href="#tools" data-scroll="tool-fx">
           <span class="k">${icon("coins")}${esc(t("home.rate"))}</span>
-          <span class="v">${r ? `RM 100 ≈ ${esc(MBB.money(100 * r, home))}` : "RM"}</span>
+          <span class="v">${r ? `RM 100 ≈ ${MBB.moneyHtml(100 * r, home)}` : "RM"}</span>
           <span class="n">${r ? `1 ${esc(home)} ≈ RM ${(1 / r).toFixed(3)} · ` : ""}${esc(t(MBB.fx.live ? "home.rateLive" : "home.rateApprox"))}</span>
         </a>
         <div class="tile">

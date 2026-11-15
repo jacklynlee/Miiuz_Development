@@ -108,8 +108,8 @@
   }
   function billOut({ total, each }) {
     const home = MBB.state.home, r = MBB.rate(home) || 0;
-    return `<div><span>${esc(t("tools.billTotal"))}</span><b>${MBB.rm(total)}</b><small>≈ ${esc(MBB.money(total * r, home))}</small></div>
-      <div><span>${esc(t("tools.billEach"))}</span><b>${MBB.rm(each)}</b><small>≈ ${esc(MBB.money(each * r, home))}</small></div>`;
+    return `<div><span>${esc(t("tools.billTotal"))}</span><b>${MBB.rm(total)}</b><small>≈ ${MBB.moneyHtml(total * r, home)}</small></div>
+      <div><span>${esc(t("tools.billEach"))}</span><b>${MBB.rm(each)}</b><small>≈ ${MBB.moneyHtml(each * r, home)}</small></div>`;
   }
 
   function bind(cat) {
