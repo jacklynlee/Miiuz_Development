@@ -58,6 +58,14 @@ Travellers get each deployment without reinstalling (`sw.js`, `js/update.js`, #3
   release that changes a saved format raises `DATA_VERSION` in `js/core.js` and adds a step
   that converts old data.
 - Offline, nothing is checked: the app opens on the last version it had.
+- **What's new (#68):** travellers who had an older version find out about new features once.
+  A dot marks the tab and the links that lead to each new feature until it's opened. The screen
+  then shows "New" next to its title on that first visit. After an update, one message lists what's
+  new, with "Show me". It never appears on top of SOS, the sign-up nudge or the update bar. Someone
+  opening Miiuz for the first time sees none of it, and features they already used are skipped.
+  Each hint retires two minor versions later. **For each release,** add the new features to `NEWS`
+  in `js/news.js`: an id, the version, the screen, the tab, optionally the link, and the name's
+  string key. The name and the "New" label are translated like any other string.
 
 ## Languages (i18n)
 
@@ -456,6 +464,7 @@ js/picks.js             Our Pick!: listings from /api/picks, open now, halal sta
 js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
 js/install.js           "install the app" card (Android prompt / iPhone instructions), WeChat bar
 js/update.js            version, update bar and "Please update" (with sw.js)
+js/news.js              what's new: one-time dots, "New" labels and the message after an update
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
 api/config.mjs          hands the public Supabase URL + key and the visitor's country to the app
 api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)

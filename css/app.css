@@ -175,6 +175,19 @@ main { padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom, 0px) +
 .view:focus { outline: none; }
 .view-head h1 { font-family: var(--display); font-weight: 900; font-size: clamp(26px, 5vw, 36px); line-height: 1.2; margin: 0 0 6px; }
 .view-head p { margin: 0; color: var(--muted); max-width: 60ch; }
+/* What's new (#68): a dot on the way to a new feature, and "New" next to its title the first time. */
+.tab-ic, .badge-ic { position: relative; }
+.tabbar a.is-new .tab-ic::after, a.is-new .badge-ic::after {
+  content: ""; position: absolute; top: 2px; inset-inline-end: 6px; width: 8px; height: 8px; border-radius: 50%;
+  background: var(--hibiscus); box-shadow: 0 0 0 2px var(--surface);
+}
+a.is-new .badge-ic::after { top: -2px; inset-inline-end: -2px; }
+@media (min-width: 900px) { .tabbar a.is-new .tab-ic::after { top: -3px; inset-inline-end: -5px; } }
+.new-pill {
+  display: inline-block; vertical-align: middle; margin-inline-start: 4px; padding: 2px 8px; border-radius: 999px;
+  font-family: var(--body); font-size: 12px; font-weight: 700; line-height: 1.5; letter-spacing: .02em;
+  background: var(--teal-soft); color: var(--teal);
+}
 .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--teal); margin: 0; }
 .section-title { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 0 12px; }
 .section-title h2 { font-family: var(--display); font-weight: 900; font-size: 21px; margin: 0; }

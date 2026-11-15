@@ -58,6 +58,7 @@ npm run vendor         # refresh vendor/ and fonts/ from npm (pinned versions)
   listings (#50) are not in the repo: staff add them in Supabase (`our_picks`), and the app reads
   them through `api/picks.mjs` (`js/picks.js`).
 - UI strings: `js/i18n.js`. Language list (BCP 47): `js/locales.js`.
+- What's new for each release (#68): `NEWS` in `js/news.js` (README → Updates).
 - Screens: `js/explore.js`, `guide.js`, `planner.js`, `trip.js`, `book.js`, `tools.js`, `chat.js`,
   `search.js`, `place.js`, `member.js`, `app.js` (routing by `#hash`: home, explore, guide, plan,
   trip, stays, tours, tools, ask, search, place, member, credits). Tabs: Home, Explore, Guide,

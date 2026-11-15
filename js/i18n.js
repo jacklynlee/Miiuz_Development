@@ -633,6 +633,10 @@
     "update.go": { zh: "更新", en: "Update", ko: "업데이트", ja: "更新" },
     "update.must": { zh: "请更新后继续使用 Miiuz BB", en: "Please update to keep using Miiuz BB", ko: "Miiuz BB를 계속 쓰려면 업데이트해 주세요", ja: "Miiuz BB を引き続き使うには更新してください" },
     "update.mustLead": { zh: "这个版本已经过时。更新只需几秒，语言、行程和会员登录都会保留。", en: "This version is out of date. Updating takes a few seconds, and your language, plans and sign-in stay.", ko: "이 버전은 오래됐어요. 몇 초면 업데이트되고, 언어·일정·로그인은 그대로 유지돼요.", ja: "このバージョンは古くなっています。更新は数秒で終わり、言語・プラン・ログインはそのまま残ります。" },
+    // What's new (#68): "New" next to a screen's title, and the message after an update.
+    "news.new": { zh: "新功能", en: "New", ko: "새 기능", ja: "新機能" },
+    "news.toast": { zh: "新版本新增：{list}", en: "New in this version: {list}", ko: "이번 버전의 새 기능: {list}", ja: "このバージョンの新機能：{list}" },
+    "news.show": { zh: "去看看", en: "Show me", ko: "보러 가기", ja: "見てみる" },
     "credits.title": { zh: "图片与地图来源", en: "Photo & map credits", ko: "사진·지도 출처", ja: "写真・地図のクレジット" },
     "credits.lead": { zh: "图片来自 Wikimedia Commons，均为自由授权，作者和授权如下。", en: "Photos come from Wikimedia Commons under free licences; their authors and licences are listed below.", ko: "사진은 자유 이용이 허락된 Wikimedia Commons 이미지예요. 작가와 라이선스는 아래와 같아요.", ja: "写真はWikimedia Commonsの自由ライセンス画像です。作者とライセンスは以下の通りです。" },
     "credits.none": { zh: "联网加载图片后会显示来源。", en: "Credits appear once photos have loaded.", ko: "사진을 불러오면 출처가 표시돼요.", ja: "写真の読み込み後に表示されます。" },
