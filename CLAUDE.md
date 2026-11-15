@@ -153,6 +153,7 @@ Versions follow semantic versioning, **MAJOR.MINOR.PATCH**, judged by what trave
    - [ ] Ask Miiuz answers, Members sign-in works, SOS numbers and the share-location link work
    - [ ] Offline: reload with the network off and the app still opens
    - [ ] An installed app that was open before the release shows the update bar, and Update works
+   - [ ] Each new feature has its one-time hint (#68), in EN, 简体中文, 한국어 and 日本語
    - [ ] Facts changed in this release are checked against official sources
    - [ ] `npm run photos` says "Nothing to fix"
 3. Merge it (merge commit, not squash), then tag `main`: `git tag vX.Y.Z && git push origin vX.Y.Z`.
