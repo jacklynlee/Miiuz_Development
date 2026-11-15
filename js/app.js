@@ -32,6 +32,7 @@
     if (route.view === "search") MBB.search.render();
     if (route.view === "place") MBB.place.render(route.sub);
     if (route.view === "credits") MBB.media.renderCredits($("#view-credits"));
+    MBB.news.opened(route.view);
     if (pendingScroll) {
       const el = document.getElementById(pendingScroll);
       pendingScroll = null;

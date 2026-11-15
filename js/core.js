@@ -25,6 +25,8 @@
    * Steps run once, in order, before anything reads the data. */
   const DATA_VERSION = 1;
   const MIGRATE = {};
+  // Nothing saved yet: this phone opens Miiuz for the first time (what's new skips them, #68).
+  MBB.firstRun = store.get("dataVersion", null) === null;
   {
     let v = store.get("dataVersion", 0);
     if (v === 0) v = 1; // everything saved before #30 is format 1
