@@ -126,76 +126,71 @@
         (MBB.features.ask ? quick("#ask", "spark", "home.q.ask", "home.q.askD") : quick("#guide-food", "bowl", "home.q.food", "home.q.foodD"));
   }
 
-  function renderHome() {
-    const C = MBB.C;
+  // Where are you and home country fold into one line (#71). It stays open while a choice re-renders Home.
+  let prefsOpen = false;
+  function prefsHtml() {
+    const C = MBB.C, city = C.cities[MBB.state.city], c = MBB.state.fromOk ? MBB.state.from : null;
+    const cityChips = Object.entries(C.cities).map(([k, v]) =>
+      `<div class="chip"><input type="radio" name="hcity" id="h-city-${k}" value="${k}"${k === MBB.state.city ? " checked" : ""}><label for="h-city-${k}">${esc(L(v))}</label></div>`).join("");
+    return `<details class="prefs" id="h-prefs"${prefsOpen ? " open" : ""}>
+      <summary>
+        <span class="prefs-now"><span class="sr-only">${esc(t("home.city"))}: </span>${icon("pin")}<span>${esc(city ? L(city) : "")}</span>${c ? `<span class="sep" aria-hidden="true">·</span><span class="sr-only">${esc(t("from.label"))}: </span>${icon("globe")}<span>${esc(MBB.countryName(c))}</span>` : ""}</span>
+        <span class="prefs-edit">${esc(t("from.change"))}</span>
+      </summary>
+      <div class="prefs-body">
+        <div class="city-pick"><span>${esc(t("home.city"))}</span><div class="chips" id="h-city">${cityChips}<a class="chip-link" href="#search" data-search>${icon("search")}${esc(t("home.elsewhere"))}</a></div></div>
+        ${fromLine()}
+      </div>
+    </details>`;
+  }
+
+  // Time, exchange rate and the emergency number in one strip, with the month's weather under it (#71).
+  function glanceHtml() {
+    const C = MBB.C, now = MBB.localNow();
     const like999 = C.emergency.find(e => e.id === "999")?.like?.[MBB.state.from]; // "Malaysia's 911"
-    const now = MBB.localNow();
-    const st = stage();
-    const stageChips = ["before", "landed"].map(k =>
-      `<div class="chip"><input type="radio" name="hstage" id="h-stage-${k}" value="${k}"${k === st ? " checked" : ""}><label for="h-stage-${k}">${esc(t(`home.stage.${k}`, { country: L(C.name) }))}</label></div>`).join("");
     const home = MBB.state.home, r = MBB.rate(home);
     let month;
     try { month = new Date(2026, now.month, 1).toLocaleDateString(MBB.locale(), { month: "long" }); } catch { month = String(now.month + 1); }
-    const prog = MBB.trip.progress();
-    const pct = prog.total ? Math.round((prog.done / prog.total) * 100) : 0;
-    const cityChips = Object.entries(C.cities).map(([k, c]) =>
-      `<div class="chip"><input type="radio" name="hcity" id="h-city-${k}" value="${k}"${k === MBB.state.city ? " checked" : ""}><label for="h-city-${k}">${esc(L(c))}</label></div>`).join("");
+    return `<div class="glance">
+        <div class="g-cell"><span class="k">${esc(t("home.time"))}</span><span class="v" id="h-clock">${esc(MBB.clock(now.minutes))}</span>${MBB.tzGap() ? `<span class="n">${esc(gapText())}</span>` : ""}</div>
+        <a class="g-cell" href="#tools" data-scroll="tool-fx"><span class="k">${r ? "RM 100 ≈" : esc(t("home.rate"))}</span><span class="v">${r ? MBB.moneyHtml(100 * r, home) : "RM"}</span></a>
+        <button type="button" class="g-cell sos" data-sos><span class="k">${esc(t("home.sos"))}</span><span class="v">999</span>${like999 ? `<span class="n">${esc(t("sos.like", { n: like999 }))}</span>` : ""}</button>
+      </div>
+      <a class="wx-line" href="#guide-weather">${icon("sun")}<span><b>${esc(t("home.weather", { m: month }))} · <bdi dir="ltr">${esc(MBB.temp(24, 33))}</bdi></b> ${esc(L(C.climate[now.month]))}</span>${icon("next", "next")}</a>`;
+  }
 
+  function renderHome() {
+    const C = MBB.C;
+    const st = stage();
+    const stageChips = ["before", "landed"].map(k =>
+      `<div class="chip"><input type="radio" name="hstage" id="h-stage-${k}" value="${k}"${k === st ? " checked" : ""}><label for="h-stage-${k}">${esc(t(`home.stage.${k}`, { country: L(C.name) }))}</label></div>`).join("");
+    const more = MBB.member.homeCard().trim() + (MBB.install.card() || "").trim();
+
+    // Phones: head, the strip, then Start here. Wide screens: Start here on the left, the strip on the right.
     $("#view-home").innerHTML = `
-      ${MBB.member.homeCard()}
-      <section class="hero">
-        <p class="eyebrow">${esc(t("home.eyebrow"))}</p>
+      <section class="home-head">
         <p class="slogan"><span lang="ms">Cuti-cuti Malaysia!</span>${MBB.state.lang === "ms" ? "" : `<small>${esc(t("home.sloganGloss"))}</small>`}</p>
         <h1>${esc(t("home.title"))}</h1>
-        <p class="lead">${esc(t("home.lead"))}</p>
         <a class="search-launch" href="#search" data-search>${icon("search")}<span>${esc(t("search.ph"))}</span></a>
-        <div class="city-pick"><span>${esc(t("home.city"))}</span><div class="chips" id="h-city">${cityChips}<a class="chip-link" href="#search" data-search>${icon("search")}${esc(t("home.elsewhere"))}</a></div></div>
-        ${fromLine()}
+        ${prefsHtml()}
       </section>
-
-      ${MBB.trip.homeHtml()}
 
       ${fromCard()}
 
-      <div class="glance">
-        <div class="tile">
-          <span class="k">${icon("clock")}${esc(t("home.time"))}</span>
-          <span class="v" id="h-clock">${esc(MBB.clock(now.minutes))}</span>
-          <span class="n">${esc(gapText())}</span>
+      <div class="home-body">
+        <div class="home-glance">${glanceHtml()}</div>
+        <div class="home-main">
+          ${MBB.trip.homeHtml()}
+          <section>
+            <div class="section-title"><h2 id="h-start">${esc(t(st === "before" ? "home.startBefore" : "home.start"))}</h2></div>
+            <div class="chips stage-pick" id="h-stage">${stageChips}</div>
+            <div class="quick" id="h-quick">${quickList(st)}</div>
+          </section>
         </div>
-        <a class="tile" href="#tools" data-scroll="tool-fx">
-          <span class="k">${icon("coins")}${esc(t("home.rate"))}</span>
-          <span class="v">${r ? `RM 100 ≈ ${MBB.moneyHtml(100 * r, home)}` : "RM"}</span>
-          <span class="n">${r ? `1 ${esc(home)} ≈ RM ${(1 / r).toFixed(3)} · ` : ""}${esc(t(MBB.fx.live ? "home.rateLive" : "home.rateApprox"))}</span>
-        </a>
-        <div class="tile">
-          <span class="k">${icon("sun")}${esc(t("home.weather", { m: month }))}</span>
-          <span class="v text">${esc(L(C.climate[now.month]))}</span>
-          <span class="n">${esc(MBB.temp(24, 33))}</span>
-        </div>
-        <button type="button" class="tile sos" data-sos>
-          <span class="k">${icon("phone")}${esc(t("home.sos"))}</span>
-          <span class="v">999</span>
-          <span class="n">${like999 ? `${esc(t("sos.like", { n: like999 }))} · ` : ""}${esc(t("home.sosNote"))}</span>
-        </button>
-      </div>
+        <div class="home-more">${more}</div>
+      </div>`;
 
-      <section>
-        <div class="section-title"><h2 id="h-start">${esc(t(st === "before" ? "home.startBefore" : "home.start"))}</h2></div>
-        <div class="chips stage-pick" id="h-stage">${stageChips}</div>
-        <div class="quick" id="h-quick">${quickList(st)}</div>
-      </section>
-
-      <section>
-        <div class="quick">${quick("#explore", "compass", "explore.title", "explore.homeD")}</div>
-      </section>
-
-      <section class="card progress">
-        <div class="section-title"><h2>${esc(t("home.check"))}</h2><a href="#trip" data-scroll="trip-check">${esc(t("home.checkOpen"))}</a></div>
-        <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${prog.total}" aria-valuenow="${prog.done}"><i style="width:${pct}%"></i></div>
-        <p class="hint">${esc(t("home.checkProgress", { n: prog.done, total: prog.total }))}</p>
-      </section>`;
-
+    $("#h-prefs").addEventListener("toggle", e => { prefsOpen = e.target.open; });
     $("#h-city").addEventListener("change", e => MBB.setCity(e.target.value));
     $("#h-stage").addEventListener("change", e => {
       const s = e.target.value;
@@ -204,8 +199,7 @@
       $("#h-quick").innerHTML = quickList(s); // only the list changes, so focus stays on the chip
     });
     bindFrom();
-    const inst = MBB.install.card();
-    if (inst) { $(".glance").insertAdjacentHTML("afterend", inst); MBB.install.bind(); }
+    MBB.install.bind();
   }
 
   /* ---------- SOS sheet ---------- */
@@ -357,7 +351,6 @@
     MBB.on("member", () => MBB.hintFrom("member", MBB.member.state.profile?.nationality));
     MBB.on("city", () => { if (["home", "explore", "guide"].includes(route.view)) show(); });
     MBB.on("fx", () => { if (route.view === "home") renderHome(); });
-    MBB.on("check", () => { if (route.view === "home") renderHome(); });
     MBB.on("trip", () => { if (route.view === "home") renderHome(); });
     MBB.on("member", () => { if (route.view === "home") renderHome(); });
     MBB.on("install", () => { if (route.view === "home") renderHome(); });
