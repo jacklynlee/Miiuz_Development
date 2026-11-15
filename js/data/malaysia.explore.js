@@ -183,6 +183,37 @@
       when: { zh: "11–2 月适合冲浪，3–10 月风平浪静适合玩海滩。", en: "Surf from November to February; calm beach days from March to October.", ko: "11~2월엔 서핑, 3~10월엔 잔잔한 해변 휴가.", ja: "11〜2月はサーフィン、3〜10月は穏やかなビーチ日和。" } },
   ];
 
+  /* Stays and car tours (#4, #10): how each partner names every city and destination, so its search
+   * opens on the right place. agoda = Agoda's city id, booking = what Booking.com is searched for,
+   * tours = the place in Klook and KKday searches (only where a car with a driver makes sense).
+   * Checked on the partners' sites 2026-11-13. Agoda has no city of its own for Putrajaya, Mulu or
+   * Fraser's Hill (Booking.com calls it Bukit Fraser); Sepilok stays are searched in Sandakan. */
+  MY.book = {
+    kl: { agoda: 14524, booking: "Kuala Lumpur, Malaysia", tours: "Kuala Lumpur" },
+    pg: { agoda: 16087, booking: "George Town, Penang, Malaysia", tours: "Penang" },
+    ml: { agoda: 15121, booking: "Melaka, Malaysia", tours: "Melaka" },
+    langkawi: { agoda: 16928, booking: "Langkawi, Malaysia", tours: "Langkawi" },
+    genting: { agoda: 4684, booking: "Genting Highlands, Malaysia", tours: "Genting Highlands" },
+    cameron: { agoda: 1399, booking: "Cameron Highlands, Malaysia", tours: "Cameron Highlands" },
+    ipoh: { agoda: 15523, booking: "Ipoh, Malaysia", tours: "Ipoh" },
+    putrajaya: { booking: "Putrajaya, Malaysia", tours: "Putrajaya" },
+    kota_kinabalu: { agoda: 5070, booking: "Kota Kinabalu, Malaysia", tours: "Kota Kinabalu" },
+    kinabalu: { agoda: 211727, booking: "Kundasang, Sabah, Malaysia", tours: "Kundasang" },
+    semporna: { agoda: 106021, booking: "Semporna, Malaysia" },
+    sepilok: { agoda: 106018, booking: "Sandakan, Sabah, Malaysia" },
+    kuching: { agoda: 14523, booking: "Kuching, Malaysia", tours: "Kuching" },
+    mulu: { booking: "Mulu, Sarawak, Malaysia" },
+    johor_bahru: { agoda: 1808, booking: "Johor Bahru, Malaysia", tours: "Johor Bahru" },
+    perhentian: { agoda: 106060, booking: "Perhentian Islands, Malaysia" },
+    redang: { agoda: 21299, booking: "Redang Island, Malaysia" },
+    tioman: { agoda: 16012, booking: "Tioman Island, Malaysia" },
+    taman_negara: { agoda: 211417, booking: "Kuala Tahan, Pahang, Malaysia" },
+    kuala_terengganu: { agoda: 15780, booking: "Kuala Terengganu, Malaysia" },
+    kota_bharu: { agoda: 211364, booking: "Kota Bharu, Malaysia" },
+    frasers_hill: { booking: "Bukit Fraser, Pahang, Malaysia" },
+    cherating: { agoda: 17248, booking: "Cherating, Malaysia" },
+  };
+
   // Souvenirs worth bringing home (shown in Home and the Shopping guide).
   MY.souvenirs = [
     { id: "batik", wp: ["Malaysian batik", "Batik"],

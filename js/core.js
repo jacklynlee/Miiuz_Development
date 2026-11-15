@@ -16,7 +16,7 @@
   /* ---------- this copy's version (#30) ----------
    * Same as package.json's "version" (npm run check makes sure). Shown on Credits and sent to the
    * APIs as X-Miiuz-Version. The build (commit) comes from the service worker: js/update.js. */
-  MBB.VERSION = "1.0.0";
+  MBB.VERSION = "1.1.0";
 
   /* ---------- saved data format (#30) ----------
    * Settings and plans are saved as "mbb.*" in localStorage. When a release changes how something
@@ -82,7 +82,7 @@
   MBB.C = MBB.countries[MBB.state.country];
 
   // Features that are built but not released yet. Ask Miiuz (the AI chat) ships after v1.0.0 (#13, #33):
-  // while it's off, the Ask tab shows "Coming soon" and every other way into the chat is hidden.
+  // while it's off, every way into the chat is hidden and #ask shows "Coming soon". It has no tab (#49).
   // AI translation is separate and stays on. Set ask to true to switch the chat back on.
   MBB.features = { ask: false };
   if (!MBB.C.cities[MBB.state.city]) MBB.state.city = "kl";
@@ -281,11 +281,18 @@
       return false;
     }
   };
-  MBB.money = (n, cur) => {
-    const digits = ["JPY", "KRW", "IDR", "VND"].includes(cur) ? 0 : 2;
-    try { return new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n); }
-    catch { return `${cur} ${n.toFixed(digits)}`; }
+  const noCents = cur => ["JPY", "KRW", "IDR", "VND"].includes(cur);
+  // An amount in the traveller's currency, as HTML that reads right in right-to-left languages too
+  // (#55). The amount is one unit, laid out by the direction marks Intl puts in it (Arabic and Hebrew
+  // right to left), and a symbol with Latin letters stays in one piece: Arabic writes pounds "UK£",
+  // which would otherwise show as "£UK".
+  const amountHtml = (n, cur, digits) => {
+    let parts;
+    try { parts = new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).formatToParts(n); }
+    catch { return `<bdi dir="ltr">${MBB.esc(`${cur} ${n.toFixed(digits)}`)}</bdi>`; }
+    return `<bdi>${parts.map(p => (p.type === "currency" && /[A-Za-z]/.test(p.value) ? `<bdi dir="ltr">${MBB.esc(p.value)}</bdi>` : MBB.esc(p.value))).join("")}</bdi>`;
   };
+  MBB.moneyHtml = (n, cur) => amountHtml(n, cur, noCents(cur) ? 0 : 2);
   MBB.rm = n => `RM ${n.toFixed(2)}`;
 
   /* ---------- RM prices in text, with the home-currency amount (#19) ----------
@@ -293,25 +300,29 @@
    * app adds "(≈ US$13)" after each one: "RM1–RM10", "RM30–100", "RM1~RM10" and "RM100+" count as
    * one price. Uses the live rate when online and the saved one offline; "≈" marks it as approximate.
    * Nothing is added when the home currency is the ringgit. On a new rate or home currency the
-   * amounts update in place ([data-fx]), without re-rendering the screen. */
+   * amounts update in place ([data-fx]), without re-rendering the screen.
+   * In right-to-left languages the amounts stay left to right as a group, in the same order as the
+   * RM price they follow ("RM10–RM20 (≈ UK£1.85–UK£3.69)"), and the words around them ("≈", or a
+   * translation's own word) keep the direction of the text (#55). */
   const RM_PRICE = /\bRM\s?(\d+(?:,\d{3})*(?:\.\d+)?)(?:\s?[–~〜～-]\s?(?:RM\s?)?(\d+(?:,\d{3})*(?:\.\d+)?))?(\+)?/g;
-  const approxMoney = (n, cur) => {
+  const approxHtml = (n, cur) => {
     if (n >= 1000) { const step = 10 ** (Math.floor(Math.log10(n)) - 1); n = Math.round(n / step) * step; } // ₩9,977 → ₩10,000
-    const digits = ["JPY", "KRW", "IDR", "VND"].includes(cur) || n >= 10 ? 0 : 2;
-    try { return new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n); }
-    catch { return `${cur} ${n.toFixed(digits)}`; }
+    return amountHtml(n, cur, noCents(cur) || n >= 10 ? 0 : 2);
   };
-  const fxSuffix = (a, b, plus) => {
+  const fxHtml = (a, b, plus) => {
     const home = MBB.state.home, r = home && home !== "MYR" ? MBB.rate(home) : null;
     if (!r) return "";
-    const v = x => approxMoney(Number(String(x).replace(/,/g, "")) * r, home);
-    const s = MBB.t("fx.approx", { v: (b ? `${v(a)}–${v(b)}` : v(a)) + (plus || "") });
+    const v = x => approxHtml(Number(String(x).replace(/,/g, "")) * r, home);
+    const s = MBB.esc(MBB.t("fx.approx", { v: "" }))
+      .replace("", () => `<bdi dir="ltr">${b ? `${v(a)}–${v(b)}` : v(a)}${plus || ""}</bdi>`);
     return s.startsWith("（") ? s : " " + s; // full-width brackets (Chinese, Japanese) need no space
   };
   // Escaped HTML for a text that may contain RM prices. Use it instead of esc() wherever prices can appear.
+  // A left-to-right mark after "RM100+" keeps the "+" after the number in right-to-left text, instead
+  // of "+RM100".
   MBB.priceHtml = text => MBB.esc(text).replace(RM_PRICE, (m, a, b, plus) =>
-    `${m}<span class="fx" data-fx="${a}|${b || ""}|${plus || ""}">${MBB.esc(fxSuffix(a, b, plus))}</span>`);
-  MBB.on("fx", () => MBB.$$("[data-fx]").forEach(el => { el.textContent = fxSuffix(...el.dataset.fx.split("|")); }));
+    `${m}${plus ? "&lrm;" : ""}<span class="fx" data-fx="${a}|${b || ""}|${plus || ""}">${fxHtml(a, b, plus)}</span>`);
+  MBB.on("fx", () => MBB.$$("[data-fx]").forEach(el => { el.innerHTML = fxHtml(...el.dataset.fx.split("|")); }));
 
   /* ---------- feedback ---------- */
   /* ---------- toasts (#29) ----------
@@ -473,8 +484,10 @@
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
     guide: '<path d="M3 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H3z"/><path d="M21 5h-6a3 3 0 0 0-3 3v12a2 2 0 0 1 2-2h7z"/>',
     plan: '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/>',
+    trip: '<rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7M8 7v13M16 7v13"/>',
     tools: '<path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M20 18h0"/><circle cx="16" cy="6" r="2.2"/><circle cx="10" cy="12" r="2.2"/><circle cx="18" cy="18" r="2.2"/>',
     ask: '<path d="M4 5h16v11H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+    compass: '<circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/>',
     passport: '<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 16.5h6"/>',
     plane: '<path d="M21 15.5l-8-4.5V5a1.5 1.5 0 0 0-3 0v6l-8 4.5v2l8-2.5v4l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-4l8 2.5z"/>',
     coins: '<ellipse cx="9" cy="7" rx="6" ry="3"/><path d="M3 7v4c0 1.7 2.7 3 6 3s6-1.3 6-3V7"/><path d="M9 14v3c0 1.7 2.7 3 6 3s6-1.3 6-3v-4c0-1.7-2.7-3-6-3"/>',
@@ -517,6 +530,7 @@
     island: '<path d="M3 19c3-3 15-3 18 0"/><path d="M12 17V8"/><path d="M12 8c-2-3-6-3-8-1 3-1 6 0 8 1zM12 8c2-3 6-3 8-1-3-1-6 0-8 1z"/>',
     building: '<rect x="4" y="3" width="10" height="18"/><path d="M14 9h6v12h-6"/><path d="M7 7h1M10 7h1M7 11h1M10 11h1M7 15h1M10 15h1"/>',
     bed: '<path d="M3 18V7M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>',
+    car: '<path d="M3 17v-4l2.2-5.2A2 2 0 0 1 7 6.5h10a2 2 0 0 1 1.8 1.3L21 13v4z"/><path d="M3 13h18"/><circle cx="7.5" cy="15" r="1"/><circle cx="16.5" cy="15" r="1"/><path d="M5 17v2.5M19 17v2.5"/>',
     landmark: '<path d="M3 21h18M4 10h16M12 3l9 5H3z"/><path d="M6 10v9M10 10v9M14 10v9M18 10v9"/>',
     fish: '<path d="M3 12c3-4 8-5 12-3l4-3v12l-4-3c-4 2-9 1-12-3z"/><circle cx="8" cy="11" r=".8"/>',
     share: '<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',

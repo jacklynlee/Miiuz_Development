@@ -5,7 +5,7 @@ country. It starts with **Malaysia**: hand-written day plans for Kuala Lumpur, P
 20 more destinations from Langkawi to Kuching, and search for any place in the country. It is
 built so more countries can be added.
 
-Live at **https://www.miiuz-bb.com**.
+Live at **https://www.miiuz-bb.com**. 
 
 It grew out of the original *Miiuz Beyond Borders* half-day planner artifact: the planner is
 still here, now alongside everything else a visitor needs.
@@ -14,14 +14,18 @@ still here, now alongside everything else a visitor needs.
 
 | Tab | What it does |
 |---|---|
-| **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, a map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, "just landed" shortcuts, checklist progress |
+| **Home** | "Cuti-cuti Malaysia!", search box, local time vs. your phone, live exchange rate, this month's weather, one-tap 999, "just landed" shortcuts, a link to Explore, checklist progress |
+| **Explore** | A map of Malaysia with 23 destinations, photo strips of destinations, food to try and souvenirs to buy, and when to go (weather, festivals). Search and place pages belong to this tab (#49) |
+| **Our Pick!** (Explore, city pages, search) | Food places the Miiuz team visited and recommends, listed with the owner's consent: what to order and for how much, halal status, open now, how to pay, the owner's photos, directions and the driver card (#50). Listings live in Supabase, so staff add them without a release |
+| **Stays** and **Car tours** (`#stays`, `#tours`, part of Explore) | Choose the place, dates and group once, then search Agoda and Booking.com (stays) or Klook and KKday (a private car with a driver) with them filled in. Travellers book and pay on the partner's site (#4, #10). Place pages have "Find a stay nearby", which searches Booking.com around that spot. Car tours writes an English message for the driver with the pickup (that day's stay in My trip, if it's near) and the day's plan; the day planner's "Book a car for this plan" opens it filled in. "Booked one? Add it to My trip" starts the booking with what's already known. Plain links to the partners until they approve Miiuz, then affiliate links (`MIIUZ_LINK_*`, see Deploy) |
 | **Search** | Type to search the app's own places, guide, dishes, souvenirs and phrases instantly (offline, in every language); press Search to find *any* place in Malaysia on OpenStreetMap |
 | **Place pages** | Photo, what it is (plus a Wikipedia summary in the traveller's language), opening hours / phone / website where known, street map, directions (Google Maps, Waze), "show the driver" card, distance from your city or from you, nearby Miiuz picks and destinations, nearby hospitals / police / ATMs, one-tap questions for Miiuz |
 | **Guide** | Photo galleries of 11 must-try dishes and 12 souvenirs, and 12 topics: entry & MDAC, airport transfers, money & payments, getting around, SIM & internet, food, etiquette, safety & scams, weather & packing, health, shopping, festivals. Facts checked October 2026 |
-| **Plan** | The day planner from the original artifact: pick city, time window (or work back from a flight), travel style, interests, group and budget; get a route with travel times, map links and ticket links |
-| **Tools** | Currency converter (live rates), bill splitter (10% service + 6% SST), "show the driver" hotel card, Malay phrasebook with audio and full-screen "show" mode, trip checklist |
-| **Ask Miiuz** | AI travel assistant on Claude: answers in the traveller's language, searches the web for current prices/hours, cites sources, and can rewrite the day plan on screen |
-| **SOS** (header) | Emergency numbers (999 / 112 / 994 / tourist police / consular lines), share my location, nearest hospitals & police, saved hotel & embassy numbers |
+| **My trip** (`#trip`) | The traveller's own things in one tab (#56). **Where I'm staying**: the current stay, or a hotel typed in without a booking, with the full-screen "show the driver" card. It's the only place to change the hotel; SOS, Home and Ask Miiuz read it from here. **Bookings**: stays and car tours booked anywhere (Agoda, Booking.com, Airbnb, Klook…), typed in by hand: dates, address, booking reference, driver, car, guide. Home shows today's stay and tour, SOS shows their numbers, place pages show the distance from the stay. Kept on the phone, and in the account for members (#5). Then a link to the day planner, and the trip checklist |
+| **Day planner** (`#plan`, part of My trip) | The planner from the original artifact: pick city, time window (or work back from a flight), travel style, interests, group and budget; get a route with travel times, map links and ticket links. It can start and end the day at the hotel in My trip |
+| **Tools** | Currency converter (live rates), bill splitter (10% service + 6% SST), Malay phrasebook with audio and full-screen "show" mode |
+| **Ask Miiuz** (`#ask`, switched off until #13, no tab) | AI travel assistant on Claude: answers in the traveller's language, searches the web for current prices/hours, cites sources, and can rewrite the day plan on screen |
+| **SOS** (header) | Emergency numbers (999 / 112 / 994 / tourist police / consular lines), share my location, nearest hospitals & police, where I'm staying (from My trip) with the driver card, today's car tour, embassy and insurance numbers |
 | **Members** (header) | Free membership: +10 points for joining, +10 per invited friend, Basic → Silver → Gold → Platinum tiers, member-only offers, goodies and news |
 
 Works offline after the first visit (installable PWA, with an "install the app" card on Home), in
@@ -114,6 +118,12 @@ npm run check          # syntax + data + translation sanity checks
    - `MIIUZ_ALLOWED_ORIGINS` to only accept AI requests from your own domain (recommended)
    - `MIIUZ_RATE_LIMIT` / `MIIUZ_TRANSLATE_LIMIT` per-IP request limits
    - `MIIUZ_MIN_VERSION` to force older copies to update (rarely; see Updates)
+   - `MIIUZ_LINK_AGODA`, `MIIUZ_LINK_BOOKING`, `MIIUZ_LINK_KLOOK`, `MIIUZ_LINK_KKDAY`: affiliate
+     link templates for Stays and Car tours, set once that partner approves Miiuz. `{url}` is the
+     partner's own search address (`{url_enc}` the same, encoded) and `{tag}` the member's
+     booking tag, or `guest`. For example `{url}&cid=123456&tag={tag}`, or
+     `https://partner.example/track?id=123&to={url_enc}`. A malformed template is ignored (plain
+     link). Redeploy after changing one. With none set, the commission note isn't shown
 4. Check that AI is on: open `https://your-app/api/chat`. It must say `"configured":true`. If it
    says `false`, the key is missing from that environment, or you haven't redeployed since adding
    it (a new variable only reaches new deployments).
@@ -149,12 +159,19 @@ password) and get:
 
 - **+10 points** when they join, and **+10 points** for every friend who joins with their
   invite link (`https://your-app/?ref=CODE`). The friend gets their own +10 too.
+- **Points for bookings** (#8) made through the app's partner links (Stays, Car tours), once the
+  partner reports the stay or tour completed. They're taken back if the partner reports a
+  cancellation. To start with, 20 points plus 1 per RM paid, at most 1,000 per booking (a RM300
+  stay earns 320), set in `booking_points_rules`. Bookings
+  that travellers type into My trip themselves never earn points. See
+  [Points for bookings](#points-for-bookings-staff).
 - **Details at sign-up:** nationality (required), and optionally a phone number (with a
   WhatsApp/SMS offers opt-in) and an emergency contact, which members can call in one tap from
   the SOS screen. National ID and passport numbers are deliberately **not** collected. Members
   can view and edit their details any time; already-registered members use the **Sign in** tab.
 - **Tiers** by points ever earned: Basic (0) → Silver (1,000) → Gold (5,000) → Platinum (10,000).
-  Spending points never lowers a tier, and neither points nor tiers expire.
+  Spending points never lowers a tier, and neither points nor tiers expire. Taking back a
+  cancelled booking's points can.
 - **Member offers, goodies and news**, optionally limited to a tier and above.
 
 Guests are invited to join after 5 minutes of use, then again after 10, 20, 40 minutes (at most
@@ -162,6 +179,13 @@ hourly), never while typing. Until Supabase is connected, membership is hidden a
 
 Points are written only by the database (triggers in `supabase/schema.sql`), after the email
 address is verified, once per person; members can read but never change their own points.
+
+**My trip** bookings (#5) are kept in the `trip_bookings` table, so they're on every device a
+member signs in on. Only that member can read, add, change or delete them, and they're removed
+with the account. Guests' bookings stay on their phone. Bookings never earn points.
+
+**Our Pick!** listings (#50) are in the `our_picks` table, readable by everyone; see
+[Our Pick! listings](#our-pick-listings-staff) below for how staff add them.
 
 ### Set up (once)
 
@@ -244,6 +268,108 @@ notice in Malay and English that says what you collect and why; have one reviewe
 launching membership. Phone numbers and emergency contacts are visible only to the member
 and to you (the Supabase project owner).
 
+### Points for bookings (staff)
+
+Each member has a random `booking_tag` (in `profiles`). It's 16 letters and digits that say
+nothing about who they are. Once a partner approves Miiuz and its `MIIUZ_LINK_…` template
+includes `{tag}`, a signed-in member's partner links carry their tag, and guests' links carry
+`guest`. Partners list the tag in their booking reports (as a sub-id or label), and that's how
+a booking finds its member. Mention the tag in the privacy notice.
+
+**Set the amount** (Table Editor → `booking_points_rules`, one row each for `stay` and `tour`):
+points = `flat` + `per_rm` × ringgit paid, rounded down, at most `max_points` (empty = no
+limit). It starts at flat 20, per_rm 1 and max_points 1,000 for both, so a RM300 stay earns 320
+points. A change counts for bookings completed after it. To pause booking points, set
+`max_points` to 0. Running `schema.sql` again never changes rules you've edited.
+
+**Import a report** (each month, or whenever a partner sends one):
+
+1. Download the partner's report and make a CSV with these columns: `partner` (`agoda`,
+   `booking`, `klook` or `kkday`), `booking_ref` (the partner's booking number), `kind` (`stay` or
+   `tour`), `tag` (the sub-id or label), `amount_myr` (ringgit paid; `RM1,234.50` is fine; it may
+   be empty) and `status`. Use `completed` only once the partner confirms the stay or tour
+   happened (often "approved", "paid" or "stayed" in their report), `cancelled` for cancellations,
+   and `pending` for anything else.
+2. Table Editor → `partner_report` → Insert → Import data from CSV.
+3. SQL Editor: `select * from apply_partner_report();`. It shows how many bookings were added,
+   changed and unchanged, and how many rows have problems. Good rows leave `partner_report`.
+   Rows it couldn't use stay there with the reason in `problem`. Fix them and run it again, or
+   delete them.
+
+Importing the same report twice never adds points twice, because each partner booking number is
+one row. A status only moves forward (pending → completed or cancelled, completed → cancelled),
+so an older report can't undo a cancellation.
+
+```sql
+-- A member's bookings and points
+select b.partner, b.booking_ref, b.kind, b.status, b.amount_myr, b.points, b.updated_at
+from partner_bookings b join auth.users u on u.id = b.user_id
+where u.email = 'member@example.com' order by b.created_at desc;
+
+-- Bookings with no member (guests, or a tag that matched nobody)
+select partner, booking_ref, tag, status from partner_bookings where user_id is null;
+
+-- The partner was wrong about a cancellation: complete it again by hand (points come back)
+update partner_bookings set status = 'completed' where partner = 'agoda' and booking_ref = '123456789';
+
+-- Completed before the points rules were set: work out their points from today's rules
+update partner_bookings set points = null where status = 'completed' and points = 0;
+```
+
+Changing a booking's `status`, `points`, `tag` or `user_id` by hand keeps the member's points
+right: the database writes the difference to `points_ledger`. A booking with points can't be
+deleted; mark it `cancelled` instead.
+
+### Our Pick! listings (staff)
+
+Food places the Miiuz team visited and recommends (#50). They show in Explore, on their city's
+page and in search, and each has its own page (`#place-pick-<slug>`). Everyone sees live
+listings, guests too. The app reads them through `/api/picks`, which Vercel caches for 5 minutes,
+and keeps the last ones on the phone for offline use.
+
+**Collect in one visit:**
+- The owner's **written consent** to be listed and to use their photos. Keep the signed form, and
+  note where in `consent_note` (staff only: the app can't read it).
+- Name, address, opening hours and days closed; 2–3 dishes to order with prices; the price range
+  per person; how to pay (`cash`, `duitnow`, `card`, `alipay`, `wechat`).
+- **Halal status, from the certificate.** Only JAKIM or a state Islamic authority (JAWI in KL)
+  can certify, and calling an uncertified place halal is against the law. Use `certified` with
+  the issuer and expiry date, `no_pork` if there's no pork or lard but no certificate, otherwise
+  `not_halal`. The app stops saying "halal" after `halal_expires`, so update it when the
+  certificate is renewed.
+- If the place pays, or gets anything in return, tick `sponsored`: the app then says "Sponsored".
+
+**Add it:**
+1. **Photos:** Storage → `our-picks` → upload JPEG or WebP, about 1600 px wide and under 2 MB,
+   named like `kedai-contoh-1.webp` (lower case, no spaces). To replace a photo, upload it under a
+   new name: phones keep photos they've already seen.
+2. **Listing:** Table Editor → `our_picks` → Insert row, or SQL (the example is made up):
+   ```sql
+   insert into our_picks (slug, name, area, address, lat, lng, blurb, dishes, price_range,
+     halal, halal_body, halal_expires, hours, hours_note, pay, phone, photos, photo_credit,
+     consent_on, consent_note, checked_on)
+   values ('kedai-contoh', 'Kedai Contoh', 'Kampung Baru', 'Jalan Raja Muda Musa, Kampung Baru, 50300 Kuala Lumpur',
+     3.1650, 101.7004,
+     '{"en": "Why we like it, in one or two sentences.", "zh": "…", "ko": "…", "ja": "…"}',
+     '[{"ms": "Nasi lemak ayam goreng", "en": "Coconut rice with fried chicken", "zh": "炸鸡椰浆饭", "ko": "…", "ja": "…", "price": "RM12"}]',
+     'RM8–RM15', 'certified', 'JAKIM', '2027-06-30', 'Mo-Sa 07:00-15:00; Su off',
+     '{"en": "Closed on public holidays", "zh": "…", "ko": "…", "ja": "…"}',
+     '{cash,duitnow}', '+60 3-0000 0000', '["kedai-contoh-1.webp", "kedai-contoh-2.webp"]', 'Kedai Contoh',
+     '2026-11-20', 'Signed form: Drive → Our Pick! → Kedai Contoh.pdf', '2026-11-20');
+   ```
+   - **Text** (`blurb`, dish names, `hours_note`) in EN, 简体中文, 한국어 and 日本語; other languages
+     are translated from English automatically. `names` holds the name in other scripts, e.g.
+     `{"zh": "…"}`. Prices are plain ringgit.
+   - **Hours** use OpenStreetMap's short form: `Mo-Sa 07:00-15:00; Su off`, a break
+     `Tu-Su 07:00-11:30,17:00-22:00`, past midnight `Mo-Su 18:00-02:00`, or `24/7`. Days not named
+     are closed. The database refuses anything it can't read, and the other checks (halal
+     certificate, photo names, a location in Malaysia).
+   - **Location:** right-click the entrance in Google Maps to copy its latitude and longitude.
+3. **Check, then approve:** a second person checks the listing against the notes and photos, then
+   ticks `approved`. It can't be approved without `consent_on`. It appears within 5 minutes.
+   Untick `active` to hide it for a while; `sort` orders the list (lower first).
+4. **Recheck** each place at least every 6 months and update `checked_on` (the app shows the month).
+
 ## Search, maps and photos
 
 - **Search anywhere** uses OpenStreetMap's Nominatim through `api/places.mjs`, limited to
@@ -270,8 +396,14 @@ and to you (the Supabase project owner).
   - **Before each release, run `npm run photos`** (it needs the network). It lists items with no
     photo, items not pinned, pins that stopped working (deleted or relicensed), and titles that
     are missing or disambiguation pages. `npm run check` makes sure every item is pinned.
+  - **Through our own domain:** the app loads every photo through `/api/photo` (`api/photo.mjs`,
+    #39), because Wikimedia is blocked in mainland China and on Chinese roaming SIMs. It only
+    fetches Commons photos (JPEG, PNG, WebP, GIF), and Vercel's CDN keeps each one for a year.
   - **Offline:** photos the traveller has seen are kept (at most 200, about 12 MB).
   - **Updates:** the app asks for the photo list again after it updates, otherwise every 3 days.
+  - **Our Pick! is the one exception** (#50): those are the owner's own photos, used with their
+    written permission and credited to the place. They're in Supabase Storage → `our-picks` and
+    load through `/api/photo?pick=<file>`, which only fetches from that bucket.
 - **Maps**: the Malaysia overview is drawn offline from Natural Earth (public domain;
   rebuild with `scripts/build-map.mjs`). Street maps use MapLibre GL (our own copy in `vendor/`)
   with OpenFreeMap tiles (free, no key, © OpenStreetMap contributors) and fall back to the
@@ -313,17 +445,22 @@ js/core.js              state, storage, helpers, icons
 js/translate.js         on-demand AI translation    js/i18n-entries.js  translatable string inventory
 js/ai.js                where AI runs (server / Claude artifact / off)
 js/prompt.js            assistant + translation prompts, update_plan tool
-js/guide.js · planner.js · tools.js · chat.js · app.js   the screens
+js/explore.js · guide.js · planner.js · tools.js · chat.js · app.js   the screens
+js/trip.js              My trip: stays and car tours, kept on the phone and in members' accounts
+js/book.js              Stays and Car tours: partner searches with the place, dates and group filled in
 js/data/malaysia.explore.js  destinations, souvenirs, states, city summaries, photo titles and pins
 js/data/malaysia.map.js      Malaysia outline for the offline map (generated)
 js/search.js · place.js      search and place pages      js/maps.js  overview + street maps
 js/media.js             photos with credits, credits page
+js/picks.js             Our Pick!: listings from /api/picks, open now, halal status, cards and place pages
 js/member.js            membership: sign-in by emailed code, details, points, tiers, invites, offers, nudges
 js/install.js           "install the app" card (Android prompt / iPhone instructions), WeChat bar
 js/update.js            version, update bar and "Please update" (with sw.js)
 api/chat.mjs · api/translate.mjs   Vercel functions (Claude API)
 api/config.mjs          hands the public Supabase URL + key and the visitor's country to the app
 api/places.mjs · api/media.mjs   place search and Wikipedia/Commons lookups (cached)
+api/picks.mjs           live Our Pick! listings from Supabase (cached 5 minutes)
+api/photo.mjs           Commons and Our Pick! photos through our own domain, for travellers in China (#39)
 supabase/email/         sign-in emails for Supabase (generated by scripts/build-emails.mjs: npm run emails)
 supabase/schema.sql     membership database: tables, points triggers, tiers, access rules
 sw.js · manifest.webmanifest · icons/   PWA (offline, one cache per build)
@@ -339,6 +476,11 @@ Rebuild the single-file claude.ai preview with `npm run build:preview`.
 Facts were checked in October 2026 (visa rules, MDAC, KLIA Ekspres fares, SST, payments,
 emergency numbers). Rules and prices change; the app tells travellers to confirm with
 official sources. Update `checked` in `js/data/malaysia.js` when you re-verify.
+
+Partner searches for Stays and Car tours (`book` in `js/data/malaysia.explore.js`): Agoda city
+ids and the names Booking.com, Klook and KKday search for, checked in November 2026. Every city
+and destination needs one (`npm run check`). After adding a destination, find its Agoda id from
+the Agoda city page and check that the search opens the right place on each site.
 
 ---
 

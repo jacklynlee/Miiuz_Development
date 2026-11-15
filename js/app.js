@@ -2,7 +2,10 @@
 (function () {
   const MBB = window.MBB;
   const { $, $$, esc, t, L, icon } = MBB;
-  const VIEWS = ["home", "guide", "plan", "tools", "ask", "member", "search", "place", "credits"];
+  const VIEWS = ["home", "explore", "guide", "plan", "trip", "tools", "ask", "member", "search", "place", "credits", "stays", "tours"];
+  // Screens without a tab of their own light up the tab they belong to (#49).
+  // The day planner is part of My trip (#56); Stays and Car tours are part of Explore (#4, #10).
+  const TAB_OF = { search: "explore", place: "explore", stays: "explore", tours: "explore", plan: "trip" };
   let route = { view: "home" }, pendingScroll = null, moves = 0;
 
   /* ---------- routing (plain #name hashes: #home, #guide-money, …) ---------- */
@@ -17,9 +20,14 @@
     const prev = route;
     route = parse();
     VIEWS.forEach(v => { $(`#view-${v}`).hidden = v !== route.view; });
-    $$(".tabbar a").forEach(a => (a.dataset.tab === route.view ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
+    const tab = TAB_OF[route.view] || route.view;
+    $$(".tabbar a").forEach(a => (a.dataset.tab === tab ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current")));
     if (route.view === "home") renderHome();
+    if (route.view === "explore") MBB.explore.render();
     if (route.view === "guide") MBB.guide.render(route.sub);
+    if (route.view === "trip") MBB.trip.render();
+    if (route.view === "stays") MBB.book.renderStays();
+    if (route.view === "tours") MBB.book.renderTours();
     if (route.view === "member") { MBB.member.hideNudge(false); MBB.member.render(); }
     if (route.view === "search") MBB.search.render();
     if (route.view === "place") MBB.place.render(route.sub);
@@ -105,7 +113,7 @@
   function quickList(st) {
     return st === "before"
       ? quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
-        quick("#tools", "check", "home.check", "home.q.checkD", "warm", "tool-check") +
+        quick("#trip", "check", "home.check", "home.q.checkD", "warm", "trip-check") +
         quick("#guide-connect", "signal", "home.q.connect", "home.q.connectD") +
         quick("#guide-money", "coins", "home.q.money", "home.q.moneyD") +
         quick("#plan", "plan", "home.q.plan", "home.q.planD") +
@@ -113,7 +121,7 @@
       : quick("#guide-entry", "passport", "home.q.entry", "home.q.entryD", "hot") +
         quick("#guide-airport", "plane", "home.q.airport", "home.q.airportD") +
         quick("#guide-money", "coins", "home.q.money", "home.q.moneyD", "warm") +
-        quick("#tools", "pin", "tools.driver", "tools.driverLead", "", "tool-driver") +
+        quick("#trip", "pin", "tools.driver", "tools.driverLead", "", "trip-where") +
         quick("#plan", "plan", "home.q.plan", "home.q.planD") +
         (MBB.features.ask ? quick("#ask", "spark", "home.q.ask", "home.q.askD") : quick("#guide-food", "bowl", "home.q.food", "home.q.foodD"));
   }
@@ -128,7 +136,7 @@
     const home = MBB.state.home, r = MBB.rate(home);
     let month;
     try { month = new Date(2026, now.month, 1).toLocaleDateString(MBB.locale(), { month: "long" }); } catch { month = String(now.month + 1); }
-    const prog = MBB.tools.progress();
+    const prog = MBB.trip.progress();
     const pct = prog.total ? Math.round((prog.done / prog.total) * 100) : 0;
     const cityChips = Object.entries(C.cities).map(([k, c]) =>
       `<div class="chip"><input type="radio" name="hcity" id="h-city-${k}" value="${k}"${k === MBB.state.city ? " checked" : ""}><label for="h-city-${k}">${esc(L(c))}</label></div>`).join("");
@@ -145,6 +153,8 @@
         ${fromLine()}
       </section>
 
+      ${MBB.trip.homeHtml()}
+
       ${fromCard()}
 
       <div class="glance">
@@ -155,7 +165,7 @@
         </div>
         <a class="tile" href="#tools" data-scroll="tool-fx">
           <span class="k">${icon("coins")}${esc(t("home.rate"))}</span>
-          <span class="v">${r ? `RM 100 ≈ ${esc(MBB.money(100 * r, home))}` : "RM"}</span>
+          <span class="v">${r ? `RM 100 ≈ ${MBB.moneyHtml(100 * r, home)}` : "RM"}</span>
           <span class="n">${r ? `1 ${esc(home)} ≈ RM ${(1 / r).toFixed(3)} · ` : ""}${esc(t(MBB.fx.live ? "home.rateLive" : "home.rateApprox"))}</span>
         </a>
         <div class="tile">
@@ -176,32 +186,12 @@
         <div class="quick" id="h-quick">${quickList(st)}</div>
       </section>
 
-      <section class="explore">
-        <div class="section-title"><h2>${esc(t("explore.title"))}</h2><a href="#search" data-search>${esc(t("explore.all"))}</a></div>
-        <p class="hint">${esc(t("explore.lead"))}</p>
-        <div class="mymap-wrap">${MBB.maps.overview()}</div>
-        <div class="strip">${C.destinations.map(MBB.place.destCard).join("")}</div>
-      </section>
-
       <section>
-        <div class="section-title"><h2>${esc(t("home.food"))}</h2><a href="#guide-food">${esc(t("home.more"))}</a></div>
-        <div class="strip">${(C.guide.find(g => g.id === "food")?.dishes || []).map((d, i) => `<a class="pic-card" href="#guide-food" data-scroll="dish-${i}">
-          ${MBB.media.html(`dish:${i}`, { alt: "", ic: "bowl" })}<span><b>${esc(d.ms)}</b><small>${esc(L(d))}</small></span></a>`).join("")}</div>
-      </section>
-
-      <section>
-        <div class="section-title"><h2>${esc(t("home.souvenirs"))}</h2><a href="#guide-shopping">${esc(t("home.more"))}</a></div>
-        <div class="strip">${C.souvenirs.map(sv => `<a class="pic-card" href="#guide-shopping" data-scroll="souv-${sv.id}">
-          ${MBB.media.html(`souv:${sv.id}`, { alt: "", ic: "gift" })}<span><b>${esc(L(sv.name))}</b><small>${esc(L(sv.desc))}</small></span></a>`).join("")}</div>
-      </section>
-
-      <section>
-        <div class="section-title"><h2>${esc(t("home.guide"))}</h2><a href="#guide">${esc(t("home.allTopics"))}</a></div>
-        <div class="topics">${C.guide.map(MBB.guide.topicCard).join("")}</div>
+        <div class="quick">${quick("#explore", "compass", "explore.title", "explore.homeD")}</div>
       </section>
 
       <section class="card progress">
-        <div class="section-title"><h2>${esc(t("home.check"))}</h2><a href="#tools" data-scroll="tool-check">${esc(t("home.checkOpen"))}</a></div>
+        <div class="section-title"><h2>${esc(t("home.check"))}</h2><a href="#trip" data-scroll="trip-check">${esc(t("home.checkOpen"))}</a></div>
         <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="${prog.total}" aria-valuenow="${prog.done}"><i style="width:${pct}%"></i></div>
         <p class="hint">${esc(t("home.checkProgress", { n: prog.done, total: prog.total }))}</p>
       </section>`;
@@ -225,7 +215,6 @@
     const mine = MBB.store.get("sos", {});
     const prof = MBB.member.state.profile || {};
     const em = prof.emergency_phone ? prof : null;
-    const hotel = MBB.store.get("hotel", "");
     $("#sos-sheet").innerHTML = `
       <div class="sheet-head">
         <div><h2 id="sos-title">${esc(t("sos.title"))}</h2><p>${esc(t("sos.lead"))}</p></div>
@@ -253,11 +242,10 @@
       </div>
       <div class="sos-block">
         <h3>${esc(t("sos.mine"))}</h3>
+        ${MBB.trip.sosHtml()}
         ${em ? `<div class="sos-em"><span><b>${esc(t("sos.emergencyContact"))}</b><small>${esc([em.emergency_name, em.emergency_relation].filter(Boolean).join(" · "))} ${esc(em.emergency_phone)}</small></span>
           <a class="icon-btn" href="tel:${esc(em.emergency_phone)}">${icon("phone")}${esc(t("sos.call"))}</a></div>`
           : `<label for="sos-em">${esc(t("sos.emergencyLocal"))}<input type="text" id="sos-em" inputmode="text" value="${esc(mine.emergency || "")}"></label>`}
-        <label for="sos-hotel">${esc(t("sos.hotel"))}<textarea id="sos-hotel" rows="2" placeholder="${esc(t("tools.driverPh"))}">${esc(hotel)}</textarea></label>
-        <div class="actions"><button type="button" class="btn btn-main btn-sm" id="sos-driver">${icon("expand")}${esc(t("tools.driverShow"))}</button></div>
         <label for="sos-embassy">${esc(t("sos.embassy"))}<input type="text" id="sos-embassy" inputmode="tel" value="${esc(mine.embassy || "")}"></label>
         <label for="sos-ins">${esc(t("sos.insurance"))}<input type="text" id="sos-ins" inputmode="tel" value="${esc(mine.insurance || "")}"></label>
         <p class="hint">${esc(t("sos.mineNote"))}</p>
@@ -268,12 +256,13 @@
       MBB.copy(b.dataset.copy).then(ok => MBB.copied(ok, t("sos.copied", { x: b.dataset.copy })));
     }));
     $("#sos-locate").addEventListener("click", locate);
-    $("#sos-hotel").addEventListener("input", e => { MBB.store.set("hotel", e.target.value); MBB.emit("hotel"); });
     const saveMine = () => MBB.store.set("sos", { ...MBB.store.get("sos", {}), embassy: $("#sos-embassy").value, insurance: $("#sos-ins").value, ...($("#sos-em") ? { emergency: $("#sos-em").value } : {}) });
     $("#sos-embassy").addEventListener("input", saveMine);
     $("#sos-em")?.addEventListener("input", saveMine);
     $("#sos-ins").addEventListener("input", saveMine);
-    $("#sos-driver").addEventListener("click", () => { closeSOS(); MBB.tools.showDriver(); });
+    $("#sos-driver")?.addEventListener("click", () => { closeSOS(); MBB.trip.showDriver(); });
+    // "Change it in My trip": the sheet closes as the link opens the tab.
+    $$("a[href^='#']", $("#sos-sheet")).forEach(a => a.addEventListener("click", closeSOS));
   }
   function locate() {
     const out = $("#sos-loc");
@@ -327,6 +316,9 @@
     MBB.applyStatic();
     buildLangSelect();
 
+    MBB.trip.init(); // before the planner and members, which use it
+    MBB.book.init();
+    MBB.picks.init(); // before the first screen, so a shared #place-pick-… link finds its listing
     MBB.planner.init();
     MBB.tools.init();
     MBB.chat.init();
@@ -363,13 +355,15 @@
     // Home-country hints that arrive after start-up. Malaysia is ignored (see js/country.js).
     MBB.config().then(cfg => MBB.hintFrom("ip", cfg?.country));
     MBB.on("member", () => MBB.hintFrom("member", MBB.member.state.profile?.nationality));
-    MBB.on("city", () => { if (route.view === "home" || route.view === "guide") show(); });
+    MBB.on("city", () => { if (["home", "explore", "guide"].includes(route.view)) show(); });
     MBB.on("fx", () => { if (route.view === "home") renderHome(); });
     MBB.on("check", () => { if (route.view === "home") renderHome(); });
+    MBB.on("trip", () => { if (route.view === "home") renderHome(); });
     MBB.on("member", () => { if (route.view === "home") renderHome(); });
     MBB.on("install", () => { if (route.view === "home") renderHome(); });
     MBB.on("media", () => {
       if (route.view === "home") renderHome();
+      if (route.view === "explore") MBB.explore.render();
       if (route.view === "guide" && route.sub) MBB.guide.render(route.sub);
       if (route.view === "credits") MBB.media.renderCredits($("#view-credits")); // opened before the photo list arrived
     });

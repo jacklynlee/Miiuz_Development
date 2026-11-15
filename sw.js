@@ -14,13 +14,15 @@ const DEV = BUILD === "dev";
 const VERSION = "mbb-" + BUILD;
 // Wikimedia Commons photos the traveller has seen, for offline use (#32). Kept across builds, at most
 // PHOTO_MAX (oldest out first). The app loads them with crossorigin, so they're stored at their real size.
+// Since #39 they come through our own domain (/api/photo); Commons' own hosts are for older saved lists.
 const PHOTOS = "mbb-photos", PHOTO_MAX = 200;
 const PHOTO_HOSTS = ["thumb.wikimedia.org", "upload.wikimedia.org"];
+const isPhoto = (url, req) => req.destination === "image" && (PHOTO_HOSTS.includes(url.hostname) || (url.origin === location.origin && url.pathname === "/api/photo"));
 const SHELL = [
   "./", "index.html", "manifest.webmanifest", "css/app.css",
   "js/data/malaysia.js", "js/data/malaysia.explore.js", "js/data/malaysia.map.js", "js/data/malaysia.ko.js", "js/data/malaysia.ja.js",
   "js/i18n.js", "js/locales.js", "js/country.js", "js/core.js", "js/i18n-entries.js", "js/ai.js", "js/prompt.js", "js/translate.js",
-  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/update.js", "js/member.js", "js/media.js", "js/maps.js", "js/search.js", "js/place.js", "js/app.js",
+  "js/guide.js", "js/planner.js", "js/tools.js", "js/chat.js", "js/install.js", "js/update.js", "js/member.js", "js/media.js", "js/picks.js", "js/maps.js", "js/search.js", "js/place.js", "js/explore.js", "js/trip.js", "js/book.js", "js/app.js",
   "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png", "icons/apple-touch-icon.png",
   // Latin fonts, so text looks right offline from the first visit. Other subsets, MapLibre and the
   // Supabase client (vendor/) are cached the first time they're used.
@@ -52,10 +54,11 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
 
+  // Photos the traveller has seen are kept for offline use, wherever they come from.
+  if (isPhoto(url, req)) { e.respondWith(photo(req)); return; }
+
   // Never cache the assistant, member data, live exchange rates or Vercel Web Analytics.
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/_vercel/") || url.hostname === "open.er-api.com" || url.hostname.endsWith(".supabase.co")) return;
-
-  if (PHOTO_HOSTS.includes(url.hostname) && req.destination === "image") { e.respondWith(photo(req)); return; }
 
   if (url.origin !== location.origin) return;
 
@@ -84,7 +87,7 @@ async function photo(req) {
   const hit = await cache.match(req);
   if (hit) return hit;
   const res = await fetch(req);
-  if (res.ok && res.type === "cors") {
+  if (res.ok && (res.type === "cors" || res.type === "basic")) { // not opaque, so the real size is stored
     await cache.put(req, res.clone());
     const keys = await cache.keys();
     await Promise.all(keys.slice(0, Math.max(0, keys.length - PHOTO_MAX)).map(k => cache.delete(k)));

@@ -55,6 +55,12 @@
     });
     for (const [id, c] of Object.entries(C.cities)) if (c.sum) add(`city.${id}.sum`, c.sum.en, into(c.sum));
     (C.destinations || []).forEach(d => ["sum", "go", "when"].forEach(k => add(`dest.${d.id}.${k}`, d[k].en, into(d[k]))));
+    // Our Pick! listings (js/picks.js), once they've come from the server. Not in locales/*.json.
+    (C.picks || []).forEach(p => {
+      if (p.blurb) add(`pick.${p.slug}.blurb`, p.blurb.en, into(p.blurb));
+      if (p.hoursNote) add(`pick.${p.slug}.hours`, p.hoursNote.en, into(p.hoursNote));
+      (p.dishes || []).forEach((d, i) => add(`pick.${p.slug}.d${i}`, d.en, into(d)));
+    });
     return out;
   }
 

@@ -135,5 +135,12 @@
       if (!info || info.full) { bar(""); return Promise.resolve(); }
       return (jobs[lang] ??= run(lang).finally(() => { delete jobs[lang]; }));
     },
+    // More text arrived after the language was set up (Our Pick! listings): translate it too.
+    more() {
+      entries = null;
+      const lang = MBB.state.lang, info = MBB.LANGS[lang];
+      if (!info || info.full) return;
+      (jobs[lang] || Promise.resolve()).then(() => MBB.translator.ensure(lang));
+    },
   };
 })();

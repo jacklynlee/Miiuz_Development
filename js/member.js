@@ -105,9 +105,17 @@
     M.sb.auth.updateUser({ data: { lang: MBB.state.lang } }).then(({ data }) => { if (data?.user) M.user = data.user; }, () => {});
   }
 
-  async function onSession(session, fresh) {
+  // A sign-in that just happened welcomes the member and opens their page: someone new is signed in
+  // (the code was entered here, or they signed in in another tab), or the page opened from the
+  // sign-in email link (once). Supabase also says SIGNED_IN for the same member each time the app
+  // comes back into view (back from Agoda or Klook, another app, a locked phone): that must leave
+  // the traveller on the page they were on.
+  let linkWelcome = fromLink;
+  async function onSession(session, signedIn) {
     const user = session?.user || null;
     const same = (user?.id || null) === (M.user?.id || null);
+    const fresh = Boolean(user) && ((signedIn && !same) || linkWelcome);
+    linkWelcome = false;
     M.user = user;
     if (!user) {
       Object.assign(M, { profile: null, stat: null, ledger: [], offers: [] });
@@ -123,8 +131,6 @@
       const isNew = M.profile?.created_at && Date.now() - new Date(M.profile.created_at) < 15 * 60e3;
       MBB.toast(t(isNew ? "member.welcome" : "member.welcomeBack"), { type: "success" });
       if (location.hash !== "#member") MBB.go("member");
-    } else if (fromLink) {
-      MBB.go("member");
     }
   }
 
@@ -411,7 +417,7 @@
       </article>`).join("") : `<p class="hint">${esc(t("member.noOffers"))}</p>`;
 
     const history = M.ledger.length ? `<ul class="history">${M.ledger.map(x => `
-      <li><span>${esc(t(`member.r.${x.reason}`))}<small>${esc(date(x.created_at))}</small></span><b class="mono ${x.points < 0 ? "neg" : ""}">${x.points > 0 ? "+" : ""}${num(x.points)}</b></li>`).join("")}</ul>` : `<p class="hint">—</p>`;
+      <li><span>${esc(t(x.reason === "booking" && x.points < 0 ? "member.r.bookingBack" : `member.r.${x.reason}`))}<small>${esc(date(x.created_at))}</small></span><b class="mono ${x.points < 0 ? "neg" : ""}">${x.points > 0 ? "+" : ""}${num(x.points)}</b></li>`).join("")}</ul>` : `<p class="hint">—</p>`;
 
     const details = M.editing ? `
         <form id="m-details" class="m-form" novalidate>

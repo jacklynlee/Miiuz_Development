@@ -1,6 +1,7 @@
 /* Helpers shared by the API functions. Files starting with "_" are not routes on Vercel. */
 import Anthropic from "@anthropic-ai/sdk";
 import { createRequire } from "node:module";
+import { sendJson, rateLimiter } from "./_http.mjs";
 
 const require = createRequire(import.meta.url);
 export const COUNTRY = require("../js/data/malaysia.js");
@@ -33,13 +34,6 @@ let client = null;
 export const anthropic = () => (client ??= new Anthropic());
 export const configured = () => Boolean(process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN);
 
-export function sendJson(res, status, body, cache = "no-store") {
-  res.statusCode = status;
-  res.setHeader("Content-Type", "application/json; charset=utf-8");
-  res.setHeader("Cache-Control", cache);
-  res.end(JSON.stringify(body));
-}
-
 export async function readJson(req) {
   if (req.body && typeof req.body === "object") return req.body; // Vercel parses JSON bodies
   if (typeof req.body === "string") return JSON.parse(req.body);
@@ -51,20 +45,6 @@ export async function readJson(req) {
     chunks.push(chunk);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
-}
-
-// Best-effort per-instance limiter: `max` requests per IP per 10 minutes.
-export function rateLimiter(max) {
-  const hits = new Map();
-  return req => {
-    const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "?").split(",")[0].trim();
-    const now = Date.now();
-    const recent = (hits.get(ip) || []).filter(ts => now - ts < 10 * 60 * 1000);
-    recent.push(now);
-    hits.set(ip, recent);
-    if (hits.size > 5000) hits.clear();
-    return recent.length > max;
-  };
 }
 
 export function originAllowed(req) {
@@ -81,4 +61,4 @@ export function errorCode(err) {
   return "upstream";
 }
 
-export { Anthropic };
+export { Anthropic, sendJson, rateLimiter };
