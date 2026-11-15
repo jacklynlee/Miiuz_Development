@@ -281,11 +281,18 @@
       return false;
     }
   };
-  MBB.money = (n, cur) => {
-    const digits = ["JPY", "KRW", "IDR", "VND"].includes(cur) ? 0 : 2;
-    try { return new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, maximumFractionDigits: digits, minimumFractionDigits: digits }).format(n); }
-    catch { return `${cur} ${n.toFixed(digits)}`; }
+  const noCents = cur => ["JPY", "KRW", "IDR", "VND"].includes(cur);
+  // An amount in the traveller's currency, as HTML that reads right in right-to-left languages too
+  // (#55). The amount is one unit, laid out by the direction marks Intl puts in it (Arabic and Hebrew
+  // right to left), and a symbol with Latin letters stays in one piece: Arabic writes pounds "UK£",
+  // which would otherwise show as "£UK".
+  const amountHtml = (n, cur, digits) => {
+    let parts;
+    try { parts = new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).formatToParts(n); }
+    catch { return `<bdi dir="ltr">${MBB.esc(`${cur} ${n.toFixed(digits)}`)}</bdi>`; }
+    return `<bdi>${parts.map(p => (p.type === "currency" && /[A-Za-z]/.test(p.value) ? `<bdi dir="ltr">${MBB.esc(p.value)}</bdi>` : MBB.esc(p.value))).join("")}</bdi>`;
   };
+  MBB.moneyHtml = (n, cur) => amountHtml(n, cur, noCents(cur) ? 0 : 2);
   MBB.rm = n => `RM ${n.toFixed(2)}`;
 
   /* ---------- RM prices in text, with the home-currency amount (#19) ----------
@@ -293,25 +300,29 @@
    * app adds "(≈ US$13)" after each one: "RM1–RM10", "RM30–100", "RM1~RM10" and "RM100+" count as
    * one price. Uses the live rate when online and the saved one offline; "≈" marks it as approximate.
    * Nothing is added when the home currency is the ringgit. On a new rate or home currency the
-   * amounts update in place ([data-fx]), without re-rendering the screen. */
+   * amounts update in place ([data-fx]), without re-rendering the screen.
+   * In right-to-left languages the amounts stay left to right as a group, in the same order as the
+   * RM price they follow ("RM10–RM20 (≈ UK£1.85–UK£3.69)"), and the words around them ("≈", or a
+   * translation's own word) keep the direction of the text (#55). */
   const RM_PRICE = /\bRM\s?(\d+(?:,\d{3})*(?:\.\d+)?)(?:\s?[–~〜～-]\s?(?:RM\s?)?(\d+(?:,\d{3})*(?:\.\d+)?))?(\+)?/g;
-  const approxMoney = (n, cur) => {
+  const approxHtml = (n, cur) => {
     if (n >= 1000) { const step = 10 ** (Math.floor(Math.log10(n)) - 1); n = Math.round(n / step) * step; } // ₩9,977 → ₩10,000
-    const digits = ["JPY", "KRW", "IDR", "VND"].includes(cur) || n >= 10 ? 0 : 2;
-    try { return new Intl.NumberFormat(MBB.locale(), { style: "currency", currency: cur, minimumFractionDigits: digits, maximumFractionDigits: digits }).format(n); }
-    catch { return `${cur} ${n.toFixed(digits)}`; }
+    return amountHtml(n, cur, noCents(cur) || n >= 10 ? 0 : 2);
   };
-  const fxSuffix = (a, b, plus) => {
+  const fxHtml = (a, b, plus) => {
     const home = MBB.state.home, r = home && home !== "MYR" ? MBB.rate(home) : null;
     if (!r) return "";
-    const v = x => approxMoney(Number(String(x).replace(/,/g, "")) * r, home);
-    const s = MBB.t("fx.approx", { v: (b ? `${v(a)}–${v(b)}` : v(a)) + (plus || "") });
+    const v = x => approxHtml(Number(String(x).replace(/,/g, "")) * r, home);
+    const s = MBB.esc(MBB.t("fx.approx", { v: "" }))
+      .replace("", () => `<bdi dir="ltr">${b ? `${v(a)}–${v(b)}` : v(a)}${plus || ""}</bdi>`);
     return s.startsWith("（") ? s : " " + s; // full-width brackets (Chinese, Japanese) need no space
   };
   // Escaped HTML for a text that may contain RM prices. Use it instead of esc() wherever prices can appear.
+  // A left-to-right mark after "RM100+" keeps the "+" after the number in right-to-left text, instead
+  // of "+RM100".
   MBB.priceHtml = text => MBB.esc(text).replace(RM_PRICE, (m, a, b, plus) =>
-    `${m}<span class="fx" data-fx="${a}|${b || ""}|${plus || ""}">${MBB.esc(fxSuffix(a, b, plus))}</span>`);
-  MBB.on("fx", () => MBB.$$("[data-fx]").forEach(el => { el.textContent = fxSuffix(...el.dataset.fx.split("|")); }));
+    `${m}${plus ? "&lrm;" : ""}<span class="fx" data-fx="${a}|${b || ""}|${plus || ""}">${fxHtml(a, b, plus)}</span>`);
+  MBB.on("fx", () => MBB.$$("[data-fx]").forEach(el => { el.innerHTML = fxHtml(...el.dataset.fx.split("|")); }));
 
   /* ---------- feedback ---------- */
   /* ---------- toasts (#29) ----------
