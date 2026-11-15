@@ -25,7 +25,6 @@ const SCRIPTS = [
 const FONTS = [
   { pkg: "@fontsource/noto-sans", version: "5.3.0", family: "Noto Sans", weights: [400, 500, 700] },
   { pkg: "@fontsource/noto-serif", version: "5.3.0", family: "Noto Serif", weights: [600, 900] },
-  { pkg: "@fontsource/ibm-plex-mono", version: "5.3.0", family: "IBM Plex Mono", weights: [500, 600] },
 ];
 // Scripts of the app's languages that these fonts cover. Browsers download a file only when the page uses it.
 const SUBSETS = ["latin", "latin-ext", "vietnamese", "cyrillic", "greek"];

@@ -27,7 +27,7 @@ const SHELL = [
   // Latin fonts, so text looks right offline from the first visit. Other subsets, MapLibre and the
   // Supabase client (vendor/) are cached the first time they're used.
   "css/fonts.css", "fonts/noto-sans-latin-400-normal.woff2", "fonts/noto-sans-latin-500-normal.woff2", "fonts/noto-sans-latin-700-normal.woff2",
-  "fonts/noto-serif-latin-600-normal.woff2", "fonts/noto-serif-latin-900-normal.woff2", "fonts/ibm-plex-mono-latin-500-normal.woff2", "fonts/ibm-plex-mono-latin-600-normal.woff2",
+  "fonts/noto-serif-latin-600-normal.woff2", "fonts/noto-serif-latin-900-normal.woff2",
 ];
 
 self.addEventListener("install", e => {
