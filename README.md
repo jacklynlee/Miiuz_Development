@@ -410,7 +410,7 @@ and keeps the last ones on the phone for offline use.
   overview plus a Google Maps link when offline. Travellers from China also get Amap (高德) and
   Baidu Maps links on place pages and in the day plan, since Google is blocked on Chinese SIMs.
 - **Fonts and third-party scripts**: nothing loads from Google Fonts or a CDN, so the app works
-  from mainland China (#18). Latin text uses Noto Sans, Noto Serif and IBM Plex Mono from `fonts/`
+  from mainland China (#18). Latin text uses Noto Sans and Noto Serif from `fonts/`
   (SIL Open Font License); Chinese, Japanese and Korean use the phone's own fonts. MapLibre and
   the Supabase client are in `vendor/`. `npm run vendor` refreshes both from npm at the versions
   pinned in `scripts/vendor.mjs`.

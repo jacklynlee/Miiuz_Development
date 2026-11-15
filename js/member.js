@@ -410,7 +410,7 @@
         <h3>${esc(L(o.title))}</h3>
         ${L(o.body) ? `<p>${esc(L(o.body))}</p>` : ""}
         <div class="offer-foot">
-          ${o.code ? `<span class="offer-code"><small>${esc(t("member.codeLabel"))}</small><b class="mono">${esc(o.code)}</b><button type="button" class="icon-btn" data-copy-code="${esc(o.code)}" aria-label="${esc(t("sos.copy"))}">${icon("copy")}</button></span>` : ""}
+          ${o.code ? `<span class="offer-code"><small>${esc(t("member.codeLabel"))}</small><b class="code">${esc(o.code)}</b><button type="button" class="icon-btn" data-copy-code="${esc(o.code)}" aria-label="${esc(t("sos.copy"))}">${icon("copy")}</button></span>` : ""}
           ${o.link && /^https?:\/\//.test(o.link) ? `<a class="btn btn-ghost btn-sm" href="${esc(o.link)}" target="_blank" rel="noopener">${esc(t("member.open"))}${icon("external")}</a>` : ""}
           ${o.ends_at ? `<small class="hint">${esc(t("member.until", { d: date(o.ends_at) }))}</small>` : ""}
         </div>
@@ -453,12 +453,12 @@
         <section class="card m-invite">
           <h2>${icon("users")}${esc(t("member.invite"))}</h2>
           <p>${esc(t("member.inviteLead"))}</p>
-          <div class="invite-link"><span class="mono" id="m-link">${esc(inviteUrl())}</span></div>
+          <div class="invite-link"><span class="code" id="m-link">${esc(inviteUrl())}</span></div>
           <div class="actions">
             <button type="button" class="btn btn-main btn-sm" id="m-copy">${icon("copy")}${esc(t("member.copyLink"))}</button>
             <button type="button" class="btn btn-ghost btn-sm" id="m-share">${icon("send")}${esc(t("member.share"))}</button>
           </div>
-          <p class="hint">${esc(t("member.friends", { n: num(friends) }))} · ${esc(t("member.yourCode"))} <b class="mono">${esc(p.referral_code || "")}</b></p>
+          <p class="hint">${esc(t("member.friends", { n: num(friends) }))} · ${esc(t("member.yourCode"))} <b class="code">${esc(p.referral_code || "")}</b></p>
         </section>
         <section class="card m-tiers">
           <h2>${icon("star")}${esc(t("member.tiers"))}</h2>
